@@ -31,7 +31,6 @@ const PROVIDERS = [["vk", "ВКонтакте"], ["yandex", "Яндекс"], ["t
    на политику обработки данных (её оператор обязан опубликовать, ст. 18.1)
    и политику cookie: вход держится на куке сессии. Это ознакомление,
    а не согласие. Адреса — страницы «Политики и документы» (docs.js, slug). */
-const doc = (href, text) => html`<a class="ui-link" href="${href}" target="_blank" rel="noopener">${t(text)}</a>`;
 
 /* Не резолвится: вход перезагружает страницу. */
 export async function loginScreen() {
@@ -40,14 +39,14 @@ export async function loginScreen() {
 
   const root = document.createElement("main");
   root.className = "login";
-  root.innerHTML = String(html`<form class="ui-modal" novalidate aria-label="${t("Sign in to the admin")}">
+  root.innerHTML = String(html`<form class="ui-modal" novalidate aria-label="Вход в портал">
     <div class="ui-modal__header">
-      <div class="login__brand">${brandMark()}<span>${t("Korzilla CMS")}</span></div>
+      <div class="login__brand">${brandMark()}<span>Korzilla 996</span></div>
     </div>
     <div class="ui-modal__body ui-field-group">
       <div class="ui-field">
         <label class="ui-field__label" for="login-email">${t("Email")}</label>
-        <div class="ui-input__wrap">${icon("mail")}<input class="ui-input ui-input--secondary ui-input--lg" id="login-email" name="email" placeholder="${t("Sign-in email")}" type="email" inputmode="email" autocomplete="username" autofocus></div>
+        <div class="ui-input__wrap">${icon("mail")}<input class="ui-input ui-input--secondary ui-input--lg" id="login-email" name="email" placeholder="Рабочая почта" type="email" inputmode="email" autocomplete="username" autofocus></div>
       </div>
       <div class="ui-field">
         <label class="ui-field__label" for="login-password">${t("Password")}</label>
@@ -61,7 +60,7 @@ export async function loginScreen() {
       <div class="login__alt">${PROVIDERS.map(([id, name]) => html`<button class="ui-btn ui-btn--secondary ui-btn--lg" type="button" data-login-provider="${name}" aria-label="${t("Sign in with")} ${name}" data-ui-tooltip="${name}" data-side="bottom"><span class="ui-icon" data-ui-icon="${id}"></span></button>`)}</div>
     </div>
   </form>
-  <p class="login__docs ui-text-caption ui-text-muted">${t("Signing in, you confirm that you have read the")} ${doc("/privacy/", "Personal data policy")} ${t("and the")} ${doc("/cookies/", "Cookie policy")}</p>`);
+  `);
   /* Тема — сразу, до входа: кнопка под ссылкой на политику, посередине до низа страницы, выбор сохраняется
      тем же setLook, что и меню аккаунта, и переживает вход. */
   const themeButton = () => {

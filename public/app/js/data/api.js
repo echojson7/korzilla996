@@ -11,7 +11,9 @@
    включённые модули, типы страниц, токен формы. null — движка нет (витрина,
    другой хост) или не вошли: экраны остаются на демо. */
 
-const BASE = "/admin/api/v1";
+/* Портал: сервер — Laravel рядом с приложением (public/index.php), адрес
+   считается от страницы: /996/app/ → /996/index.php/api. */
+const BASE = new URL("../index.php/api", location.href).pathname;
 
 let csrf = "";
 let engine = null;
@@ -63,11 +65,11 @@ export const getEngine = () => engine;
 /* Состояние входа: { admin | null, configured, site_name, csrf }. null — движка
    нет (витрина на другом хосте): входить некуда, админка на демо. */
 export async function session() {
-  /* Вход сотрудников придёт вместе с сервером портала. */
-  return null;
   try {
     const state = await api("GET", "auth");
     csrf = state.csrf;
+    /* Вошедший сотрудник — он же «движок» для выхода из аккаунта. */
+    engine = state.admin ? { me: state.admin } : null;
     return state;
   } catch {
     return null;

@@ -9,3 +9,7 @@
   (`wide` или `narrow`).
 - Модули портала — `public/app/modules/<модуль>/module.js`, слой подключается
   в `public/app/sites/layers.js` и `sites/index.js`.
+- Сервер — Laravel 13 в корне ветки. Приложение ходит в API по адресу
+  `../index.php/api/…` от страницы (`public/app/js/data/api.js`): на стенде
+  подпапка `/996/` без `index.php` в адресе уходит в Laravel стенда korzillaX.
+- Учётки сотрудников заводит только консоль (`staff:create`), регистрации нет.

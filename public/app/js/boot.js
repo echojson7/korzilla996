@@ -28,7 +28,7 @@ import { skills, subjects, prompts, briefs, features, isOn, useSite, setRoute } 
 import { initAssistant, onSite, ask } from "./ai/panel.js";
 import { ME } from "./data/fixtures.js";
 import { loadLive } from "./data/live.js";
-import { session } from "./data/api.js";
+import { session, getEngine } from "./data/api.js";
 import { loginScreen } from "./shell/login.js";
 import { loadIcons } from "./data/icons.js";
 import { loadAppearance } from "./data/appearance.js";
@@ -75,6 +75,9 @@ async function main() {
   /* Слои манифестов — после данных сайта и приставки хранилища: их модули
      считают своё от «сейчас» и от пришедших данных. */
   const layers = await loadLayers();
+  /* Вошедший сотрудник — вместо демо-директора из данных портала. */
+  const staff = getEngine()?.me;
+  if (staff) Object.assign(ME, staff);
 
   /* Право пользователя: «*» — всё. Бэкенд CMS отдаст список прав вместе с профилем. */
   const can = (permission) => ME.permissions.includes("*") || ME.permissions.includes(permission);
