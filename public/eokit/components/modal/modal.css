@@ -1,0 +1,276 @@
+/* ---- Модальное окно -------------------------------------------------------- */
+
+/* Модуль на каждое открытие кладёт в body слой: подложка, окно, хром. Движение —
+   переходы между data-state (placing → open → closing), а не ключевые кадры:
+   модуль ждёт их getAnimations() и пишет в transform жест, перетаскивание и
+   разворот на полпути. Смещение --ui-modal-x/y поэтому входит в каждый
+   transform. Вход — пружиной (--ui-spring) из 0.94, с перелётом ~1 %; панель
+   сбоку и лист — своим ходом 420/220 мс по --ui-ease; уход окна — 100 мс. */
+@property --ui-modal-x { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@property --ui-modal-y { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@property --ui-modal-progress { syntax: "<number>"; inherits: false; initial-value: 0; }
+
+.ui-modal-layer {
+  --ui-modal-w: 520px;
+  --ui-modal-h: auto;
+  --ui-modal-enter: var(--ui-spring-time);
+  --ui-modal-enter-ease: var(--ui-spring);
+  --ui-modal-fade: 120ms;
+  --ui-modal-exit: var(--ui-duration-surface-out);
+  --ui-modal-exit-ease: var(--ui-ease-out);
+  /* Смена высоты при новом содержимом (загрузка, шаг мастера) — как раскрытие. */
+  --ui-modal-morph: 180ms;
+  --ui-modal-from-x: 0px;
+  --ui-modal-from-y: 0px;
+  --ui-modal-from-scale: 0.94;
+  --ui-modal-from-opacity: 0;
+  --ui-modal-covered-scale: 0.96;
+  position: fixed;
+  inset: 0;
+  z-index: var(--ui-z-modal);
+  display: flex;
+  /* Поле слоя — граница, за которую окно не уводят ни мышью, ни размером. */
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  overflow: hidden;
+}
+.ui-modal-layer__backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--ui-scrim);
+  opacity: calc(1 - var(--ui-modal-progress, 0));
+  transition: opacity var(--ui-modal-fade) var(--ui-ease-out);
+}
+.ui-modal-layer[data-nested] > .ui-modal-layer__backdrop { background: color-mix(in srgb, var(--ui-scrim) 50%, transparent); }
+
+.ui-modal-layer[data-animation="slide-down"] { --ui-modal-from-y: -16px; --ui-modal-from-scale: 0.98; }
+.ui-modal-layer[data-animation="slide-up"] { --ui-modal-from-y: 16px; --ui-modal-from-scale: 0.98; }
+.ui-modal-layer[data-animation="fade"] { --ui-modal-from-scale: 1; --ui-modal-enter: 150ms; }
+.ui-modal-layer[data-animation="spring"] { --ui-modal-from-scale: 0.9; --ui-modal-enter: var(--ui-spring-bounce-time); --ui-modal-enter-ease: var(--ui-spring-bounce); }
+
+/* Панель сбоку — карточка с полем 8 px, как лист в admin-panel-new; слева от неё
+   остаётся полоса страницы. Лист снизу прилегает к нижней кромке. Обе въезжают
+   целиком, без масштаба и проявления, своим ходом (--ui-duration-panel-*
+   по --ui-ease, см. tokens.css); подложка темнеет и светлеет в такт. */
+.ui-modal-layer:is([data-type="side"], [data-type="sheet"]) {
+  --ui-modal-from-scale: 1;
+  --ui-modal-from-opacity: 1;
+  --ui-modal-enter: var(--ui-duration-panel-in);
+  --ui-modal-enter-ease: var(--ui-ease);
+  --ui-modal-exit: var(--ui-duration-panel-out);
+  --ui-modal-exit-ease: var(--ui-ease);
+}
+.ui-modal-layer:is([data-type="side"], [data-type="sheet"]) > .ui-modal-layer__backdrop {
+  transition: opacity var(--ui-modal-enter) var(--ui-ease-out);
+}
+.ui-modal-layer[data-type="side"] {
+  --ui-modal-w: 416px;
+  --ui-modal-from-x: calc(100% + 8px);
+  padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) 48px;
+}
+.ui-modal-layer[data-type="side"][data-side="left"] {
+  --ui-modal-from-x: calc(-100% - 8px);
+  padding: max(8px, env(safe-area-inset-top)) 48px max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+}
+.ui-modal-layer[data-type="sheet"] {
+  --ui-modal-w: 640px;
+  --ui-modal-from-y: 100%;
+  padding: max(40px, env(safe-area-inset-top)) 0 0;
+}
+
+/* Размер пишется и листу, но лист его не слушает. */
+.ui-modal-layer:not([data-type="sheet"])[data-size="sm"] { --ui-modal-w: 400px; }
+.ui-modal-layer:not([data-type="sheet"])[data-size="lg"] { --ui-modal-w: 640px; }
+.ui-modal-layer:not([data-type="sheet"])[data-size="xl"] { --ui-modal-w: 880px; }
+.ui-modal-layer:not([data-type="sheet"])[data-size="full"] { --ui-modal-w: 100%; --ui-modal-h: 100%; }
+.ui-modal-layer[data-type="side"][data-size="sm"] { --ui-modal-w: 320px; }
+
+.ui-modal-layer > .ui-modal {
+  transform: translate3d(var(--ui-modal-x, 0px), var(--ui-modal-y, 0px), 0);
+  transition: opacity var(--ui-modal-fade) linear, transform var(--ui-modal-enter) var(--ui-modal-enter-ease);
+}
+.ui-modal-layer:is([data-state="placing"], [data-state="closing"]) > .ui-modal {
+  opacity: var(--ui-modal-from-opacity);
+  transform: translate3d(calc(var(--ui-modal-x, 0px) + var(--ui-modal-from-x)), calc(var(--ui-modal-y, 0px) + var(--ui-modal-from-y)), 0) scale(var(--ui-modal-from-scale));
+}
+.ui-modal-layer:is([data-state="placing"], [data-state="closing"]) > .ui-modal-layer__backdrop { opacity: 0; }
+.ui-modal-layer[data-state="closing"] { pointer-events: none; }
+.ui-modal-layer[data-state="closing"] > :is(.ui-modal, .ui-modal-layer__backdrop) { transition-duration: var(--ui-modal-exit); transition-timing-function: var(--ui-modal-exit-ease); }
+/* Окно под новым отступает назад; панель сбоку остаётся как есть. */
+.ui-modal-layer[data-covered]:is([data-type="dialog"], [data-type="sheet"]) > .ui-modal { transform: translate3d(var(--ui-modal-x, 0px), var(--ui-modal-y, 0px), 0) scale(var(--ui-modal-covered-scale)); }
+.ui-modal-layer.is-dragging { user-select: none; }
+.ui-modal-layer.is-dragging > :is(.ui-modal, .ui-modal-layer__backdrop) { transition: none; }
+
+/* Окно: колонка по содержимому, не выше слоя. Тело не прокручивается, пока
+   модуль не поставит data-overflow, — иначе список селекта и календарь в
+   последнем поле обрезались бы. */
+.ui-modal {
+  --ui-modal-min-w: 256px;
+  --ui-modal-min-h: 160px;
+  --ui-modal-resize-step: 16px;
+  --ui-modal-overdrag: 24px;
+  /* Поле содержимого у краёв окна; шапка, тело и подвал отделены только им.
+     Шаг — зазор между полями формы и абзацами в теле, и он же от шапки до тела:
+     окно просторнее страницы, плотность там не нужна. */
+  --ui-modal-pad: 28px;
+  --ui-modal-gap: 20px;
+  /* Шапка и тело — на светло-сером, подвал с кнопками — белый. */
+  --ui-modal-bg: var(--ui-canvas);
+  --ui-modal-foot-bg: var(--ui-pop);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  inline-size: min(var(--ui-modal-w, 520px), 100%);
+  max-block-size: 100%;
+  margin: auto;
+  border-radius: var(--ui-r-modal);
+  outline: 1px solid transparent;
+  color: var(--ui-fg);
+  box-shadow: var(--ui-shadow-pop);
+  background: var(--ui-modal-bg);
+}
+:root.dark .ui-modal { --ui-modal-bg: var(--ui-surface); }
+.ui-modal.is-morphing { overflow: clip; }
+.ui-modal-layer:is([data-height], :not([data-type="sheet"])[data-size="full"]) > .ui-modal { block-size: min(var(--ui-modal-h), 100%); }
+.ui-modal-layer[data-type="side"] > .ui-modal { block-size: 100%; margin: 0 0 0 auto; }
+.ui-modal-layer[data-type="side"][data-side="left"] > .ui-modal { margin: 0 auto 0 0; }
+.ui-modal-layer[data-type="sheet"] > .ui-modal {
+  margin: auto auto 0;
+  --ui-modal-pad: 24px;
+  padding: 8px 0 env(safe-area-inset-bottom);
+  border-radius: var(--ui-r-modal) var(--ui-r-modal) 0 0;
+  transform-origin: 50% 100%;
+}
+/* Лист тянут вверх против хода — под ним продолжается тот же фон. */
+.ui-modal-layer[data-type="sheet"] > .ui-modal::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: calc(100% - 1px);
+  height: 25px;
+  background: inherit;
+  pointer-events: none;
+}
+
+/* Шапка без фона: заголовок 16/24, как у карточки тура, рядом статус, под ним описание. От тела
+   отделена только отступом; черта — когда тело прокручивается. */
+.ui-modal__header { display: flex; flex-direction: column; gap: 6px; padding: var(--ui-modal-pad) var(--ui-modal-pad) 0; }
+.ui-modal:has(> .ui-modal__close) > .ui-modal__header { padding-inline-end: calc(var(--ui-modal-pad) + (var(--ui-h) + 18px) / 2 + 4px); }
+.ui-modal__heading { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; }
+.ui-modal__title { margin: 0; color: var(--ui-fg); font: 600 var(--ui-text-md) / var(--ui-leading-md) var(--ui-font); letter-spacing: -0.01em; text-wrap: pretty; overflow-wrap: anywhere; }
+.ui-modal__heading > .ui-modal__title { min-width: 0; }
+.ui-modal__description { margin: 0; color: var(--ui-fg-2); overflow-wrap: anywhere; }
+/* Селект и календарь в теле — во всю ширину, как поле. */
+.ui-modal__body { --ui-select-w: 100%; --ui-datepicker-w: 100%; --ui-form-gap: var(--ui-modal-gap); flex: 0 1 auto; min-block-size: 0; padding: var(--ui-modal-pad); }
+.ui-modal__header + .ui-modal__body { padding-top: var(--ui-modal-gap); }
+.ui-modal__body > p { margin: 0; }
+.ui-modal__body > p + p { margin-top: 12px; }
+/* Меню действий в теле — те же строки, что в поповере, текст по краю заголовка. */
+.ui-modal__body > .ui-popover__menu { margin-inline: -8px; }
+.ui-modal-layer[data-overflow] > .ui-modal > .ui-modal__body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.ui-modal__body:focus-visible { outline: none; box-shadow: inset 0 0 0 var(--ui-focus-w-sm) var(--ui-focus); }
+.ui-modal-layer[data-overflow] > .ui-modal > .ui-modal__header { padding-bottom: var(--ui-modal-gap); box-shadow: inset 0 -1px var(--ui-line); }
+
+/* Подвал без фона: кнопки справа, в поле окна, как шапка. Главная кнопка —
+   акцентом с белым текстом. */
+.ui-modal__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: auto;
+  padding: 16px var(--ui-modal-pad);
+  border-radius: 0 0 var(--ui-r-modal) var(--ui-r-modal);
+  background: var(--ui-modal-foot-bg);
+}
+.ui-modal__footer > .ui-btn--primary { --ui-btn-bg: var(--ui-accent); --ui-btn-fg: var(--ui-on-tone); --ui-btn-hover: color-mix(in srgb, var(--ui-accent) 88%, var(--ui-fg)); }
+/* Пояснение в подвале — слева от кнопок. */
+.ui-modal__note { display: inline-flex; align-items: center; gap: 6px; min-width: 0; margin-inline-end: auto; padding-inline-end: 4px; color: var(--ui-fg-2); font-size: var(--ui-text-sm); --ui-icon-size: 14px; }
+.ui-modal__header + .ui-modal__footer { margin-top: var(--ui-modal-gap); }
+/* Тело прокручивается — подвал отделён чертой, как шапка. */
+.ui-modal-layer[data-overflow] > .ui-modal > .ui-modal__footer { box-shadow: inset 0 1px var(--ui-line); }
+
+/* Лист снизу: главная кнопка — сверху, под большим пальцем; кнопки во всю ширину. */
+.ui-modal-layer[data-type="sheet"] .ui-modal__footer { flex-direction: column-reverse; align-items: stretch; border-radius: 0; }
+.ui-modal-layer[data-type="sheet"] > .ui-modal:has(> .ui-modal__footer) { padding-bottom: 0; }
+.ui-modal-layer[data-type="sheet"] > .ui-modal:has(> .ui-modal__footer)::after { background: var(--ui-modal-foot-bg); }
+.ui-modal-layer[data-type="sheet"] > .ui-modal > .ui-modal__footer { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+.ui-modal-layer[data-type="sheet"] .ui-modal__footer > .ui-btn { --ui-btn-h: var(--ui-h-lg); width: 100%; }
+.ui-modal-layer[data-type="sheet"] .ui-modal__footer > .ui-btn ~ :not(.ui-btn) { order: -1; }
+.ui-modal-layer[data-type="sheet"] .ui-modal__footer > :not(.ui-btn):has(~ .ui-btn) { order: 1; }
+.ui-modal-layer[data-type="sheet"] .ui-modal__body > .ui-popover__menu > .ui-btn { --ui-btn-h: 40px; }
+
+/* Хром: крестик, ручка листа, ручки размера — поверх окна, вне потока. */
+/* Крестик кита (.ui-close) — по середине строки заголовка, глиф по краю поля.
+   Отступы считаются от его размера и глифа: числом они расходились, когда
+   крестик вырос с 32 до 36 (44 в крупном), и он съезжал вниз. */
+.ui-modal__close {
+  --ui-modal-close-top: calc(var(--ui-modal-pad) + (var(--ui-leading-md) - var(--ui-close-size)) / 2);
+  position: absolute;
+  top: var(--ui-modal-close-top);
+  inset-inline-end: calc(var(--ui-modal-pad) - (var(--ui-close-size) - var(--ui-close-icon)) / 2);
+  z-index: 1;
+}
+.ui-modal-layer[data-type="sheet"] .ui-modal__close { top: calc(var(--ui-modal-close-top) + 8px); }
+.ui-modal__handle {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: 1;
+  width: 64px;
+  height: 20px;
+  margin: 0 0 0 -32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: grab;
+  touch-action: none;
+}
+.ui-modal__handle::before { content: ""; position: absolute; top: 8px; left: 14px; right: 14px; height: 4px; border-radius: var(--ui-r-full); background: var(--ui-line-strong); }
+.ui-modal__handle:focus-visible { outline: none; }
+.ui-modal__handle:focus-visible::before { box-shadow: 0 0 0 var(--ui-focus-w) var(--ui-focus); }
+.ui-modal__grip { position: absolute; z-index: 2; touch-action: none; }
+.ui-modal__grip:is([data-grip="n"], [data-grip="s"]) { left: 16px; right: 16px; height: 8px; cursor: ns-resize; }
+.ui-modal__grip:is([data-grip="e"], [data-grip="w"]) { top: 16px; bottom: 16px; width: 8px; cursor: ew-resize; }
+.ui-modal__grip:is([data-grip="ne"], [data-grip="nw"], [data-grip="se"], [data-grip="sw"]) { width: 16px; height: 16px; }
+.ui-modal__grip:is([data-grip="n"], [data-grip="ne"], [data-grip="nw"]) { top: -4px; }
+.ui-modal__grip:is([data-grip="s"], [data-grip="se"], [data-grip="sw"]) { bottom: -4px; }
+.ui-modal__grip:is([data-grip="e"], [data-grip="ne"], [data-grip="se"]) { right: -4px; }
+.ui-modal__grip:is([data-grip="w"], [data-grip="nw"], [data-grip="sw"]) { left: -4px; }
+.ui-modal__grip:is([data-grip="nw"], [data-grip="se"]) { cursor: nwse-resize; }
+.ui-modal__grip:is([data-grip="ne"], [data-grip="sw"]) { cursor: nesw-resize; }
+/* Край панели сбоку: тянется мышью и стрелками, при наведении — синяя линия. */
+.ui-modal-layer[data-type="side"] .ui-modal__grip { top: 0; bottom: 0; width: 12px; outline: none; }
+.ui-modal-layer[data-type="side"] .ui-modal__grip[data-grip="w"] { left: -6px; }
+.ui-modal-layer[data-type="side"] .ui-modal__grip[data-grip="e"] { right: -6px; }
+.ui-modal-layer[data-type="side"] .ui-modal__grip::after {
+  content: "";
+  position: absolute;
+  inset-block: 12px;
+  left: 5px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--ui-accent);
+  opacity: 0;
+  transition: opacity var(--ui-duration-fast) var(--ui-ease-out);
+}
+.ui-modal-layer[data-type="side"] .ui-modal__grip:is(:hover, :focus-visible)::after,
+.ui-modal-layer[data-type="side"].is-dragging .ui-modal__grip::after { opacity: 1; }
+
+/* Жесты: браузер не должен перехватывать смахивание листа и панели. Шапка листа
+   и перетаскиваемого окна — ручка: ни прокрутки, ни выделения текста. */
+.ui-modal-layer[data-type="sheet"]:not([data-overflow]) > .ui-modal { touch-action: pinch-zoom; }
+.ui-modal-layer:is([data-type="sheet"], [data-drag]) .ui-modal__header { touch-action: pinch-zoom; user-select: none; }
+.ui-modal-layer[data-type="side"] > .ui-modal,
+.ui-modal-layer[data-type="side"] .ui-modal__body { touch-action: pan-y pinch-zoom; }
+.ui-modal-layer[data-drag] .ui-modal__header { cursor: grab; }
+.ui-modal-layer[data-drag].is-dragging .ui-modal__header { cursor: grabbing; }
+
+/* Содержимое по адресу: спиннер появляется, только если загрузка дольше 200 мс. */
+.ui-modal__status { display: grid; place-items: center; gap: 12px; min-height: 96px; color: var(--ui-fg-2); text-align: center; }
+.ui-modal__status > .ui-spinner { transition: opacity 150ms var(--ui-ease-out) 200ms; }
+@starting-style { .ui-modal__status > .ui-spinner { opacity: 0; } }
+.ui-modal__status-text { margin: 0; }

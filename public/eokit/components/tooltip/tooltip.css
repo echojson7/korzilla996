@@ -1,0 +1,205 @@
+/* ---- Подсказка ------------------------------------------------------------- */
+
+.ui-tooltip {
+  --ui-tooltip-gap: 8px;
+  --ui-tooltip-edge: 8px;
+  --ui-tooltip-arrow-inset: 14px;
+  --ui-surface-from-y: 3px;
+  --ui-surface-scale: 0.97;
+  position: fixed;
+  left: var(--ui-tooltip-x, 0);
+  top: var(--ui-tooltip-y, 0);
+  z-index: var(--ui-z-tooltip);
+  width: max-content;
+  max-width: min(240px, calc(100vw - 16px));
+  pointer-events: none;
+  transform-origin: var(--ui-tooltip-origin, 50% 100%);
+  contain: layout style;
+}
+.ui-tooltip[data-side="bottom"] { --ui-surface-from-y: -3px; }
+.ui-tooltip[data-side="left"] { --ui-surface-from-x: 3px; --ui-surface-from-y: 0px; }
+.ui-tooltip[data-side="right"] { --ui-surface-from-x: -3px; --ui-surface-from-y: 0px; }
+/* Пересадка на соседа: пузырь сразу на новом месте, без входа. */
+.ui-tooltip[data-state="open"][data-motion="swap"] { animation: none; }
+/* Серая подсказка: светлый пузырь с основным текстом; белая — ниже. Цвет типа
+   (успех, внимание, ошибка) важнее обеих. */
+.ui-tooltip--secondary { --ui-tooltip-bg: var(--ui-tooltip-secondary-bg); --ui-tooltip-fg: var(--ui-fg); --ui-tooltip-shadow: var(--ui-tooltip-secondary-shadow); }
+/* Белая подсказка — кожа поповера: белый пузырь, основной текст. Кромка и тень —
+   drop-shadow на всей поверхности, чтобы стрелка и пузырь были одним контуром
+   без шва (box-shadow у пузыря прошёл бы линией по основанию стрелки). */
+.ui-tooltip--surface {
+  --ui-tooltip-bg: var(--ui-pop);
+  --ui-tooltip-fg: var(--ui-fg);
+  --ui-tooltip-shadow: none;
+  filter: var(--ui-tooltip-surface-shadow);
+}
+.ui-tooltip--success { --ui-tooltip-bg: var(--ui-green); --ui-tooltip-fg: var(--ui-on-tone); }
+.ui-tooltip--warn { --ui-tooltip-bg: var(--ui-amber); --ui-tooltip-fg: var(--ui-on-tone); }
+.ui-tooltip--error { --ui-tooltip-bg: var(--ui-red); --ui-tooltip-fg: var(--ui-on-tone); }
+
+/* Текст при пересадке — слайд (модуль, Web Animations): старый уходит к прежнему
+   якорю, новый въезжает с другой стороны; кромка пузыря его обрезает. Уходящий
+   (__ghost) лежит поверх на месте текста и раскладку пузыря не трогает. */
+.ui-tooltip__content {
+  position: relative;
+  padding: var(--ui-tooltip-pad);
+  overflow: hidden;
+  border-radius: var(--ui-tooltip-r);
+  box-shadow: var(--ui-tooltip-shadow);
+  background: var(--ui-tooltip-bg);
+  color: var(--ui-tooltip-fg);
+  font: 400 var(--ui-tooltip-text) / var(--ui-tooltip-leading) var(--ui-font);
+  overflow-wrap: break-word;
+}
+.ui-tooltip__text { display: block; }
+
+/* Стрелка 10×5 со скруглённым кончиком; вдоль кромки её ставит модуль. */
+.ui-tooltip__arrow {
+  position: absolute;
+  bottom: 0;
+  left: var(--ui-tooltip-arrow-offset, 50%);
+  width: 10px;
+  height: 5px;
+  background: var(--ui-tooltip-bg);
+  transform: translate(-50%, 100%);
+  clip-path: path("M0 0H10L5.9 4.3Q5 5.2 4.1 4.3Z");
+}
+.ui-tooltip[data-side="bottom"] .ui-tooltip__arrow { top: 0; bottom: auto; transform: translate(-50%, -100%); clip-path: path("M0 5H10L5.9 0.7Q5 -0.2 4.1 0.7Z"); }
+.ui-tooltip:is([data-side="left"], [data-side="right"]) .ui-tooltip__arrow { top: var(--ui-tooltip-arrow-offset, 50%); bottom: auto; width: 5px; height: 10px; }
+.ui-tooltip[data-side="left"] .ui-tooltip__arrow { left: auto; right: 0; transform: translate(100%, -50%); clip-path: path("M0 0V10L4.3 5.9Q5.2 5 4.3 4.1Z"); }
+.ui-tooltip[data-side="right"] .ui-tooltip__arrow { left: 0; transform: translate(-100%, -50%); clip-path: path("M5 0V10L0.7 5.9Q-0.2 5 0.7 4.1Z"); }
+
+.ui-tooltip__ghost { position: absolute; inset: var(--ui-tooltip-pad); pointer-events: none; }
+.ui-tooltip__ghost:empty { display: none; }
+
+/* ---- Богатое содержимое ---------------------------------------------------- */
+
+/* Шаблон (data-tooltip): строка из частей с зазором 6 px; кегль и строка — те же
+   12/16, что у простого текста, и высота пузыря та же 28. Приглушённый цвет — доля
+   основного: верно на тёмном, сером и белом пузыре. Тон части — data-tone. */
+.ui-tooltip { --ui-tooltip-meta: color-mix(in srgb, var(--ui-tooltip-fg) 58%, transparent); }
+.ui-tooltip__text--rich { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+.ui-tooltip__text--rich .ui-icon { --ui-icon-size: 14px; color: color-mix(in srgb, var(--ui-tooltip-fg) 72%, transparent); }
+.ui-tooltip__text--rich :is(.ui-icon, .ui-tooltip__meta)[data-tone] { color: var(--ui-tone); }
+/* Значок после текста (ссылка наружу) — приглушённый и чуть дальше. */
+.ui-tooltip__text--rich > .ui-icon:last-child:not(:first-child) { margin-inline-start: 2px; color: var(--ui-tooltip-meta); }
+.ui-tooltip__meta { color: var(--ui-tooltip-meta); }
+
+/* Точка статуса 8 px и образец цвета 12 px — цвет из --ui-tone (data-tone или
+   style="--ui-tone: #…"). Кольцо держит светлый образец на светлом пузыре. */
+.ui-tooltip__dot { flex: none; width: 8px; height: 8px; margin-inline: calc((14px - 8px) / 2) 1px; border-radius: 50%; background: var(--ui-tone, currentColor); }
+.ui-tooltip__swatch { flex: none; width: 12px; height: 12px; margin-inline: 1px; border-radius: 50%; background: var(--ui-tone, currentColor); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ui-tooltip-fg) 14%, transparent); }
+.ui-tooltip__swatches { display: flex; gap: 6px; }
+
+/* Клавиши — плашки кита 20 px из полупрозрачного цвета текста пузыря. Поле
+   −2 px сверху и снизу: строка остаётся 16, пузырь — 28, как у соседей. */
+.ui-tooltip .ui-kbd-group { gap: 4px; margin-block: -2px; margin-inline: 2px -4px; }
+.ui-tooltip .ui-kbd { background: color-mix(in srgb, var(--ui-tooltip-fg) 12%, transparent); color: var(--ui-tooltip-meta); }
+
+/* Блок в несколько строк: прогресс, человек, палитра. Поле сверху и снизу 8, как
+   по бокам у кнопки, — блок не прижат к кромке. */
+.ui-tooltip__stack { display: grid; gap: 8px; min-width: 0; padding-block: 2px; white-space: nowrap; }
+.ui-tooltip__line { display: flex; align-items: center; gap: 6px; }
+.ui-tooltip__title { font-weight: 500; }
+/* Цвета под строкой со значком начинаются от текста, а не от значка. */
+.ui-tooltip__line:has(> .ui-icon:first-child) + .ui-tooltip__swatches { padding-inline-start: calc(14px + 6px - 1px); }
+
+/* Прогресс: дорожка 4 px на всю ширину блока, не уже 168; заливка — scaleX по
+   --ui-value. */
+.ui-tooltip__stack:has(> .ui-tooltip__progress) { min-width: 168px; }
+.ui-tooltip__progress { height: 4px; overflow: hidden; border-radius: var(--ui-r-full); background: color-mix(in srgb, var(--ui-tooltip-fg) 14%, transparent); }
+.ui-tooltip__progress::after { content: ""; display: block; height: 100%; border-radius: inherit; background: var(--ui-tooltip-fg); transform: scaleX(var(--ui-value, 0%)); transform-origin: left; }
+
+/* Человек: аватар 32 — ровно две строки имени и «когда был». */
+.ui-tooltip__person { display: flex; align-items: center; gap: 10px; padding-block: 2px; }
+.ui-tooltip__person > .ui-avatar { --ui-avatar: 32px; }
+.ui-tooltip__person > span { display: grid; }
+
+/* ---- Карточка -------------------------------------------------------------- */
+
+/* data-variant="card": белая (в тёмной теме — тёмная) карточка у значка справки —
+   обложка и пара строк о том, что это такое. Та же подсказка: одна поверхность,
+   показ по наведению и фокусу, пересадка между соседями слайдом; пауза короче
+   (модуль), стрелки нет — карточку держит зазор и тень. Разметка — шаблон:
+
+     <button class="ui-help" type="button" aria-label="О сервисе" data-ui-tooltip="Яндекс Метрика" data-variant="card">…
+       <template data-tooltip>
+         <span class="ui-tooltip__card">
+           <span class="ui-tooltip__cover" data-tone="red"><span class="ui-tooltip__mark"><img src="…" alt=""></span></span>
+           <span class="ui-tooltip__body">
+             <span class="ui-tooltip__head">Яндекс Метрика</span>
+             <span class="ui-tooltip__desc">Посещаемость, источники заказов, записи визитов.</span>
+             <span class="ui-tooltip__foot">Бесплатно · настраивается здесь</span>
+           </span>
+         </span>
+       </template>
+     </button>
+
+   Обложка — мягкий градиент из тона (data-tone или style="--ui-tone: …"), либо
+   фото: <img class="ui-tooltip__cover-img">. Знак в центре — .ui-tooltip__mark:
+   логотип, 3D-иконка (.ui-e3d) или линейная (.ui-icon); --tile — логотип-плитка
+   во весь знак. */
+.ui-tooltip--card {
+  --ui-tooltip-bg: var(--ui-pop);
+  --ui-tooltip-fg: var(--ui-fg);
+  --ui-tooltip-shadow: var(--ui-tooltip-card-shadow);
+  --ui-tooltip-pad: 4px;
+  --ui-tooltip-r: var(--ui-r-card);
+  --ui-tooltip-gap: 8px;
+  --ui-surface-from-y: 6px;
+  --ui-surface-scale: 0.96;
+  width: min(280px, calc(100vw - 16px));
+  max-width: none;
+}
+.ui-tooltip--card[data-side="bottom"] { --ui-surface-from-y: -6px; }
+.ui-tooltip--card[data-side="left"] { --ui-surface-from-x: 6px; }
+.ui-tooltip--card[data-side="right"] { --ui-surface-from-x: -6px; }
+.ui-tooltip--card .ui-tooltip__arrow { display: none; }
+.ui-tooltip--card .ui-tooltip__text--rich { display: block; white-space: normal; }
+
+.ui-tooltip__card { display: grid; gap: 0; }
+
+.ui-tooltip__cover {
+  --ui-cover-tone: var(--ui-tone, var(--ui-accent));
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 116px;
+  overflow: hidden;
+  border-radius: calc(var(--ui-tooltip-r) - var(--ui-tooltip-pad));
+  /* Без относительных цветов — ровная тонированная заливка. */
+  background: color-mix(in oklab, var(--ui-cover-tone) 16%, var(--ui-pop));
+  /* Три пятна: тон, сосед по кругу и светлый отблеск снизу — «аврора» без картинки. */
+  background:
+    radial-gradient(90% 110% at 0% 0%, color-mix(in oklab, var(--ui-cover-tone) 60%, transparent), transparent 70%),
+    radial-gradient(80% 100% at 100% 0%, color-mix(in oklab, oklch(from var(--ui-cover-tone) calc(l + 0.08) c calc(h + 48)) 50%, transparent), transparent 70%),
+    radial-gradient(90% 90% at 65% 120%, color-mix(in oklab, oklch(from var(--ui-cover-tone) calc(l + 0.2) calc(c * 0.6) calc(h - 36)) 70%, transparent), transparent 72%),
+    color-mix(in oklab, var(--ui-cover-tone) 14%, var(--ui-pop));
+  isolation: isolate;
+}
+.ui-tooltip__cover-img { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; object-fit: cover; }
+
+.ui-tooltip__mark {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--ui-tooltip-mark-bg);
+  box-shadow: 0 0 0 1px var(--ui-tooltip-mark-ring), 0 8px 20px -6px color-mix(in oklab, var(--ui-cover-tone) 55%, var(--ui-tooltip-mark-shade));
+}
+.ui-tooltip__mark > img { width: 32px; height: 32px; object-fit: contain; }
+.ui-tooltip__mark--tile > img { width: 100%; height: 100%; object-fit: cover; }
+.ui-tooltip__mark > .ui-e3d { --ui-e3d: 40px; }
+.ui-tooltip__mark > .ui-icon { --ui-icon-size: 24px; color: var(--ui-cover-tone); }
+/* Знак догоняет карточку: на входе поднимается чуть позже неё. */
+.ui-tooltip--card[data-state="open"][data-motion="enter"] .ui-tooltip__mark { animation: ui-tooltip-mark var(--ui-duration-surface-in) var(--ui-ease) 40ms both; }
+@keyframes ui-tooltip-mark { from { opacity: 0; transform: translateY(6px) scale(0.9); } }
+
+.ui-tooltip__body { display: grid; gap: 4px; padding: 10px 10px 8px; }
+.ui-tooltip__head { display: flex; align-items: center; gap: 6px; color: var(--ui-tooltip-fg); font: 500 var(--ui-text) / var(--ui-leading) var(--ui-font); }
+.ui-tooltip__head > .ui-badge { margin-inline-start: auto; }
+.ui-tooltip__desc { color: color-mix(in srgb, var(--ui-tooltip-fg) 64%, transparent); font: 400 var(--ui-text-sm) / 1.4 var(--ui-font); }
+.ui-tooltip__foot { display: flex; align-items: center; gap: 6px; margin-top: 4px; padding-top: 8px; border-top: 1px solid var(--ui-line); color: var(--ui-tooltip-meta); font: 400 var(--ui-text-2xs) / var(--ui-leading-2xs) var(--ui-font); }
+.ui-tooltip__foot > .ui-icon { --ui-icon-size: 14px; }

@@ -1,0 +1,234 @@
+/* Общая анатомия страниц: поле страницы, шапка, заголовок группы, сетка,
+   карточка и плашка, показатель, список (панель, таблица, подвал), пустое
+   состояние. Свои стили страница приносит в манифесте (pages.<id>.styles) — они
+   грузятся вместе с её модулем. Правила вида — «Вид страниц» в
+   admin2/ARCHITECTURE.md.
+
+   Два вида блоков на белом листе: плашка (.card--soft, .stat, .tile) — серая,
+   без рамки, для того, что смотрят: показатели, график, сводки, лента; карточка
+   (.card) — белая в волосяной рамке, для того, с чем работают: таблица, форма,
+   редактор, дерево. Скругление обоих 16, теней нет: тень — у всплывающего.
+
+   Ритм 8 / 16 / 24 / 32: внутри строки — 8, внутри блока и между блоками — 16,
+   поле листа — 24, перед заголовком группы — 32. Текст — пять ступеней: 13/16
+   подписи, 14/20 основной и заголовок блока, 16/24 заголовок группы, 20/28
+   заголовок страницы, 28/36 числа показателей. Имена в строках обычные (400):
+   жирные — только заголовки и числа. */
+
+.page { max-width: 1440px; margin: 0 auto; padding: 24px 24px 40px; }
+/* Ширина листа — только из манифеста страницы (`width`, ставит view.js):
+   широкий для списков, таблиц и редакторов, узкий для форм и настроек.
+   Своих max-width у страниц нет; без `width` — широкий. */
+.page[data-width="wide"] { max-width: 1440px; }
+.page[data-width="narrow"] { max-width: 1040px; }
+.page--center { display: grid; place-items: center; min-height: 100%; }
+/* Смена страницы (core/view.js): старая уходит сразу, блоки новой
+   проявляются с подъёмом каскадом (--i ставит view.js первым шести, дальше
+   все вместе). Только opacity и translate — их ведёт композитор, кадры не
+   перерисовываются (размытие перерисовывало бы каждый кадр). Токены —
+   --ui-*-page-* кита. */
+.is-entering > * {
+  will-change: opacity, translate;
+  animation: page-in var(--ui-duration-page) var(--ui-ease-page) backwards;
+  animation-delay: calc(var(--i, 6) * var(--ui-page-stagger));
+}
+/* Шапка страницы (заголовок и действия) стоит на месте: она якорь, глаз
+   ищет её там же, где была. */
+.is-entering > .page-head { animation: none; }
+@keyframes page-in { from { opacity: 0; translate: 0 var(--ui-page-shift); } }
+@media (prefers-reduced-motion: reduce) { .is-entering > * { animation: none; } }
+/* Слабая машина (data-ui-motion="lite", core/motion.js кита): без каскада —
+   страница проявляется целиком, одним слоем; без анимаций — сразу. */
+:root[data-ui-motion="lite"] .is-entering > *, :root[data-ui-motion="off"] .is-entering > * { animation: none; will-change: auto; }
+:root[data-ui-motion="lite"] .is-entering { animation: page-in var(--ui-duration-page) var(--ui-ease-out) backwards; }
+
+/* Шапка: заголовок 28 + подпись 20 = 48, действия по центру этой высоты. */
+.page-head { container: page-head / inline-size; display: flex; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; }
+.page-head__text { flex: 1 1 280px; min-width: 0; }
+.page-head > .ui-e3d { flex: none; margin-right: -4px; }
+.page-head__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.page-title { font: 600 20px / 28px var(--ui-font); letter-spacing: -0.015em; }
+/* Узкая шапка (телефон, узкое окно): без картинки, действия в той же строке,
+   у вторичных — только иконка. Как крупный заголовок iOS: данные начинаются
+   на ~70 px выше. Условие — ширина самой шапки, а не экрана. */
+@container page-head (max-width: 560px) {
+  .page-head > .ui-e3d { display: none; }
+  .page-head__text { flex-basis: 0; }
+  .page-head__actions { flex-wrap: nowrap; }
+  .page-head__actions .ui-btn:not(.ui-btn--primary) .ui-btn__label { display: none; }
+}
+
+/* Заголовок группы блоков на листе: 16/24, справа ссылка или контрол 28. Сверху
+   32 (под шапкой страницы — её 24), до блоков 12. */
+.section-head { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; min-height: 28px; margin: 32px 0 12px; }
+.section-head:first-child, .page-head + .section-head { margin-top: 0; }
+.section-head__text { flex: 1 1 240px; min-width: 0; }
+.section-head__end { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+
+.grid { display: grid; gap: 16px; }
+.grid + .grid, .grid + .card, .card + .grid { margin-top: 16px; }
+.g-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.g-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.g-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.g-main { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+.stack { display: grid; gap: 16px; align-content: start; }
+
+.muted { color: var(--ui-fg-2); }
+.faint { color: var(--ui-fg-3); }
+
+/* ---- Карточка и плашка ----------------------------------------------------------
+   Поле 16 со всех сторон. Шапка — строка контролов 28 (сегменты, ссылка «Все»),
+   заголовок в ней по центру: от края до текста 16, от текста до содержимого 16.
+   Карточка — белая в волосяной рамке; плашка (.card--soft) — серая без рамки;
+   голая (.card--plain) — без рамки, подложки и полей: группа полей формы прямо
+   на листе.
+   Поле на плашке — обычное белое, на карточке — серое (--secondary). */
+
+.card { position: relative; display: flex; flex-direction: column; min-width: 0; border-radius: var(--ui-r-card); background: var(--ui-surface); box-shadow: 0 0 0 1px var(--ui-line); }
+/* Строки списка на плашке подсвечиваются заливкой темнее плашки; .tile в ней — белая. */
+.card--soft { --ui-list-hover: var(--ui-chip); background: var(--ui-plate); box-shadow: none; }
+.card--plain { border-radius: 0; background: none; box-shadow: none; }
+.card--plain > :is(.card__head, .card__body) { padding-inline: 0; }
+.card--plain > .card__body { padding-bottom: 0; }
+/* Серое поле (--secondary) на плашке слилось бы с ней — там оно белое, без рамки;
+   под мышью рамка, как у обычного поля. */
+.card--soft :is(.ui-input--secondary, .ui-textarea--secondary, .ui-select--secondary, .ui-number-field--secondary, .ui-editor--secondary),
+.card--soft .ui-select__wrap[data-variant="secondary"] > .ui-select__trigger { --ui-input-bg: var(--ui-surface); }
+@media (hover: hover) and (pointer: fine) {
+  .card--soft :is(.ui-input--secondary, .ui-textarea--secondary, .ui-select--secondary, .ui-number-field--secondary, .ui-editor--secondary):not(:focus, :focus-within):hover,
+  .card--soft .ui-select__wrap[data-variant="secondary"] > .ui-select__trigger:not(:focus-visible, [aria-expanded="true"]):hover { --ui-input-edge: var(--ui-control-edge-hover); }
+}
+.card__head { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 12px 16px 0; }
+.card__title { flex: 1; min-width: 0; }
+.card__title h2 { font: 600 var(--ui-text) / var(--ui-leading) var(--ui-font); }
+.card__end { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.card__end > .ui-btn--ghost:last-child { margin-right: -6px; }
+.card__body { flex: 1; padding: 12px 16px 16px; }
+.card__flush { flex: 1; padding-top: 12px; }
+.card__foot { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-top: 1px solid var(--ui-line); color: var(--ui-fg-2); font-size: var(--ui-text-sm); }
+.card__foot > .ui-btn:last-child { margin-left: auto; margin-right: -6px; }
+.card__foot > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card__foot > .ui-icon { flex: none; }
+
+/* Список кита в карточке — без своей рамки (карточка уже рамка), строки по полю
+   карточки 16. Высоты строк и иконки — кита: 48 / 24, плотная 40 / 20. Первый
+   в карточке — и верхние углы по ней: подсветка строки не выходит за скругление. */
+.card .ui-list { border-radius: 0 0 var(--ui-r-card) var(--ui-r-card); background: none; box-shadow: none; }
+.card > .ui-list:first-child { border-top-left-radius: var(--ui-r-card); border-top-right-radius: var(--ui-r-card); }
+.card .ui-list__row { padding-inline: 16px; }
+.card__flush > .ui-list:first-child > .ui-list__row:first-child { box-shadow: inset 0 1px var(--ui-line); }
+/* Дерево и редактируемый список кита в карточке — тоже без своей рамки: строки
+   на поле списка 4. */
+.card :is(.ui-sortable, .ui-repeater) { background: none; box-shadow: none; }
+
+/* Показатель — плашка: подпись, число, строка пояснения (дельта, период, линия
+   тренда). 16 + 20 + 4 + 36 + 4 + 20 + 16 = 116. */
+.stat { gap: 4px; padding: 16px; background: var(--ui-plate); box-shadow: none; }
+.stat__top { display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 20px; color: var(--ui-fg-2); }
+.stat__top > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stat__value { overflow: hidden; font: 600 28px / 36px var(--ui-font); letter-spacing: -0.025em; text-overflow: ellipsis; white-space: nowrap; }
+.stat__sub { display: flex; align-items: center; gap: 8px; min-height: 20px; color: var(--ui-fg-3); font-size: var(--ui-text-2xs); line-height: var(--ui-leading-2xs); }
+.stat__sub > span:not(.ui-badge) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stat__sub > .ui-badge { flex: none; }
+
+/* Строка-плашка (серая без рамки, как в карточках Сплита): иконка, две строки
+   текста, конец. 12 + 28 + 12 = 52. Внутри плашки — белая, как строки Сплита на
+   сером. */
+.tile { --ui-tile-bg: var(--ui-plate); --ui-tile-hover: var(--ui-chip-hover); display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 8px 12px; border: 0; border-radius: var(--ui-r-xl); background: var(--ui-tile-bg); color: inherit; font: inherit; text-align: left; }
+.card--soft .tile { --ui-tile-bg: var(--ui-surface); --ui-tile-hover: var(--ui-soft); }
+.tile > .ui-icon:last-child { color: var(--ui-fg-3); }
+:is(a, button).tile { width: 100%; cursor: pointer; }
+@media (hover: hover) and (pointer: fine) { :is(a, button).tile:hover { background: var(--ui-tile-hover); } }
+.tiles { display: flex; flex-direction: column; gap: 8px; }
+
+/* ---- Список: панель, таблица, подвал ------------------------------------------
+   Панель — на листе над карточкой, не в ней: поиск своей строкой во всю ширину,
+   под ним вкладки, фильтры и действия над выбранным (вид и сортировка — справа).
+   Карточка начинается шапкой таблицы и кончается последней строкой; счёт и
+   страницы — на листе под ней. Контролы на листе серые (на белом — серое), высота
+   32; между строками панели 8, от панели и до подвала 12. */
+
+.toolbar { container: toolbar / inline-size; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-height: 32px; margin-bottom: 12px; }
+.toolbar__sep { width: 1px; height: 16px; background: var(--ui-line-strong); }
+.toolbar__end { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+/* Счёт во вкладке или кнопке — голое число: 12, на 8 от подписи. */
+:is(.ui-tabs__trigger, .ui-btn) > .faint.num { margin-left: 2px; font-size: var(--ui-text-2xs); }
+.search-input > .ui-input { flex: 1; min-width: 0; }
+.toolbar .search-input { flex: 1 1 100%; }
+/* Выбраны строки — счётчик и действия над ними встают под поиском на место
+   вкладок и фильтров: высота панели та же, таблица под рукой не прыгает. */
+.toolbar > .selection { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 32px; }
+.toolbar > .selection:empty, .toolbar.has-selection > :not(.selection, .search-input) { display: none; }
+/* Узкая панель: фильтры — лентой во всю ширину с прокруткой вбок, как чипы
+   в приложениях, а не прижатой вправо кучей, которая переносится. */
+@container toolbar (max-width: 560px) {
+  .toolbar > .ui-tabs { flex: 1 1 100%; min-width: 0; }
+  .toolbar__end { flex: 1 1 100%; min-width: 0; margin-left: 0; overflow-x: auto; scrollbar-width: none; }
+  .toolbar__end > * { flex: none; }
+}
+
+/* Таблица кита в карточке — без своей рамки, углы по скруглению карточки;
+   крайние ячейки — по полю карточки 16. Под заголовком карточки (страница
+   заказа) таблицу отделяет черта. */
+.sheet-table:not(:first-child) { border-top: 1px solid var(--ui-line); }
+.sheet-table > .ui-table-wrap { --ui-table-stack-px: 16px; border-radius: 0; box-shadow: none; }
+.card > .sheet-table:first-child > .ui-table-wrap { border-top-left-radius: var(--ui-r-card); border-top-right-radius: var(--ui-r-card); }
+/* Последняя видимая в карточке: пустое состояние за ней спрятано. */
+.card > .sheet-table:not(:has(~ :not([hidden]))) > .ui-table-wrap { border-bottom-left-radius: var(--ui-r-card); border-bottom-right-radius: var(--ui-r-card); }
+.sheet-table :is(th, td):first-child:not(.ui-table__check) { padding-inline-start: 16px; }
+.sheet-table :is(th, td):last-child { padding-inline-end: 16px; }
+/* Строки, спрятанные поиском или страницами, не в счёт: черту под последней
+   видимой закрывает край карточки. */
+.card > .sheet-table tbody tr:not([hidden]):not(:has(~ tr:not([hidden]))) > * { --ui-table-line: transparent; }
+
+/* Подвал списка: размер страницы, номера, счёт. */
+.list-foot { --list-foot-gap: 12px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 400px) minmax(0, 1fr); align-items: center; gap: 8px; min-height: 28px; margin-top: var(--list-foot-gap); color: var(--ui-fg-2); font-size: var(--ui-text); line-height: var(--ui-leading); }
+/* Та же строка над списком: зазор переезжает вниз, к таблице. */
+.list-foot--head { margin: 0 0 var(--list-foot-gap); }
+/* Три места, как в таблицах данных: размер страницы слева, номера по центру,
+   счёт справа. Пустое место держит колонку — номера не съезжают. */
+.list-foot > nav { grid-column: 2; min-width: 0; }
+.list-foot__size { grid-column: 1; justify-self: start; display: inline-flex; align-items: baseline; white-space: nowrap; }
+.list-foot__count { grid-column: 3; justify-self: end; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.list-foot .ui-pagination { justify-content: center; }
+/* Узкий подвал: только номера во всю ширину. «Показывать по» и счёт строк
+   на телефоне не помещаются рядом с ними, а итог и так в подписи страницы. */
+.list-foot { container: list-foot / inline-size; }
+@container list-foot (max-width: 560px) {
+  .list-foot__size, .list-foot__count { display: none; }
+  .list-foot > nav { grid-column: 1 / -1; }
+}
+
+/* Кнопка в начале подвала окна (удалить, скачать) — слева, остальные справа. */
+.foot-start { margin-inline-end: auto; }
+
+/* ---- Пустые состояния ------------------------------------------------------------ */
+
+.empty { display: grid; justify-items: center; gap: 8px; padding: 48px 24px; text-align: center; }
+.empty > .ui-e3d { margin-bottom: 8px; }
+.empty__text { max-width: 360px; margin-bottom: 8px; }
+/* Карточка, в которой осталось одно пустое состояние, теряет рамку и фон:
+   «ничего не нашлось» в пустой рамке выглядит как сломанная таблица. */
+.card:has(> .empty), .card:has(> :not([hidden]) > .empty) { background: none; box-shadow: none; }
+
+.fatal { max-width: 640px; padding: 24px; }
+.fatal ul { margin: 12px 0 0; padding-left: 16px; color: var(--ui-fg-2); font-family: var(--ui-mono); font-size: var(--ui-text-sm); line-height: 24px; }
+
+/* ---- Ширины --------------------------------------------------------------------- */
+
+@media (max-width: 1279px) {
+  .g-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .g-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .g-main { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 767px) {
+  .page { padding: 16px 16px 24px; }
+  .page-head { margin-bottom: 16px; }
+  .section-head { margin-top: 24px; }
+  .grid { gap: 12px; }
+  .grid + .grid, .grid + .card, .card + .grid { margin-top: 12px; }
+  .stack { gap: 12px; }
+  .g-3, .g-2 { grid-template-columns: minmax(0, 1fr); }
+  .stat { padding: 12px; }
+  .stat__value { font-size: 24px; line-height: 32px; }
+}

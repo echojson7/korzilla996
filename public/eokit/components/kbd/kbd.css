@@ -1,0 +1,17 @@
+/* Клавиша — плоская плашка без рамки и тени. Фон полупрозрачный: виден и на
+   белом, и на сером поле, и в тёмной теме. Скругление — h/4 + 2, как у
+   контролов: 7 у 20, 6 у 16. */
+.ui-kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 7px;
+  background: var(--ui-chip-hover);
+  color: var(--ui-fg-2);
+  font: 500 var(--ui-text-2xs) / 1 var(--ui-mono);
+}
+.ui-kbd--sm { min-width: 16px; height: 16px; padding: 0 4px; border-radius: var(--ui-r-sm); font-size: 11px; }
+.ui-kbd-group { display: inline-flex; align-items: center; gap: 2px; }
+.ui-kbd-group__sep { color: var(--ui-fg-3); font-size: var(--ui-text-2xs); }

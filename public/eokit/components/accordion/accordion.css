@@ -1,0 +1,81 @@
+/* ---- Аккордеон ------------------------------------------------------------- */
+
+/* По HeroUI v3: заголовок — полоса во всю ширину, разделитель — волосяная линия
+   под пунктом. Наведение красит полосу целиком, от линии до линии, и только у
+   закрытого пункта: открытый уже выделен своей панелью. Вариант surface —
+   карточка: углы полосы срезает сама карточка, линия не доходит до краёв.
+   Строка 48 (у HeroUI 52), поля 16, как у HeroUI. Текст панели встаёт под
+   подпись, а не под иконку перед ней. Модуль снимает hidden с панелей и ставит
+   inert, поэтому закрытую панель сворачивает CSS: высота 0 ↔ auto через
+   interpolate-size. Высота идёт линейно по кривой, в отличие от строки сетки
+   0fr → 1fr (там она растёт как fr², и закрытие тянулось хвостом после открытия
+   соседа). Открытие и закрытие — одна кривая листа за 180 мс, с первого кадра:
+   открытый и закрытый пункты меняются местами без рывка списка; где
+   interpolate-size нет, панель открывается сразу. */
+.ui-accordion { --ui-accordion-x: 16px; --ui-accordion-hover: color-mix(in oklab, var(--ui-fg) 3%, transparent); interpolate-size: allow-keywords; display: flex; flex-direction: column; width: 100%; min-width: 0; }
+.ui-accordion--surface {
+  --ui-accordion-hover: var(--ui-chip);
+  overflow: clip;
+  border-radius: var(--ui-r-surface);
+  background: var(--ui-surface);
+  box-shadow: var(--ui-shadow-card);
+}
+.ui-accordion__item {
+  --ui-accordion-lead: 0px;
+  position: relative;
+  min-width: 0;
+}
+.ui-accordion__item:not(:last-child)::after { content: ""; position: absolute; inset-inline: 0; bottom: 0; height: 1px; background: var(--ui-line); pointer-events: none; }
+.ui-accordion--surface > .ui-accordion__item::after { inset-inline: 3%; }
+.ui-accordion__item:has(> .ui-accordion__heading > .ui-accordion__trigger > .ui-icon:first-child) { --ui-accordion-lead: 26px; }
+.ui-accordion__item:has(> .ui-accordion__heading > .ui-accordion__trigger > .ui-e3d:first-child) { --ui-accordion-lead: 30px; }
+.ui-accordion__heading { display: flex; min-width: 0; margin: 0; font: inherit; }
+.ui-accordion__trigger {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 48px;
+  margin: 0;
+  padding: 14px var(--ui-accordion-x);
+  border: 0;
+  border-radius: 0;
+  outline: none;
+  background: none;
+  color: var(--ui-fg);
+  font: 500 var(--ui-text) / var(--ui-leading) var(--ui-font);
+  text-align: start;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.ui-accordion__trigger > :is(.ui-icon, .ui-e3d):not(.ui-accordion__chevron) { --ui-icon-size: 16px; --ui-e3d: 20px; flex: none; color: var(--ui-fg-2); }
+.ui-accordion__label { flex: 1; min-width: 0; }
+/* Стрелка крутится через --ui-turn, не через transform: поворот на композиторе
+   задержал бы раскрытие рядом на кадр — Chrome ждёт общий старт обеих анимаций. */
+.ui-accordion__chevron { --ui-icon-size: 16px; flex: none; margin-inline-start: auto; color: var(--ui-fg-3); transform: rotate(var(--ui-turn)); transition: --ui-turn 180ms var(--ui-ease); }
+.ui-accordion__item.is-open > .ui-accordion__heading > .ui-accordion__trigger > .ui-accordion__chevron { --ui-turn: -180deg; }
+@media (hover: hover) and (pointer: fine) {
+  .ui-accordion__trigger:not(:disabled, [aria-expanded="true"]):hover { background: var(--ui-accordion-hover); }
+}
+.ui-accordion__trigger:focus-visible { box-shadow: inset 0 0 0 var(--ui-focus-w-sm) var(--ui-focus); }
+.ui-accordion__trigger:disabled { opacity: var(--ui-opacity-disabled); cursor: not-allowed; }
+/* Текст панели проявляется и чуть спускается с первого кадра, пока панель растёт,
+   и гаснет быстрее, чем она сворачивается. Ведёт число --ui-accordion-in, а не
+   opacity/transform: композитная анимация на кадр задержала бы старт роста высоты. */
+@property --ui-accordion-in { syntax: "<number>"; inherits: true; initial-value: 1; }
+.ui-accordion__panel {
+  --ui-accordion-in: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 0;
+  overflow: clip;
+  color: var(--ui-fg-2);
+  font-size: var(--ui-text);
+  line-height: var(--ui-leading);
+  transition: height 180ms var(--ui-ease), --ui-accordion-in 90ms linear;
+}
+.ui-accordion__item.is-open > .ui-accordion__panel { --ui-accordion-in: 1; height: auto; transition: height 180ms var(--ui-ease), --ui-accordion-in 140ms var(--ui-ease-out); }
+.ui-accordion__panel > * { margin: 0; padding-inline: calc(var(--ui-accordion-x) + var(--ui-accordion-lead)) var(--ui-accordion-x); opacity: var(--ui-accordion-in); translate: 0 calc((var(--ui-accordion-in) - 1) * 6px); }
+.ui-accordion__panel > :last-child { margin-bottom: 14px; }

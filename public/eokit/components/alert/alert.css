@@ -1,0 +1,120 @@
+/* ---- Тосты и уведомления --------------------------------------------------- */
+
+.ui-alert, .ui-alert-region {
+  /* Вход и сдвиг стопки — пружиной с лёгким перелётом: тост выскакивает снизу
+     и садится, соседи доезжают тем же ходом. Уход короткий и тормозящий, а не
+     разгоняющийся: ease-in первые кадры почти стоит на месте, и закрытие
+     кажется запоздалым. */
+  --ui-alert-move: var(--ui-spring-time);
+  --ui-alert-move-ease: var(--ui-spring);
+  --ui-alert-exit: 120ms;
+  --ui-alert-exit-ease: var(--ui-ease-out);
+}
+/* Как в старом EOKIT-UI: заливка без рамки, круглое закрытие и кнопки-пилюли; тип
+   живёт иконкой и карточку не перекрашивает. Отступы, иконка, кнопки и текст — как у
+   старого тоста (12/16, 16, 32/28, 14/20); скругление 22 — ближе к старым 26. */
+.ui-alert {
+  --ui-tone: var(--ui-fg-2);
+  --ui-surface-from-y: -6px;
+  --ui-surface-scale: 0.97;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: fit-content;
+  min-width: min(256px, 100%);
+  max-width: 100%;
+  padding: 12px 16px;
+  border-radius: 22px;
+  background: var(--ui-chip);
+  color: var(--ui-fg);
+  font: 400 var(--ui-text) / var(--ui-leading) var(--ui-font);
+}
+.ui-alert--success { --ui-tone: var(--ui-green); }
+.ui-alert--warning { --ui-tone: var(--ui-amber); }
+.ui-alert--info, .ui-alert--progress { --ui-tone: var(--ui-blue); }
+.ui-alert--error { --ui-tone: var(--ui-red); }
+.ui-alert--neutral { --ui-tone: var(--ui-fg); }
+/* Иконка по середине первой строки. */
+.ui-alert__icon, .ui-alert__spinner { --ui-icon-size: 16px; --ui-spinner-size: 16px; --ui-e3d: 18px; flex: none; margin-top: calc((var(--ui-leading) - 16px) / 2); color: var(--ui-tone); }
+.ui-alert__body { display: flex; flex-direction: column; flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.ui-alert__title { font-weight: 500; }
+.ui-alert__text { color: var(--ui-fg-2); }
+/* Действия по центру сообщения и отбиты от текста, чтобы кнопка не липла к слову. */
+.ui-alert__actions { display: flex; align-items: center; align-self: center; gap: 8px; margin-inline-start: 24px; }
+.ui-alert__actions:empty { display: none; }
+.ui-alert__actions > .ui-btn { --ui-btn-h: var(--ui-h); --ui-btn-px: 14px; --ui-btn-r: var(--ui-r-full); --ui-btn-font: 500 var(--ui-text) / 1 var(--ui-font); }
+/* Закрытие — крестик кита .ui-close--sm. Отрицательный отступ считается от его
+   размера и снимает весь рост сверх строки заголовка: крестик выше строки
+   (32 при строке 20) растягивал плашку вниз, и текст с иконкой оказывались
+   выше её середины. Отступ в начале строки вместе с зазором отбивает его
+   от текста на 24. */
+.ui-alert__close { flex: none; align-self: flex-start; margin-block: calc((var(--ui-leading) - var(--ui-close-size)) / 2); margin-inline: 12px -6px; }
+.ui-alert__actions:not(:empty) + .ui-alert__close { margin-inline-start: 0; }
+/* С действием крестик встаёт по центру строки; действия модуль ставит прямо перед ним. */
+.ui-alert > .ui-alert__actions:not(:empty) + .ui-alert__close { align-self: center; margin-block: 0; }
+/* Закрываемый alert в разметке схлопывается анимацией модуля. */
+.ui-alert[data-state="leaving"] { pointer-events: none; }
+
+/* Стопка тостов у нижней кромки; движение стопки — FLIP модуля. Без contain: стопка,
+   как статус-бар и слой окна, — корень переноса [data-ui-layer], и fixed-панель в
+   ней встала бы от её угла, а не от угла окна браузера. */
+.ui-alert-region {
+  position: fixed;
+  inset-inline: 0 var(--ui-scroll-lock-gap, 0px);
+  bottom: 20px;
+  z-index: var(--ui-z-toast);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  row-gap: 8px;
+  width: min(640px, calc(100vw - 32px));
+  margin-inline: auto;
+  pointer-events: none;
+}
+.ui-alert-region:empty { display: none; }
+.ui-alert-region > .ui-alert {
+  min-width: min(360px, 100%);
+  background: var(--ui-pop);
+  box-shadow: var(--ui-shadow-pop);
+  transform: translate3d(0, 0, 0);
+  /* Подъём (translate и opacity) ведёт модуль; лёгкое увеличение из 0.96 — отдельное
+     свойство scale, со сдвигом не спорит и идёт на композиторе. Раз на вставку. */
+  animation: ui-alert-grow var(--ui-alert-move) var(--ui-alert-move-ease) both;
+  pointer-events: auto;
+  touch-action: pan-y;
+}
+.ui-alert-region > .ui-alert.is-leaving { position: absolute; z-index: -1; margin: 0; }
+@keyframes ui-alert-grow { from { scale: 0.96; } }
+.ui-alert-region > .ui-alert.is-swiping { cursor: grabbing; user-select: none; }
+
+/* Статус-бар долгой операции. */
+.ui-alert-bar {
+  --ui-tone: var(--ui-blue);
+  --ui-surface-from-y: 8px;
+  position: fixed;
+  inset-inline: 0 var(--ui-scroll-lock-gap, 0px);
+  bottom: 0;
+  z-index: var(--ui-z-sticky);
+  display: none;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 6px 16px;
+  background: var(--ui-pop);
+  box-shadow: 0 -1px var(--ui-line), var(--ui-shadow-pop);
+}
+.ui-alert-bar:is([data-state="visible"], [data-state="leaving"]) { display: flex; }
+.ui-alert-bar > .ui-alert__body { flex-direction: row; align-items: baseline; gap: 8px; }
+.ui-alert-bar__progress { flex: none; width: 96px; height: 3px; overflow: hidden; border-radius: var(--ui-r-full); background: var(--ui-chip-hover); }
+.ui-alert-bar__progress::after { content: ""; display: block; height: 100%; border-radius: inherit; background: var(--ui-tone); transform: scaleX(var(--ui-alert-value, 0%)); transform-origin: left; transition: transform 200ms var(--ui-ease-out); }
+.ui-alert-bar__progress:dir(rtl)::after { transform-origin: right; }
+
+@media (max-width: 640px) {
+  .ui-alert-region { inset-inline: 12px; bottom: 12px; width: auto; }
+  .ui-alert-region > .ui-alert { width: 100%; flex-wrap: wrap; }
+  /* На телефоне действия уходят строкой под текст (по его началу), закрытие
+     остаётся в конце строки вверху: в одну строку текст сжимался в узкую колонку. */
+  .ui-alert-region > .ui-alert > .ui-alert__body { flex-basis: 0; }
+  .ui-alert-region > .ui-alert > .ui-alert__actions:not(:empty) { order: 1; flex-basis: 100%; margin-block: 4px 0; margin-inline: 28px 0; }
+  .ui-alert-region > .ui-alert > .ui-alert__actions:not(:empty) + .ui-alert__close { align-self: flex-start; margin-block: calc((var(--ui-leading) - var(--ui-close-size)) / 2); margin-inline: 12px -6px; }
+}

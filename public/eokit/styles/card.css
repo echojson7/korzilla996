@@ -1,0 +1,15 @@
+/* ---- Карточка --------------------------------------------------------------- */
+
+/* Карточка строк таблицы, таблицы с рендером строк, перетаскивания и списка.
+   Заглушка tableView до монтирования — та же карточка, шапку она дорисовывает фоном. */
+.ui-table-wrap, .ui-table-view, [data-ui-table-view]:not(.ui-table-view):empty, .ui-sortable, .ui-list {
+  border-radius: var(--ui-r-surface);
+  background: var(--ui-inset-bg, var(--ui-surface));
+  box-shadow: var(--ui-inset-ring, var(--ui-shadow-card));
+}
+
+/* Карточки на белом: data-ui-inset="secondary" на обёртке делает вложенные
+   карточки (список, таблица, сообщение, черновик, блок кода, карточка шага)
+   серыми без рамки и тени, как серые поля (--secondary). Наведение строки
+   списка — темнее серого. */
+[data-ui-inset="secondary"] { --ui-inset-bg: var(--ui-chip); --ui-inset-ring: var(--ui-shadow-none); --ui-list-hover: var(--ui-chip-hover); }

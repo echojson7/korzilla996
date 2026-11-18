@@ -1,0 +1,66 @@
+/* EOKIT · вход стилей. Подключается одной строкой:
+
+     <link rel="stylesheet" href="eokit/kit.css">
+
+   Порядок ниже — порядок каскада: токены, основа, затем компоненты. Компонент,
+   который настраивает чужие части (пункты меню — это .ui-btn), стоит после них.
+   Новый компонент — папка components/<имя>/ со своим <имя>.css и строка здесь.
+   Для выкладки tools/build.mjs собирает этот список в один файл. */
+
+@import url("styles/tokens.css");
+@import url("styles/base.css");
+@import url("components/text/text.css");
+@import url("components/icons/icons.css");
+@import url("components/button/button.css");
+@import url("components/close/close.css");
+@import url("components/input/input.css");
+@import url("components/field/field.css");
+@import url("components/choice/choice.css");
+@import url("components/checkbox-tree/checkbox-tree.css");
+@import url("components/segmented/segmented.css");
+@import url("components/badge/badge.css");
+@import url("components/fav/fav.css");
+@import url("components/rating/rating.css");
+@import url("components/avatar/avatar.css");
+@import url("components/kbd/kbd.css");
+@import url("components/spinner/spinner.css");
+@import url("components/progress/progress.css");
+@import url("components/skeleton/skeleton.css");
+@import url("components/number-field/number-field.css");
+@import url("components/editor/editor.css");
+@import url("components/code/code.css");
+@import url("components/prompt/prompt.css");
+@import url("components/thinking/thinking.css");
+@import url("components/prose/prose.css");
+@import url("components/message/message.css");
+@import url("components/ai/ai.css");
+@import url("components/scale-slider/scale-slider.css");
+@import url("components/file-upload/file-upload.css");
+@import url("styles/surface.css");
+@import url("components/popover/popover.css");
+@import url("components/dropdown/dropdown.css");
+@import url("components/select/select.css");
+@import url("components/tooltip/tooltip.css");
+@import url("components/alert/alert.css");
+@import url("components/modal/modal.css");
+@import url("components/command/command.css");
+@import url("components/tour/tour.css");
+@import url("components/datepicker/datepicker.css");
+@import url("components/colorpicker/colorpicker.css");
+@import url("components/tabs/tabs.css");
+@import url("components/accordion/accordion.css");
+@import url("components/breadcrumb/breadcrumb.css");
+@import url("components/pagination/pagination.css");
+@import url("components/tree-menu/tree-menu.css");
+@import url("components/carousel/carousel.css");
+@import url("styles/card.css");
+@import url("components/table/table.css");
+@import url("components/sortable/sortable.css");
+@import url("components/repeater/repeater.css");
+@import url("components/filter-builder/filter-builder.css");
+@import url("components/list/list.css");
+@import url("components/props/props.css");
+@import url("components/timeline/timeline.css");
+@import url("components/activity/activity.css");
+@import url("components/chart/chart.css");
+@import url("components/cart/cart.css");

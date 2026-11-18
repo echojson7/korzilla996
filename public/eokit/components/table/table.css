@@ -1,0 +1,339 @@
+/* ---- Таблица ---------------------------------------------------------------- */
+
+/* Обёртка — карточка и прокрутка вбок; без внутренних отступов: модуль ширины
+   меряет clientWidth обёртки. */
+.ui-table-wrap {
+  max-width: 100%;
+  overflow: auto;
+  overscroll-behavior-x: contain;
+  /* Полоса таблиц — как в старом ките: тонкая браузерная, бегунок цвета линий. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--ui-line) transparent;
+}
+
+/* Шрифт и цвет свои; у tableView — на хосте: подвал и пустое состояние вне таблиц. */
+.ui-table, .ui-table-view, .ui-sortable { color: var(--ui-fg); font: 400 var(--ui-text) / var(--ui-leading) var(--ui-font); }
+.ui-table {
+  --ui-table-selected: color-mix(in srgb, var(--ui-accent) 6%, var(--ui-surface));
+  --ui-table-dir: 1;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+/* Плотная — только для таблиц из разметки: программные читают высоту строки с хоста. */
+.ui-table--sm { --ui-table-row-h: 32px; --ui-table-head-h: 28px; --ui-table-pad: 10px; }
+
+/* Ячейка — ровно строка, текст в одну строку. Черта снизу — тенью: она не
+   занимает места. Между столбцами черт нет (владелец, 20.10.2026: таблица тише);
+   черта справа встаёт только у края закреплённых столбцов. */
+.ui-table :is(th, td) {
+  height: var(--ui-table-row-h);
+  padding: 0 var(--ui-table-pad);
+  overflow: hidden;
+  background-color: inherit;
+  box-shadow: inset calc(-1px * var(--ui-table-dir) * var(--ui-table-edge, 0)) 0 var(--ui-line), inset 0 -1px var(--ui-table-line, var(--ui-line));
+  text-align: start;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+/* Шапка — серая полоса на ступень ниже строки; подписи тем же кеглем, что и ячейки,
+   цветом линейной иконки перед текстом (--ui-fg-3). */
+.ui-table tbody tr { background: var(--ui-surface); }
+.ui-table thead tr { background: var(--ui-soft); }
+.ui-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  height: var(--ui-table-head-h);
+  color: var(--ui-fg-3);
+  font-weight: 400;
+}
+.ui-table thead th > .ui-icon:first-child, .ui-table-view__sort > .ui-icon:first-child { color: var(--ui-fg-3); }
+.ui-table thead th > .ui-icon:first-child { margin-inline: 0 6px; }
+@media (hover: hover) and (pointer: fine) {
+  .ui-table:not(.ui-table-view__rows) tbody tr:hover { background: var(--ui-soft); }
+}
+.ui-table tbody tr.is-selected { background: var(--ui-table-selected); }
+/* Последняя строка карточки — без черты: её закрывает край обёртки. */
+.ui-table-wrap > .ui-table > tbody > tr:last-child > * { --ui-table-line: transparent; }
+
+.ui-table :where(th, td).ui-table__num { text-align: end; }
+/* Аватар, иконка, метка статуса — ровно по центру строки текста. vertical-align:
+   middle ставит их по x-высоте шрифта, и они съезжают на полпикселя-пиксель
+   вниз; top плюс половина разницы со строкой ячейки — точный центр. */
+.ui-table :is(th, td) > :is(.ui-avatar, .ui-icon, .ui-e3d, .ui-badge) { --ui-cell-item: var(--ui-avatar, 24px); vertical-align: top; margin-block: calc((var(--ui-leading) - var(--ui-cell-item)) / 2); }
+.ui-table :is(th, td) > .ui-icon { --ui-cell-item: var(--ui-icon-size, var(--ui-icon)); }
+.ui-table :is(th, td) > .ui-e3d { --ui-cell-item: var(--ui-e3d); }
+.ui-table :is(th, td) > .ui-badge { --ui-cell-item: var(--ui-badge-h); }
+/* Флажок, радио, переключатель прямо в ячейке (не в столбце выбора) — тоже по
+   центру: у метки без текста базовая линия — низ коробки, и она уходит вверх. */
+.ui-table :is(th, td):not(.ui-table__check) > :is(.ui-check, .ui-radio, .ui-switch) { --ui-cell-item: 20px; vertical-align: top; margin-block: calc((var(--ui-leading) - var(--ui-cell-item)) / 2); }
+.ui-table :is(th, td):not(.ui-table__check) > .ui-switch { --ui-cell-item: max(20px, var(--ui-switch-h)); }
+/* Перед текстом ячейки: текст по-прежнему режется многоточием. */
+.ui-table :is(th, td) > :is(.ui-avatar, .ui-icon, .ui-e3d):first-child { margin-inline: 0 8px; }
+.ui-table :is(th, td).ui-table__check { width: var(--ui-table-check-w); padding: 0; line-height: 0; text-align: center; }
+.ui-table__check > .ui-check { gap: 0; line-height: 1; vertical-align: middle; }
+
+/* ---- Матрица: строки — предметы, столбцы — варианты ------------------------ */
+
+/* Сетка: черта справа у каждого столбца, кроме последнего, — тем же механизмом,
+   что у края закреплённых. Подпись строки переносится, столбцы-варианты одной
+   ширины и по центру. */
+.ui-table--matrix :is(th, td):not(:last-child) { --ui-table-edge: 1; }
+.ui-table--matrix thead th:not(:first-child) { width: var(--ui-table-choice-w); text-align: center; }
+.ui-table--matrix tbody th { padding-block: var(--ui-table-cell-py); font-weight: inherit; white-space: normal; }
+/* Ячейка-флажок: метка растянута на всю ячейку — нажатие в любом её месте
+   переключает флажок. Фокус и Пробел остаются у самого флажка, рамка фокуса
+   обводит ячейку целиком; под мышью ячейка на ступень темнее строки, сразу. */
+.ui-table :is(th, td).ui-table__choice { position: relative; padding: 0; text-align: center; }
+.ui-table :is(th, td).ui-table__choice > :is(.ui-check, .ui-radio) { position: absolute; inset: 0; align-items: center; justify-content: center; margin: 0; }
+.ui-table__choice :is(.ui-check__box, .ui-radio__box) { margin-block-start: 0; }
+.ui-table__choice > :has(> input:focus-visible) { box-shadow: inset 0 0 0 var(--ui-focus-w-sm) var(--ui-focus); }
+.ui-table__choice input:focus-visible + .ui-check__box { box-shadow: inset 0 0 0 1px var(--ui-line-strong), var(--ui-shadow-xs); }
+.ui-table__choice > :has(> input:disabled) { cursor: not-allowed; }
+@media (hover: hover) and (pointer: fine) {
+  .ui-table__choice > :not(:has(> input:disabled)):hover { background: var(--ui-chip); }
+}
+
+/* Закреплённые столбцы — непрозрачные: фон берут у строки. */
+.ui-table :is(th, td).ui-table__sticky { position: sticky; inset-inline-start: var(--ui-table-sticky-left, 0px); z-index: 1; }
+.ui-table thead th.ui-table__sticky { z-index: 3; }
+.ui-table :is(th, td).ui-table__sticky-edge { --ui-table-edge: 1; }
+/* В RTL столбцы идут справа налево: черта — с левой стороны ячейки. */
+.ui-table:dir(rtl) { --ui-table-dir: -1; }
+
+/* Скрытый столбец держит своё место в сетке: иначе соседи съезжают в его <col>. */
+.ui-table :is(th, td)[hidden] { display: table-cell !important; width: 0; padding: 0; visibility: hidden; }
+
+/* Ручка ширины — внутри ячейки шапки (ячейка режет всё, что снаружи), у правого
+   края столбца; под рукой встаёт черта акцента. */
+.ui-table__resize {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  z-index: 2;
+  width: 16px;
+  outline: none;
+  cursor: col-resize;
+  touch-action: none;
+}
+.ui-table__resize::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  width: 2px;
+  background: var(--ui-accent);
+  opacity: 0;
+  transition: opacity var(--ui-t);
+}
+.ui-table__resize:is(:hover, :focus-visible, .is-resizing)::before { opacity: 1; }
+:is(.ui-table, .ui-table-view).is-resizing { cursor: col-resize; user-select: none; }
+
+/* ---- Меню столбцов (tableColumns) ------------------------------------------ */
+
+/* Хост и есть поповер; пункты меню — обычные пункты меню кита. */
+.ui-table-columns.ui-popover { display: flex; align-items: center; width: fit-content; }
+.ui-table-columns__trigger > .ui-icon:last-child { transition: transform var(--ui-t) var(--ui-ease-out); }
+.ui-table-columns__trigger[aria-expanded="true"] > .ui-icon:last-child { transform: rotate(180deg); }
+
+/* ---- Сортировка в шапке (tableSort и tableView) ----------------------------- */
+
+.ui-popover.ui-table-view__sort-host { display: flex; width: 100%; height: 100%; }
+.ui-table-view__sort {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ui-r-xs);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+.ui-table__num .ui-table-view__sort { flex-direction: row-reverse; }
+/* Иконка подписи — перед текстом и у числового столбца (там ряд развёрнут). */
+.ui-table-view__sort > .ui-icon:first-child { margin-inline-end: 2px; }
+.ui-table__num .ui-table-view__sort > .ui-icon:first-child { order: 1; }
+.ui-table__num .ui-table-view__sort-icon { order: 2; }
+.ui-table-view__sort:focus-visible { outline: none; box-shadow: 0 0 0 var(--ui-focus-w-sm) var(--ui-focus); }
+.ui-table-view__sort-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.ui-table-view__sort-icon { display: inline-grid; flex: none; width: 14px; height: 14px; color: var(--ui-fg-3); opacity: 0; transition: opacity var(--ui-t); }
+.ui-table-view__sort-icon > .ui-icon { --ui-icon-size: 14px; display: none; grid-area: 1 / 1; }
+/* Одна из трёх стрелок — по aria-sort ячейки. */
+th[aria-sort="none"] .ui-table-view__sort-icon > :nth-child(1),
+th[aria-sort="ascending"] .ui-table-view__sort-icon > :nth-child(2),
+th[aria-sort="descending"] .ui-table-view__sort-icon > :nth-child(3) { display: block; }
+.ui-table-view__sort:is(:hover, :focus-visible, [aria-expanded="true"]) > .ui-table-view__sort-icon { opacity: 1; }
+th:is([aria-sort="ascending"], [aria-sort="descending"]) .ui-table-view__sort-icon { color: var(--ui-accent-fg); opacity: 1; }
+.ui-table-view.is-busy .ui-table-view__sort { pointer-events: none; }
+/* Меню сортировки встаёт от ячейки шапки (data-anchor="th"): край панели — на черте
+   столбца, иконки пунктов — под иконкой подписи. Не уже столбца, как список селекта
+   под полем, но этот нижний предел не больше 240: у широкого столбца короткие
+   «А → Я» не тонут в пустой панели. Длинные подписи раздвигают панель. Размер
+   пунктов — обычного меню. */
+.ui-popover__panel.ui-table-view__sort-panel { min-width: clamp(var(--ui-list-min-w), var(--ui-popover-anchor-w, 0px), 240px); }
+
+/* ---- Таблица с рендером строк (tableView): корпус --------------------------- */
+
+/* Хост — карточка фиксированной высоты: внутри прокручивается только рамка. */
+.ui-table-view {
+  display: flex;
+  flex-direction: column;
+  height: var(--ui-table-height);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ui-table-view__foot {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 12px;
+  min-height: 32px;
+  padding: 0 12px;
+  color: var(--ui-fg-2);
+  font-size: var(--ui-text-sm);
+  box-shadow: inset 0 1px var(--ui-line);
+}
+.ui-table-view__count, .ui-table-view__status { white-space: nowrap; }
+.ui-table-view__count { margin-inline-start: auto; }
+
+/* ---- Таблица с рендером строк: шапка, окно строк, скелет -------------------- */
+
+/* Шапка — липкий первый ряд кадра: вбок её везёт та же прокрутка, что и строки. */
+.ui-table-view__head-rail { position: sticky; top: 0; z-index: 3; width: max-content; background: var(--ui-soft); }
+.ui-table-view__port {
+  position: relative;
+  display: grid;
+  flex: 1 1 auto;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--ui-surface);
+}
+/* Скелет лежит под прозрачной рамкой, ниже шапки: его видно, пока строк нет. */
+.ui-table-view__skeleton { position: absolute; top: var(--ui-table-head-h); inset-inline-start: 0; background-repeat: repeat-y; pointer-events: none; }
+.ui-table-view__frame {
+  position: relative;
+  grid-area: 1 / 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  overflow-anchor: none;
+  overscroll-behavior: contain;
+  scroll-padding-top: var(--ui-table-head-h);
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  /* Жёлоб непрозрачный: под ним лежит скелет, и прозрачный показал бы заглушки.
+     Бегунок, как в старом ките, виден только под курсором и пока список едет
+     (is-scrolling ставит модуль). */
+  scrollbar-color: transparent var(--ui-surface);
+}
+.ui-table-view__frame:hover,
+.ui-table-view.is-scrolling .ui-table-view__frame { scrollbar-color: var(--ui-line) var(--ui-surface); }
+.ui-table-view.is-busy .ui-table-view__frame { cursor: progress; }
+.ui-table-view__sizer { position: relative; }
+.ui-table-view__rows { position: absolute; top: 0; left: 0; }
+.ui-table-view__rows tr.is-hover { background: var(--ui-soft); }
+.ui-table-view:is(.is-loading, .is-sorting) .ui-table-view__rows { visibility: hidden; }
+.ui-table-view:is(.is-loading, .is-sorting) .ui-table-view__skeleton { min-height: calc(100% + var(--ui-table-row-h)); }
+.ui-table-view__bone { display: inline-block; width: var(--ui-tv-bone-w, 60%); height: var(--ui-table-bone-h); border-radius: var(--ui-r-full); background: var(--ui-line); vertical-align: middle; }
+.ui-table-view__bone--box { width: var(--ui-icon); height: var(--ui-icon); border-radius: var(--ui-r-xs); }
+.ui-table-view__empty { position: absolute; inset: var(--ui-table-head-h) 0 0; display: flex; align-items: center; justify-content: center; color: var(--ui-fg-2); }
+
+/* До монтирования пустой хост уже держит размер и рисует шапку. */
+[data-ui-table-view]:not(.ui-table-view):empty {
+  display: block;
+  height: var(--ui-table-height);
+  height: attr(data-height type(<length>), var(--ui-table-height));
+  background: linear-gradient(var(--ui-soft) calc(var(--ui-table-head-h) - 1px), var(--ui-line) 0 var(--ui-table-head-h), transparent 0) var(--ui-surface);
+}
+
+/* ---- Стопка: таблица в узком контейнере становится списком ------------------ */
+
+/* data-ui-table-stack на обёртке. Уже --ui-table-stack-at (контейнер, а не
+   экран: таблица в боковой колонке широкого экрана так же узка, как на
+   телефоне) столбцы не делятся ширину на куски по 100 px, где режется всё,
+   а строка становится пунктом списка, как в приложениях банков и в iOS:
+
+       [lead]  title ........................ value
+               meta · meta · meta             aside
+
+   Роль ячейки — data-cell на <td>: lead (аватар, иконка — слева на обе
+   строки), title (первая строка, 500), value (сумма справа), aside (метка
+   статуса справа во второй строке), hide (в стопке не видна). Ячейка без роли —
+   meta: вторая строка, через точку, мельче и серым. Шапка прячется:
+   подписи столбцов в строке-пункте не нужны. Строка-группа (th с colspan) —
+   полоса во всю ширину. Порог — длина, а не @media: на 560 и уже
+   у среднего столбца остаётся меньше 120 px. */
+.ui-table-wrap[data-ui-table-stack] { container: ui-table / inline-size; }
+@container ui-table (max-width: 560px) {
+  .ui-table-wrap[data-ui-table-stack] {
+    > .ui-table { display: block; }
+    > .ui-table > :is(colgroup, thead) { display: none; }
+    > .ui-table > tbody { display: block; }
+    > .ui-table > tbody > tr {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      row-gap: 2px;
+      position: relative;
+      min-height: var(--ui-table-stack-h);
+      padding: var(--ui-table-stack-py) var(--ui-table-stack-px, var(--ui-table-pad));
+      box-shadow: inset 0 -1px var(--ui-table-line, var(--ui-line));
+    }
+    > .ui-table > tbody > tr:last-child { --ui-table-line: transparent; }
+    > .ui-table > tbody > tr:has(> [data-cell="lead"]) { padding-inline-start: calc(var(--ui-table-stack-px, var(--ui-table-pad)) + var(--ui-table-stack-lead) + 12px); }
+    > .ui-table > tbody > tr > :is(th, td) {
+      display: block;
+      height: auto;
+      padding: 0;
+      box-shadow: none;
+      background: none;
+    }
+    /* Перенос второй строки: пустой элемент во всю ширину между ролями. */
+    > .ui-table > tbody > tr:has(> [data-cell="title"])::after { content: ""; order: 3; flex-basis: 100%; height: 0; }
+    > .ui-table > tbody > tr > [data-cell="title"] { order: 1; flex: 1 1 0; min-width: 0; font-weight: 500; }
+    > .ui-table > tbody > tr > [data-cell="value"] { order: 2; flex: none; max-width: 50%; margin-inline-start: 12px; font-weight: 500; text-align: end; }
+    > .ui-table > tbody > tr > :is(td, th):not([data-cell], .ui-table__check) {
+      /* Основа 1 px и потолок по содержимому: вторая строка не переносится,
+         а при нехватке места ячейки делят её и режутся многоточием. Не 0:
+         ячейка с нулевой основой влезла бы в строку переноса за ::after. */
+      order: 4;
+      flex: 1 1 1px;
+      min-width: 0;
+      max-width: max-content;
+      color: var(--ui-fg-2);
+      font-size: var(--ui-text-sm);
+      line-height: var(--ui-leading-sm);
+    }
+    > .ui-table > tbody > tr > :is(td, th):not([data-cell], .ui-table__check) ~ :is(td, th):not([data-cell], .ui-table__check)::before { content: "·"; margin-inline: 6px; color: var(--ui-fg-3); }
+    > .ui-table > tbody > tr > [data-cell="aside"] { order: 5; flex: none; margin-inline-start: auto; padding-inline-start: 12px; }
+    > .ui-table > tbody > tr > [data-cell="lead"] {
+      position: absolute;
+      inset-block: 0;
+      inset-inline-start: var(--ui-table-stack-px, var(--ui-table-pad));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: var(--ui-table-stack-lead);
+    }
+    > .ui-table > tbody > tr > [data-cell="lead"] > * { margin: 0; }
+    > .ui-table > tbody > tr > [data-cell="hide"],
+    > .ui-table > tbody > tr > .ui-table__check { display: none; }
+    /* Строка-группа и строка «ещё»: одна ячейка во всю ширину. */
+    > .ui-table > tbody > tr:has(> [colspan]) { display: block; min-height: 0; padding: 0; }
+    > .ui-table > tbody > tr > [colspan] { height: var(--ui-table-row-h); padding: 0 var(--ui-table-stack-px, var(--ui-table-pad)); }
+  }
+}

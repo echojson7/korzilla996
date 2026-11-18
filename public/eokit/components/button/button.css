@@ -1,0 +1,97 @@
+/* ---- Кнопка ---------------------------------------------------------------- */
+
+.ui-btn {
+  --ui-btn-h: var(--ui-h);
+  --ui-btn-px: var(--ui-control-px);
+  --ui-btn-r: var(--ui-control-r);
+  --ui-btn-font: 500 var(--ui-text) / 1 var(--ui-font);
+  --ui-btn-icon: var(--ui-control-icon);
+  --ui-btn-gap: var(--ui-control-gap);
+  --ui-btn-bg: var(--ui-surface);
+  --ui-btn-fg: var(--ui-fg);
+  --ui-btn-edge: var(--ui-control-edge);
+  --ui-btn-shadow: var(--ui-shadow-xs);
+  --ui-btn-hover: var(--ui-soft);
+  --ui-btn-icon-fg: currentColor;
+  /* Отступы сторон отдельно: со стороны иконки — доля обычного (tokens.css,
+     «отступ у иконки»). Пересчитывается от --ui-btn-px, поэтому работает у
+     любого размера и у любого, кто перенастроил кнопку своим отступом. */
+  --ui-btn-icon-pad: var(--ui-control-icon-pad);
+  --ui-btn-ps: var(--ui-btn-px);
+  --ui-btn-pe: var(--ui-btn-px);
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ui-btn-gap);
+  min-width: 0;
+  height: var(--ui-btn-h);
+  margin: 0;
+  padding-block: 0;
+  padding-inline: var(--ui-btn-ps) var(--ui-btn-pe);
+  border: 0;
+  border-radius: var(--ui-btn-r);
+  background: none;
+  color: var(--ui-btn-fg);
+  font: var(--ui-btn-font);
+  white-space: nowrap;
+  text-decoration: none;
+  user-select: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--ui-t);
+}
+/* Зона нажатия у пальца: мелкая кнопка (иконка 36, крестик) ловит касание
+   в квадрате --ui-hit вокруг себя, вид не меняется. У мыши --ui-hit — 0. */
+.ui-btn::after { content: ""; position: absolute; inset-block: min(0px, calc((100% - var(--ui-hit)) / 2)); inset-inline: min(0px, calc((100% - var(--ui-hit)) / 2)); }
+/* Лицо кнопки — слой ::before под содержимым: при нажатии сжимается только он,
+   текст и иконка остаются на месте и не мылятся (как в EOKIT-UI). Вдавливается
+   сразу (--ui-press-in), отпускается пружиной с перелётом (--ui-spring-press). */
+.ui-btn::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--ui-btn-face, var(--ui-btn-bg));
+  box-shadow: inset 0 0 0 var(--ui-control-edge-w) var(--ui-btn-edge), var(--ui-btn-shadow);
+  transition: background-color var(--ui-t), box-shadow var(--ui-t), transform var(--ui-spring-press-time) var(--ui-spring-press);
+}
+.ui-btn > :is(.ui-icon, .ui-e3d) { --ui-icon-size: var(--ui-btn-icon); --ui-e3d: var(--ui-btn-icon); color: var(--ui-btn-icon-fg); }
+.ui-btn > .ui-icon[data-tone] { color: var(--ui-tone); }
+.ui-btn__spinner { display: inline-flex; }
+/* Иконка первой или последней — с её стороны отступ меньше. Ставятся только
+   переменные: у кнопки-иконки (--icon) свой padding: 0, и он остаётся главным. */
+.ui-btn:has(> :is(.ui-icon, .ui-e3d, .ui-btn__spinner):not([hidden]):first-child) { --ui-btn-ps: round(calc(var(--ui-btn-px) * var(--ui-btn-icon-pad)), 1px); }
+.ui-btn:has(> :is(.ui-icon, .ui-e3d, .ui-btn__spinner):not([hidden]):last-child) { --ui-btn-pe: round(calc(var(--ui-btn-px) * var(--ui-btn-icon-pad)), 1px); }
+
+.ui-btn--primary { --ui-btn-bg: var(--ui-primary); --ui-btn-fg: var(--ui-on-primary); --ui-btn-edge: transparent; --ui-btn-hover: var(--ui-primary-hover); }
+.ui-btn--secondary { --ui-btn-bg: var(--ui-chip); --ui-btn-edge: transparent; --ui-btn-shadow: none; --ui-btn-hover: var(--ui-chip-hover); }
+.ui-btn--ghost { --ui-btn-bg: transparent; --ui-btn-fg: var(--ui-fg-2); --ui-btn-edge: transparent; --ui-btn-shadow: none; --ui-btn-hover: var(--ui-chip); }
+.ui-btn--destructive { --ui-btn-bg: var(--ui-danger); --ui-btn-fg: var(--ui-on-tone); --ui-btn-edge: transparent; --ui-btn-hover: color-mix(in srgb, var(--ui-danger) 88%, var(--ui-fg)); }
+.ui-btn--destructive-ghost { --ui-btn-bg: transparent; --ui-btn-fg: var(--ui-danger); --ui-btn-edge: transparent; --ui-btn-shadow: none; --ui-btn-hover: var(--ui-red-soft); }
+.ui-btn--link { --ui-btn-h: auto; --ui-btn-px: 0; --ui-btn-bg: transparent; --ui-btn-fg: var(--ui-accent-fg); --ui-btn-edge: transparent; --ui-btn-shadow: none; --ui-btn-hover: transparent; }
+
+/* Размеры — шаги шкалы контролов (styles/tokens.css). */
+.ui-btn--xs, .ui-btn--icon-xs, .ui-btn--sm, .ui-btn--icon-sm { --ui-btn-font: 500 var(--ui-text-sm) / 1 var(--ui-font); }
+.ui-btn--xs, .ui-btn--icon-xs { --ui-btn-h: var(--ui-h-xs); --ui-btn-px: var(--ui-control-px-xs); --ui-btn-r: var(--ui-control-r-xs); --ui-btn-icon: var(--ui-control-icon-xs); --ui-btn-gap: var(--ui-control-gap-xs); }
+.ui-btn--sm, .ui-btn--icon-sm { --ui-btn-h: var(--ui-h-sm); --ui-btn-px: var(--ui-control-px-sm); --ui-btn-r: var(--ui-control-r-sm); }
+.ui-btn--lg, .ui-btn--icon-lg { --ui-btn-h: var(--ui-h-lg); --ui-btn-px: var(--ui-control-px-lg); --ui-btn-r: var(--ui-control-r-lg); }
+.ui-btn--icon, .ui-btn--icon-xs, .ui-btn--icon-sm, .ui-btn--icon-lg { width: var(--ui-btn-h); padding: 0; }
+/* Сжатие при нажатии — доля ширины: на широкой кнопке 0.96 уводит края лица
+   на десятки пикселей. Блочной хватает 0.99, это те же 2–3 px, что у обычной. */
+.ui-btn--block { width: 100%; --ui-btn-press: 0.99; }
+
+@media (hover: hover) and (pointer: fine) {
+  .ui-btn:hover { --ui-btn-face: var(--ui-btn-hover); }
+  .ui-btn--ghost:hover { --ui-btn-fg: var(--ui-fg); }
+  .ui-btn--link:hover { text-decoration: underline; text-underline-offset: 3px; }
+}
+.ui-btn[aria-expanded="true"] { --ui-btn-face: var(--ui-btn-hover); }
+.ui-btn:active:not(:disabled, [aria-disabled="true"], .is-loading, .ui-btn--link)::before { transform: scale(var(--ui-btn-press, 0.96)); transition-duration: var(--ui-t), var(--ui-t), var(--ui-press-in); transition-timing-function: ease, ease, var(--ui-ease-out); }
+.ui-btn:focus-visible { outline: none; }
+.ui-btn:focus-visible::before { box-shadow: inset 0 0 0 1px var(--ui-accent), 0 0 0 var(--ui-focus-w) var(--ui-focus); }
+.ui-btn:is(:disabled, [aria-disabled="true"]) { opacity: var(--ui-opacity-disabled); pointer-events: none; }
+.ui-btn.is-loading { opacity: var(--ui-opacity-loading); cursor: wait; }
+.ui-btn[aria-invalid="true"] { --ui-control-edge-w: 1px; --ui-btn-edge: var(--ui-danger); --ui-btn-fg: var(--ui-danger); }

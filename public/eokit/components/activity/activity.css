@@ -1,0 +1,208 @@
+/* ---- Ход работы -------------------------------------------------------------- */
+
+/* Шаги задачи сверху вниз: что сделано, что идёт сейчас, что получилось. В отличие
+   от ленты событий (timeline) здесь нет времени справа: шаг — знак в круге 24,
+   строка «действие + предмет» и под ней по желанию карточка, цитата или
+   свёрнутая группа. Глагол тише предмета: <b> внутри строки — цвет текста и 500.
+
+   Знак — серый круг с иконкой 14 (data-tone на знаке красит круг тоном). Шаг в
+   работе (data-state="running" на пункте) — кольцо крутится вокруг знака, иконка
+   тише; ошибка (data-state="error") — красный круг; ждущий (pending) —
+   полупрозрачный. Знаки связаны волосяной линией; у последнего её нет.
+
+   Свёрнутая группа — <details class="ui-activity__group">: «Ещё 3 шага» с
+   круглой стрелкой; к ней от линии идёт скруглённая ветка, как в ленте
+   писем. Внутри — снова .ui-activity. Высота раскрывается через
+   ::details-content (где его нет — сразу).
+
+   Новый пункт (data-enter) въезжает на 4 px за время отметки — шаги идут один
+   за другим, и каждый должен быть замечен, но не задерживать следующий. */
+.ui-activity {
+  --ui-activity-gap: 12px;
+  --ui-activity-mark: 24px;
+  --ui-activity-col: 10px;
+  --ui-activity-rail-gap: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-activity-gap);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ui-activity--sm { --ui-activity-gap: 10px; --ui-activity-mark: 20px; --ui-activity-col: 8px; --ui-activity-rail-gap: 2px; }
+.ui-activity__item {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--ui-activity-mark) minmax(0, 1fr);
+  column-gap: var(--ui-activity-col);
+  align-items: start;
+}
+.ui-activity__item[data-enter] { animation: ui-activity-in var(--ui-duration-mark) var(--ui-ease-out); }
+@keyframes ui-activity-in { from { opacity: 0; transform: translateY(4px); } }
+/* Линия от знака до следующего знака, зазор 4 у обоих концов (у --sm — 2). */
+.ui-activity__item:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  top: calc(var(--ui-activity-mark) + var(--ui-activity-rail-gap));
+  bottom: calc(var(--ui-activity-rail-gap) - var(--ui-activity-gap));
+  left: calc(var(--ui-activity-mark) / 2 - 0.5px);
+  width: 1px;
+  background: var(--ui-line-strong);
+}
+
+.ui-activity__mark {
+  --ui-icon-size: 14px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--ui-activity-mark);
+  height: var(--ui-activity-mark);
+  border-radius: 50%;
+  background: var(--ui-tone-soft, var(--ui-chip-hover));
+  color: var(--ui-tone, var(--ui-fg-2));
+  transition: background-color var(--ui-t), color var(--ui-t);
+}
+.ui-activity--sm .ui-activity__mark { --ui-icon-size: 12px; }
+.ui-activity__mark:empty::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.ui-activity__mark > .ui-avatar { --ui-avatar: var(--ui-activity-mark); }
+.ui-activity__mark > .ui-e3d { --ui-e3d: var(--ui-activity-mark); }
+.ui-activity__item[data-state="pending"] > .ui-activity__mark { opacity: 0.48; }
+.ui-activity__item[data-state="error"] > .ui-activity__mark { background: var(--ui-red-soft); color: var(--ui-red); }
+/* В работе: кольцо-сектор крутится по краю круга. */
+.ui-activity__item[data-state="running"] > .ui-activity__mark { background: transparent; color: var(--ui-fg-3); }
+.ui-activity__item[data-state="running"] > .ui-activity__mark::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 30%, var(--ui-fg-2));
+  mask: radial-gradient(closest-side, transparent calc(100% - 1.5px), #000 calc(100% - 1px));
+  animation: ui-spin 0.8s linear infinite;
+}
+
+.ui-activity__body { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+/* Строка шага по высоте знака: короткая стоит по его середине. */
+.ui-activity__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 6px;
+  min-height: var(--ui-activity-mark);
+  margin: 0;
+  padding-top: calc((var(--ui-activity-mark) - var(--ui-leading)) / 2);
+  color: var(--ui-fg-2);
+  font-size: var(--ui-text);
+  line-height: var(--ui-leading);
+  overflow-wrap: anywhere;
+}
+.ui-activity--sm .ui-activity__head { padding-top: calc((var(--ui-activity-mark) - var(--ui-leading-sm)) / 2); font-size: var(--ui-text-sm); line-height: var(--ui-leading-sm); }
+.ui-activity__head :is(b, strong) { color: var(--ui-fg); font-weight: 500; }
+.ui-activity__item[data-state="running"] .ui-activity__head { color: var(--ui-fg); }
+/* Подпись после строки: число, время — через точку. */
+.ui-activity__meta { color: var(--ui-fg-3); font-size: var(--ui-text-2xs); line-height: var(--ui-leading-2xs); white-space: nowrap; }
+.ui-activity__meta::before { content: "·"; margin-inline-end: 6px; }
+
+/* Карточка шага: белая на любом фоне, волосяная рамка. --stack — под ней ещё
+   два листа: «здесь их несколько». data-tone — полоса тона слева. */
+.ui-activity__card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: var(--ui-r-lg);
+  background: var(--ui-inset-bg, var(--ui-surface));
+  box-shadow: var(--ui-inset-ring, 0 0 0 1px var(--ui-line), var(--ui-shadow-xs));
+  line-height: var(--ui-leading);
+  overflow-wrap: anywhere;
+}
+.ui-activity__card[data-tone] { padding-inline-start: 16px; }
+.ui-activity__card[data-tone]::before { content: ""; position: absolute; top: 10px; bottom: 10px; left: 6px; width: 3px; border-radius: 2px; background: var(--ui-tone); }
+.ui-activity__card--stack { margin-bottom: 6px; box-shadow: 0 0 0 1px var(--ui-line), 0 3px 0 -1px var(--ui-surface), 0 3px 0 0 var(--ui-line), 0 6px 0 -2px var(--ui-surface), 0 6px 0 -1px var(--ui-line); }
+.ui-activity__card-title { margin: 0; font-weight: 500; }
+.ui-activity__card-text { margin: 0; color: var(--ui-fg-2); font-size: var(--ui-text-sm); line-height: var(--ui-leading-sm); }
+/* Цитата: сказанное или найденное — серой заливкой, как заметка ленты. */
+.ui-activity__quote { margin: 0; padding: 8px 12px; border-radius: var(--ui-r-lg); background: var(--ui-chip); line-height: var(--ui-leading); overflow-wrap: anywhere; }
+
+/* ---- Свёрнутая группа ---------------------------------------------------------- */
+
+.ui-activity__group { interpolate-size: allow-keywords; min-width: 0; }
+.ui-activity__toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+  max-width: 100%;
+  border-radius: var(--ui-r-sm);
+  color: var(--ui-fg-2);
+  font-size: var(--ui-text-sm);
+  line-height: var(--ui-leading-sm);
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--ui-t);
+}
+.ui-activity__toggle::-webkit-details-marker { display: none; }
+.ui-activity__toggle:focus-visible { outline: none; box-shadow: 0 0 0 var(--ui-focus-w) var(--ui-focus); }
+@media (hover: hover) and (pointer: fine) {
+  .ui-activity__toggle:hover { color: var(--ui-fg); }
+}
+/* Круг со стрелкой «вверх-вниз»: та же высота, что у знака малого шага. */
+.ui-activity__toggle-icon {
+  --ui-icon-size: 12px;
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--ui-surface);
+  box-shadow: 0 0 0 1px var(--ui-line);
+  color: var(--ui-fg-2);
+}
+/* С тоном — залитый круг 16 цвета тона, глиф белый (галочка «Готово»).
+   --ui-tone-solid на знаке перекрывает цвет круга: фирменный, свой. */
+.ui-activity__toggle-icon[data-tone] { --ui-icon-size: 10px; width: 16px; height: 16px; margin: 2px; background: var(--ui-tone-solid, var(--ui-tone)); box-shadow: none; color: var(--ui-on-tone); }
+.ui-activity__toggle-icon[data-tone] > .ui-icon :is(path, polyline) { stroke-width: 3; }
+.ui-activity__toggle-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ui-activity__toggle-label :is(b, strong) { color: var(--ui-fg); font-weight: 500; }
+.ui-activity__chevron { --ui-icon-size: 14px; flex: none; color: var(--ui-fg-3); transform: rotate(var(--ui-turn)); transition: --ui-turn var(--ui-duration-turn) var(--ui-ease); }
+.ui-activity__group[open] > .ui-activity__toggle .ui-activity__chevron { --ui-turn: -180deg; }
+/* Ветка от линии шага к группе: группа стоит в теле шага, линия — левее на
+   ширину колонки знака. */
+.ui-activity__body > .ui-activity__group > .ui-activity__toggle::before {
+  content: "";
+  position: absolute;
+  right: 100%;
+  bottom: 50%;
+  width: calc(var(--ui-activity-col) + var(--ui-activity-mark) / 2 + 0.5px);
+  height: calc(var(--ui-activity-gap) + 12px);
+  border: 0 solid var(--ui-line-strong);
+  border-width: 0 0 1px 1px;
+  border-bottom-left-radius: 8px;
+}
+.ui-activity__item:last-child > .ui-activity__body > .ui-activity__group > .ui-activity__toggle::before { display: none; }
+.ui-activity__group > .ui-activity { padding-top: 10px; }
+@supports selector(::details-content) {
+  .ui-activity__group::details-content {
+    block-size: 0;
+    overflow: clip;
+    transition: block-size var(--ui-duration-surface-out) var(--ui-ease-in), content-visibility var(--ui-duration-surface-out) allow-discrete;
+  }
+  .ui-activity__group[open]::details-content {
+    block-size: auto;
+    transition-duration: var(--ui-duration-mark);
+    transition-timing-function: var(--ui-ease-out);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-activity__item[data-enter] { animation: none; }
+  .ui-activity__item[data-state="running"] > .ui-activity__mark::after { animation-duration: 2.4s; }
+}

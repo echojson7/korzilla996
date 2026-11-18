@@ -1,0 +1,59 @@
+/* ---- Поле запроса ---------------------------------------------------------- */
+
+/* Модуль prompt: текст растёт от --ui-prompt-min-rows до --ui-prompt-rows строк,
+   под ним строка — чипы того, о чём запрос, слева и отправка справа. Пустое поле
+   в одну строку — 64: строка текста 20 с полем 8 сверху и строка 36 с кнопкой 28
+   в 4 от края (её скругление 8 концентрично рамке 12); в две — 84, для чата в
+   боковой панели. Рамка, наведение, фокус и серый вариант — общие с .ui-input
+   (input/input.css). */
+.ui-prompt {
+  --ui-prompt-min-rows: 1;
+  --ui-prompt-rows: 6;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--ui-control-r-lg);
+  cursor: text;
+}
+.ui-prompt__area {
+  display: block;
+  width: 100%;
+  min-height: calc(var(--ui-prompt-min-rows) * var(--ui-leading) + 8px);
+  max-height: calc(var(--ui-prompt-rows) * var(--ui-leading) + 8px);
+  margin: 0;
+  padding: 8px 12px 0;
+  overflow-y: auto;
+  border: 0;
+  outline: none;
+  background: none;
+  color: inherit;
+  font: 400 var(--ui-text) / var(--ui-leading) var(--ui-font);
+  resize: none;
+}
+@supports (field-sizing: content) {
+  .ui-prompt__area { field-sizing: content; }
+}
+.ui-prompt__area::placeholder { color: var(--ui-fg-3); }
+.ui-prompt__bar { display: flex; align-items: center; gap: 4px; min-width: 0; padding: 4px; }
+.ui-prompt__bar > .ui-badge { min-width: 0; }
+.ui-prompt__send { margin-inline-start: auto; }
+
+/* Крестик чипа — 16 в конце бейджа, в 4 от его края. */
+.ui-prompt__drop {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 0 -6px 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ui-r-xs);
+  background: none;
+  color: var(--ui-fg-3);
+  cursor: pointer;
+}
+.ui-prompt__drop > .ui-icon { --ui-icon-size: 12px; }
+@media (hover: hover) and (pointer: fine) {
+  .ui-prompt__drop:hover { background: var(--ui-chip-hover); color: var(--ui-fg); }
+}
+.ui-prompt__drop:focus-visible { outline: none; color: var(--ui-fg); box-shadow: 0 0 0 var(--ui-focus-w-sm) var(--ui-focus); }

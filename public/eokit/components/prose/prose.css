@@ -1,0 +1,78 @@
+/* ---- Текст ответа ------------------------------------------------------------ */
+
+/* Оформленный текст: ответ помощника, справка, описание. Ставится на обёртку,
+   внутри — обычная разметка: абзацы, заголовки h2–h4, списки (вложенные тоже),
+   цитата, код строкой и блоком, таблица, черта, ссылки. Ритм — по шкале кита:
+   абзацы через 8, заголовок отбит сверху 16, плотнее, чем в статье, — это
+   панель, а не страница.
+
+   Маркер списка — точка цвета --ui-fg-3, номер — им же; у вложенного — кружок.
+   Код строкой — серая плашка шрифтом кода. Блок кода — .ui-codeblock: шапка с
+   языком и кнопкой «Скопировать» (модуль prose: копирует, на 1,5 с ставит
+   data-copied — иконка сменяется галочкой, шлёт prose:copy), под ней <pre>
+   с прокруткой вбок. --sm — текст 13/16 для узких мест. */
+.ui-prose {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  color: var(--ui-fg);
+  font-size: var(--ui-text);
+  line-height: var(--ui-leading);
+  overflow-wrap: anywhere;
+}
+.ui-prose--sm { font-size: var(--ui-text-sm); line-height: var(--ui-leading-sm); }
+.ui-prose > * { margin: 0; }
+.ui-prose :is(h2, h3, h4) { margin: 0; color: var(--ui-fg); font-weight: 600; text-wrap: balance; }
+.ui-prose h2 { font-size: var(--ui-text-md); line-height: var(--ui-leading-md); }
+.ui-prose :is(h3, h4) { font-size: var(--ui-text); line-height: var(--ui-leading); }
+.ui-prose h4 { color: var(--ui-fg-2); }
+.ui-prose > :is(h2, h3, h4):not(:first-child) { margin-top: 8px; }
+.ui-prose :is(b, strong) { font-weight: 600; }
+.ui-prose a { border-radius: var(--ui-r-xs); color: inherit; text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 32%, transparent); text-decoration-thickness: 1px; text-underline-offset: 3px; transition: text-decoration-color var(--ui-t); }
+@media (hover: hover) and (pointer: fine) {
+  .ui-prose a:hover { text-decoration-color: currentColor; }
+}
+.ui-prose a:focus-visible { outline: none; box-shadow: 0 0 0 var(--ui-focus-w) var(--ui-focus); }
+.ui-prose mark { padding: 0 2px; border-radius: var(--ui-r-xs); background: var(--ui-amber-soft); color: inherit; }
+
+/* Списки: свой маркер — точка в строку текста, номер — числом. */
+.ui-prose :is(ul, ol) { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0 0 0 20px; }
+.ui-prose ul { list-style: none; }
+.ui-prose li { position: relative; padding-inline-start: 2px; }
+.ui-prose li > :is(ul, ol) { margin-top: 4px; }
+.ui-prose ul > li::before { content: ""; position: absolute; top: calc(var(--ui-leading) / 2 - 2.5px); left: -14px; width: 5px; height: 5px; border-radius: 50%; background: var(--ui-fg-3); }
+.ui-prose ul ul > li::before { background: none; box-shadow: inset 0 0 0 1px var(--ui-fg-3); }
+.ui-prose ol > li::marker { color: var(--ui-fg-3); font-weight: 500; }
+.ui-prose--sm ul > li::before { top: calc(var(--ui-leading-sm) / 2 - 2.5px); }
+
+.ui-prose blockquote { margin: 0; padding: 0 0 0 12px; box-shadow: inset 2px 0 0 var(--ui-line-strong); color: var(--ui-fg-2); }
+.ui-prose hr { width: 100%; height: 1px; margin: 4px 0; border: 0; background: var(--ui-line); }
+
+/* Код строкой. */
+.ui-prose :not(pre) > code, .ui-prose kbd {
+  padding: 1px 4px;
+  border-radius: var(--ui-r-xs);
+  background: var(--ui-chip-hover);
+  font-family: var(--ui-font-code);
+  font-size: 0.88em;
+}
+
+/* Таблица: шапка тише, строки через волосяную линию, прокрутка вбок. */
+.ui-prose__table { overflow-x: auto; border-radius: var(--ui-r-lg); background: var(--ui-inset-bg, var(--ui-surface)); box-shadow: var(--ui-inset-ring, 0 0 0 1px var(--ui-line) inset); }
+.ui-prose table { width: 100%; border-collapse: collapse; font-size: var(--ui-text-sm); line-height: var(--ui-leading-sm); }
+.ui-prose :is(th, td) { padding: 6px 10px; text-align: start; vertical-align: top; }
+.ui-prose th { color: var(--ui-fg-2); font-weight: 500; white-space: nowrap; }
+.ui-prose tr + tr > td, .ui-prose thead + tbody > tr:first-child > td { box-shadow: inset 0 1px 0 var(--ui-line); }
+.ui-prose td[data-align="end"], .ui-prose th[data-align="end"] { text-align: end; white-space: nowrap; }
+
+/* ---- Блок кода ----------------------------------------------------------------- */
+
+.ui-codeblock { display: flex; flex-direction: column; min-width: 0; overflow: hidden; border-radius: var(--ui-r-lg); background: var(--ui-inset-bg, var(--ui-surface)); box-shadow: var(--ui-inset-ring, 0 0 0 1px var(--ui-line) inset); }
+.ui-codeblock__head { display: flex; align-items: center; gap: 8px; min-height: 32px; padding: 0 4px 0 12px; box-shadow: inset 0 -1px 0 var(--ui-line); color: var(--ui-fg-3); font-size: var(--ui-text-2xs); line-height: var(--ui-leading-2xs); }
+.ui-codeblock__lang { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ui-codeblock__copy > .ui-icon + .ui-icon, .ui-codeblock__copy[data-copied] > .ui-icon:first-child { display: none; }
+.ui-codeblock__copy[data-copied] > .ui-icon + .ui-icon { display: block; color: var(--ui-green); animation: ui-prose-pop var(--ui-duration-mark) var(--ui-ease-out); }
+@keyframes ui-prose-pop { from { opacity: 0; transform: scale(0.6); } }
+.ui-codeblock pre { margin: 0; padding: 10px 12px; overflow-x: auto; color: var(--ui-fg); font: 400 var(--ui-text-sm) / 20px var(--ui-font-code); tab-size: 2; white-space: pre; overflow-wrap: normal; }
+.ui-codeblock code { font: inherit; }

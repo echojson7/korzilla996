@@ -1,0 +1,192 @@
+/* ---- Тур --------------------------------------------------------------------- */
+
+/* Пошаговое знакомство с экраном (tour.js): затемнение с вырезом вокруг элемента
+   шага и карточка рядом. Корень — во весь экран над окнами и под подсказками,
+   сам указатель не ловит: нажатия держит заслонка, карточка их принимает.
+
+   Затемнение собрано из кусков, и всё движение — translate и scale: переезд
+   к следующему шагу и прокрутку целиком ведёт композитор, без перерисовки.
+   Одна тень выреза в 200vmax, которой тур был до 1.41.1, перекрашивала весь
+   экран каждый кадр перехода — на слабой графике тур дёргался.
+
+     .ui-tour__spot   — сам вырез: стоит translate'ом, размер — его прямоугольник
+     .ui-tour__scrim  — затемнение: четыре полосы вокруг выреза и четыре угла
+                        со скруглением; куски плотного цвета заходят друг на
+                        друга, прозрачность одна на группу — стыков не видно
+     .ui-tour__ring   — светлая кромка: четыре отрезка (scale по длине) и дуги
+
+   Полосы огромные, но одноцветные — растра у таких слоёв нет. Углы — клетка
+   r + 1 с кругом внутри: скругление сглажено, как у border-radius. Смену
+   радиуса между шагами модуль ведёт scale клеток (WAAPI), чтобы дуга шла
+   вместе с отрезками. Место и размер пишет модуль (--ui-tour-spot-*, в px,
+   -lx/-ly — длина отрезков числом), карточки — --ui-tour-x/-y; между шагами
+   всё едет переходом, пока стоит data-moving, а при прокрутке — сразу. */
+@property --ui-tour-x { syntax: "*"; inherits: false; }
+@property --ui-tour-y { syntax: "*"; inherits: false; }
+@property --ui-tour-space { syntax: "*"; inherits: false; }
+
+.ui-tour {
+  /* Отступ выреза от элемента и наименьшее скругление (читает модуль). */
+  --ui-tour-pad: 4px;
+  --ui-tour-r: 8px;
+  --ui-tour-w: 320px;
+  position: fixed;
+  inset: 0;
+  z-index: var(--ui-z-tour);
+  pointer-events: none;
+  contain: strict;
+}
+.ui-tour[data-state="open"] { animation: ui-tour-in var(--ui-duration-surface-in) var(--ui-ease) both; }
+.ui-tour[data-state="closing"] { animation: ui-tour-out var(--ui-duration-surface-out) var(--ui-ease-in) both; }
+@keyframes ui-tour-in { from { opacity: 0; } }
+@keyframes ui-tour-out { to { opacity: 0; } }
+
+.ui-tour__block { position: absolute; inset: 0; pointer-events: auto; }
+
+.ui-tour__spot {
+  --ui-tour-spot-x: 50vw;
+  --ui-tour-spot-y: 50vh;
+  --ui-tour-spot-w: 0px;
+  --ui-tour-spot-h: 0px;
+  --ui-tour-spot-r: 0px;
+  --ui-tour-spot-lx: 0;
+  --ui-tour-spot-ly: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--ui-tour-spot-w);
+  height: var(--ui-tour-spot-h);
+  translate: var(--ui-tour-spot-x) var(--ui-tour-spot-y);
+  pointer-events: none;
+  will-change: transform;
+}
+.ui-tour__scrim, .ui-tour__ring { position: absolute; top: 0; left: 0; }
+.ui-tour__scrim { opacity: var(--ui-tour-scrim-opacity); }
+.ui-tour__ring { transition: opacity var(--ui-duration-tour) var(--ui-ease); }
+/* Без элемента вырез — точка по центру: кромки нет совсем. */
+.ui-tour__spot[data-empty] .ui-tour__ring { opacity: 0; }
+
+.ui-tour__shade, .ui-tour__corner, .ui-tour__line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform;
+}
+
+/* Полосы — от кромки выреза на три экрана в каждую сторону: вырез может стоять
+   где угодно на экране, полоса всё равно закрывает его целиком. Верхняя
+   и левая стоят от угла выреза и не двигаются вовсе. */
+.ui-tour__shade { width: 600vw; height: 600vh; background: var(--ui-tour-scrim); }
+.ui-tour__shade[data-edge="top"] { translate: -300vw -600vh; }
+.ui-tour__shade[data-edge="left"] { translate: -600vw -300vh; }
+.ui-tour__shade[data-edge="right"] { translate: var(--ui-tour-spot-w) -300vh; }
+.ui-tour__shade[data-edge="bottom"] { translate: -300vw var(--ui-tour-spot-h); }
+
+/* Угол — клетка r + 1 у внешнего угла выреза (на пиксель наружу: затемнение
+   заходит на полосы, кромка помещается целиком), круг диаметром 2r с центром
+   в углу скругления. Клетка висит на внешнем углу (translate — угол, отступ —
+   размер), и scale от него же: радиус меняется, а угол стоит на месте. */
+.ui-tour__corner {
+  width: calc(var(--ui-tour-spot-r) + 1px);
+  height: calc(var(--ui-tour-spot-r) + 1px);
+  overflow: hidden;
+}
+.ui-tour__corner::before {
+  content: "";
+  position: absolute;
+  width: calc(var(--ui-tour-spot-r) * 2);
+  height: calc(var(--ui-tour-spot-r) * 2);
+  border-radius: 50%;
+}
+.ui-tour__scrim .ui-tour__corner::before { box-shadow: 0 0 0 calc(var(--ui-tour-spot-r) + 2px) var(--ui-tour-scrim); }
+.ui-tour__ring .ui-tour__corner::before { box-shadow: 0 0 0 1px var(--ui-tour-ring); }
+.ui-tour__corner[data-corner="tl"] { translate: -1px -1px; transform-origin: 0 0; }
+.ui-tour__corner[data-corner="tl"]::before { top: 1px; left: 1px; }
+.ui-tour__corner[data-corner="tr"] { translate: calc(var(--ui-tour-spot-w) + 1px) -1px; margin-left: calc(-1px - var(--ui-tour-spot-r)); transform-origin: 100% 0; }
+.ui-tour__corner[data-corner="tr"]::before { top: 1px; right: 1px; }
+.ui-tour__corner[data-corner="bl"] { translate: -1px calc(var(--ui-tour-spot-h) + 1px); margin-top: calc(-1px - var(--ui-tour-spot-r)); transform-origin: 0 100%; }
+.ui-tour__corner[data-corner="bl"]::before { bottom: 1px; left: 1px; }
+.ui-tour__corner[data-corner="br"] { translate: calc(var(--ui-tour-spot-w) + 1px) calc(var(--ui-tour-spot-h) + 1px); margin: calc(-1px - var(--ui-tour-spot-r)) 0 0 calc(-1px - var(--ui-tour-spot-r)); transform-origin: 100% 100%; }
+.ui-tour__corner[data-corner="br"]::before { right: 1px; bottom: 1px; }
+
+/* Отрезок кромки — пиксель, растянутый scale на длину стороны без скруглений. */
+.ui-tour__line { width: 1px; height: 1px; background: var(--ui-tour-ring); transform-origin: 0 0; }
+.ui-tour__line[data-edge="top"] { translate: var(--ui-tour-spot-r) -1px; scale: var(--ui-tour-spot-lx) 1; }
+.ui-tour__line[data-edge="bottom"] { translate: var(--ui-tour-spot-r) var(--ui-tour-spot-h); scale: var(--ui-tour-spot-lx) 1; }
+.ui-tour__line[data-edge="left"] { translate: -1px var(--ui-tour-spot-r); scale: 1 var(--ui-tour-spot-ly); }
+.ui-tour__line[data-edge="right"] { translate: var(--ui-tour-spot-w) var(--ui-tour-spot-r); scale: 1 var(--ui-tour-spot-ly); }
+
+.ui-tour[data-moving] :is(.ui-tour__spot, .ui-tour__shade, .ui-tour__corner, .ui-tour__line) {
+  transition-property: translate, scale;
+  transition-duration: var(--ui-duration-tour);
+  transition-timing-function: var(--ui-ease);
+}
+
+/* ---- Карточка шага ----------------------------------------------------------- */
+
+/* Материал — как у поповера; поле 16, скругление блока. Место — translate (его
+   ведёт переход между шагами), вход — общий кадр поверхностей по transform:
+   они не мешают друг другу. */
+.ui-tour__card {
+  --ui-tour-gap: 12px;
+  --ui-tour-edge: 12px;
+  --ui-surface-from-y: 4px;
+  --ui-surface-scale: 0.96;
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  width: min(var(--ui-tour-w), calc(100vw - var(--ui-tour-edge) * 2));
+  max-height: calc(100vh - var(--ui-tour-edge) * 2);
+  padding: 16px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border-radius: var(--ui-r-card);
+  outline: none;
+  background: var(--ui-pop);
+  color: var(--ui-fg);
+  box-shadow: var(--ui-shadow-pop);
+  translate: var(--ui-tour-x, 0px) var(--ui-tour-y, 0px);
+  pointer-events: auto;
+  contain: layout style;
+}
+.ui-tour__card[data-side="top"] { --ui-surface-from-y: -4px; }
+.ui-tour__card[data-side="left"] { --ui-surface-from-x: -4px; --ui-surface-from-y: 0px; }
+.ui-tour__card[data-side="right"] { --ui-surface-from-x: 4px; --ui-surface-from-y: 0px; }
+.ui-tour[data-state="open"] .ui-tour__card { animation: ui-surface-in var(--ui-spring-time) var(--ui-spring) both; }
+/* Нажатие мимо: карточка вздрагивает. Вход стоит первым в списке и не
+   перезапускается; рывок — свойство scale, вход — transform. */
+.ui-tour[data-state="open"] .ui-tour__card[data-nudge="a"] { animation: ui-surface-in var(--ui-spring-time) var(--ui-spring) both, ui-tour-nudge-a var(--ui-duration-tour) var(--ui-ease-out); }
+.ui-tour[data-state="open"] .ui-tour__card[data-nudge="b"] { animation: ui-surface-in var(--ui-spring-time) var(--ui-spring) both, ui-tour-nudge-b var(--ui-duration-tour) var(--ui-ease-out); }
+@keyframes ui-tour-nudge-a { 35% { scale: 1.025; } }
+@keyframes ui-tour-nudge-b { 35% { scale: 1.025; } }
+.ui-tour[data-moving] .ui-tour__card { transition: translate var(--ui-duration-tour) var(--ui-ease); }
+
+/* Над текстом: тело шага анимируется и встаёт своим слоем поверх крестика. */
+.ui-tour__close { position: absolute; top: 8px; inset-inline-end: 8px; z-index: 1; }
+
+/* Текст шага. Справа место под крестик: 28 + 8 от края минус поле карточки. */
+.ui-tour__body { display: grid; gap: 4px; padding-inline-end: calc(28px + 8px - 16px + 4px); }
+.ui-tour__body[data-dir="next"] { --ui-tour-swap-x: 8px; }
+.ui-tour__body[data-dir="back"] { --ui-tour-swap-x: -8px; }
+.ui-tour__body:dir(rtl)[data-dir="next"] { --ui-tour-swap-x: -8px; }
+.ui-tour__body:dir(rtl)[data-dir="back"] { --ui-tour-swap-x: 8px; }
+.ui-tour__body[data-swap="a"] { animation: ui-tour-swap-a var(--ui-duration-surface-in) var(--ui-ease) both; }
+.ui-tour__body[data-swap="b"] { animation: ui-tour-swap-b var(--ui-duration-surface-in) var(--ui-ease) both; }
+@keyframes ui-tour-swap-a { from { opacity: 0; translate: var(--ui-tour-swap-x, 0px) 0; } }
+@keyframes ui-tour-swap-b { from { opacity: 0; translate: var(--ui-tour-swap-x, 0px) 0; } }
+.ui-tour__media { margin-bottom: 8px; }
+.ui-tour__media > .ui-e3d { --ui-e3d: 40px; }
+.ui-tour__title { margin: 0; font: 600 var(--ui-text-md) / var(--ui-leading-md) var(--ui-font); letter-spacing: -0.01em; }
+.ui-tour__text { color: var(--ui-fg-2); font: 400 var(--ui-text) / var(--ui-leading) var(--ui-font); }
+.ui-tour__text > * { margin: 0; }
+.ui-tour__text > * + * { margin-top: 8px; }
+.ui-tour__text .ui-kbd-group { vertical-align: 1px; }
+
+/* Подвал: прогресс слева, «Назад» и «Далее» справа. */
+.ui-tour__foot { display: flex; align-items: center; gap: 12px; min-height: var(--ui-h-sm); margin-top: 16px; }
+.ui-tour__progress { flex: 0 1 auto; }
+.ui-tour__progress:not(.ui-progress-steps--dots) { flex: 0 1 96px; }
+.ui-tour__count { color: var(--ui-fg-3); font: 500 var(--ui-text-2xs) / var(--ui-leading-2xs) var(--ui-font); }
+.ui-tour__actions { display: flex; gap: 4px; margin-inline-start: auto; }

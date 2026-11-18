@@ -1,0 +1,8 @@
+/* Группа флажков: общий флажок над вложенными. Модуль ставит ему checked или
+   indeterminate по детям; вложенные сдвинуты на коробку и зазор — их коробки
+   встают под подпись общего. */
+.ui-checkbox-tree { --ui-checkbox-tree-indent: 24px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.ui-checkbox-tree:has(> .ui-check--sm) { --ui-checkbox-tree-indent: calc(14px + 8px); }
+.ui-checkbox-tree:has(> .ui-check--lg) { --ui-checkbox-tree-indent: 28px; }
+.ui-checkbox-tree > .ui-check > .ui-check__label { font-weight: 500; }
+.ui-checkbox-tree__children { display: flex; flex-direction: column; gap: 8px; padding-inline-start: var(--ui-checkbox-tree-indent); }

@@ -1,0 +1,22 @@
+/* ---- Скелетон -------------------------------------------------------------- */
+
+/* Заглушка повторяет то, что придёт: строка занимает ровно строку текста (кладите
+   её в тот же слот, что и текст), --avatar — аватар. Мягкий пульс; при
+   «уменьшить движение» его нет, как и бегущего отрезка прогресса: общее правило
+   base.css сжимает анимацию, но не останавливает бесконечную. */
+.ui-skeleton {
+  display: block;
+  flex: none;
+  height: 8px;
+  margin-block: calc((1lh - 8px) / 2);
+  border-radius: var(--ui-r-full);
+  background: var(--ui-line);
+  animation: ui-skeleton 1.6s ease-in-out infinite;
+}
+.ui-skeleton--avatar { width: var(--ui-skeleton-size, 24px); height: var(--ui-skeleton-size, 24px); margin-block: 0; border-radius: calc(var(--ui-skeleton-size, 24px) / 4 + 2px); }
+.ui-skeleton--block { height: var(--ui-skeleton-size, 96px); margin-block: 0; border-radius: var(--ui-r-lg); }
+@keyframes ui-skeleton { 50% { opacity: 0.45; } }
+@media (prefers-reduced-motion: reduce) {
+  .ui-skeleton { animation: none; }
+  .ui-progress__bar:not([aria-valuenow])::before { width: 100%; opacity: 0.35; animation: none; }
+}

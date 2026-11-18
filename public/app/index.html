@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ru" data-ui-accent="brand">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Korzilla 996</title>
+  <script>
+    /* Вид админки и язык до первого кадра: иначе тёмная мигает светлой.
+       Правила — копия applyLook() из js/ui/look.js (ключ kza.look). */
+    try {
+      const root = document.documentElement;
+      const look = JSON.parse(localStorage.getItem("kza.look")) || {
+        theme: JSON.parse(localStorage.getItem("kza.theme")),
+      };
+      if (look.theme === "dark" || (look.theme === "system" && matchMedia("(prefers-color-scheme: dark)").matches)) root.classList.add("dark");
+      if (look.size === "large" || (look.size !== "base" && matchMedia("(hover: none) and (pointer: coarse)").matches)) root.dataset.density = "large";
+      if (look.tables === "compact") root.dataset.uiTables = "compact";
+      if (/^#[0-9a-f]{6}$/.test(look.accent || "")) { root.removeAttribute("data-ui-accent"); root.style.setProperty("--ui-accent", look.accent); }
+      else if (/^(blue|violet|pink|orange|green|teal)$/.test(look.accent || "")) { root.removeAttribute("data-ui-accent"); root.style.setProperty("--ui-accent", "var(--ui-" + look.accent + ")"); root.style.setProperty("--ui-accent-fg", "var(--ui-" + look.accent + "-fg)"); }
+      if (/^(inter|golos|manrope)$/.test(look.font || "")) root.style.setProperty("--ui-font", "var(--ui-font-" + look.font + ")");
+      if (localStorage.getItem("kza.lang") === "en") root.lang = "en";
+    } catch {}
+  </script>
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../eokit/fonts/Onest-cyrillic.woff2">
+  <link rel="stylesheet" href="../eokit/kit.css">
+  <link rel="stylesheet" href="./styles/admin.css">
+  <script type="module" src="./js/boot.js"></script>
+</head>
+<body class="ui-root">
+  <div class="app" id="app">
+    <aside class="side" id="side" aria-label="Navigation"></aside>
+    <div class="main">
+      <header class="top" id="top"></header>
+      <main class="view" id="view" tabindex="-1"></main>
+      <aside class="assist" id="assist" hidden></aside>
+    </div>
+    <div class="scrim" data-action="sidebar" aria-hidden="true"></div>
+  </div>
+</body>
+</html>

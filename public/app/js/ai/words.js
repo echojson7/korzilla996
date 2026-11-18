@@ -1,0 +1,50 @@
+/* Русский словарь помощника: панель, шапка, палитра, вкладка в настройках.
+   Навыки модулей приносят свои слова сами (modules/<модуль>/words.js). */
+
+import { addWords } from "../core/i18n.js";
+
+addWords({
+  "Assistant": "Помощник",
+  "Korzilla assistant": "Корзилла помощник",
+  "New conversation": "Новый разговор",
+  "Ask about orders, products, customers…": "Спросите о заказах, товарах, клиентах…",
+  "Question to the assistant": "Вопрос помощнику",
+  "Send": "Отправить",
+  "Ask without it": "Спросить без этого",
+  "Answers come from demo data. Nothing changes without you.": "Ответы по демо-данным. Без вас ничего не меняется.",
+  "For example": "Например",
+  "Preparing an answer": "Готовлю ответ",
+  "Assistant's draft": "Черновик помощника",
+  "Copy": "Скопировать",
+  "Another version": "Другой вариант",
+  "Copied": "Скопировано",
+  "Couldn't copy. Select the text and copy it by hand.": "Не скопировалось. Выделите текст и скопируйте вручную.",
+  "Ask the assistant:": "Спросить помощника:",
+  "What needs my attention today?": "Что важно сегодня?",
+  "What can you do?": "Что ты умеешь?",
+  "I can't answer that yet. In the demo I know this site's orders, products, customers, revenue, content and settings.": "На это пока не отвечу. В демо я знаю заказы, товары, клиентов, выручку, контент и настройки этого сайта.",
+  "Something went wrong while answering. Try asking differently.": "Не получилось ответить. Попробуйте спросить иначе.",
+  "Thinking": "Думаю",
+  "Demo": "Демо",
+  "How can I help?": "Чем помочь?",
+  "I know this site's orders, products, customers, revenue and content. I don't change anything myself.": "Знаю заказы, товары, клиентов, выручку и контент этого сайта. Сам ничего не меняю.",
+  "Sales": "Продажи",
+  "{name}, where shall we start?": "{name}, с чего начнём?",
+  "Where shall we start?": "С чего начнём?",
+  "Copy answer": "Скопировать ответ",
+  "Ask again": "Спросить ещё раз",
+  "Ask next": "Спросить дальше",
+  "{s} s": "{s} с",
+  "Done in {time}": "Готово за {time}",
+  "Code": "Код",
+  "Open on the page: **{label}**": "Открыто на странице: **{label}**",
+  "Looking for **who knows the answer**": "Ищу, **кто знает ответ**",
+  "Looking into **{topic}**": "Разбираюсь: **{topic}**",
+  "Looking into **the question**": "Разбираю **вопрос**",
+  "Writing **{what}**": "Пишу **{what}**",
+  "Writing **a draft**": "Пишу **черновик**",
+}, {
+  step: ["{n} шаг", "{n} шага", "{n} шагов"],
+}, {
+  step: ["{n} step", "{n} steps"],
+});

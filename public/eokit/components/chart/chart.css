@@ -1,0 +1,88 @@
+/* ---- График ----------------------------------------------------------------- */
+
+/* Слева — подписи делений (столбец по самой широкой), справа — поле: SVG в
+   пикселях поля, поверх — вертикаль, точки и подсказка. Подписи оси X под полем.
+   Линия 2 px, сравнение — пунктир 1,5 px, сетка — волосяные линии, заливка под
+   основным рядом — единственный градиент. Цвет ряда — --ui-chart-c: акцент,
+   сравнение или тон кита (data-tone). Подсказка — кожа белой подсказки кита. */
+.ui-chart {
+  --ui-chart-h: 200px;
+  --ui-chart-line: var(--ui-accent);
+  --ui-chart-compare: var(--ui-fg-3);
+  --ui-chart-grid: var(--ui-line);
+  --ui-chart-cursor: var(--ui-line-strong);
+  /* Кольцо точки — цвет того, на чём лежит график: на плашке — --ui-plate. */
+  --ui-chart-bg: var(--ui-surface);
+  --ui-chart-area: 0.16;
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding-top: 8px;
+  color: var(--ui-fg-3);
+  font: 400 var(--ui-text-2xs) / var(--ui-leading-2xs) var(--ui-font);
+}
+:is(.ui-chart__series, .ui-chart__dot, .ui-chart__key) { --ui-chart-c: var(--ui-chart-line); }
+:is(.ui-chart__series, .ui-chart__dot, .ui-chart__key)[data-compare] { --ui-chart-c: var(--ui-chart-compare); }
+:is(.ui-chart__series, .ui-chart__dot, .ui-chart__key)[data-tone] { --ui-chart-c: var(--ui-tone); }
+
+/* Легенда — у двух рядов и больше: ключ линией, как сам ряд. */
+.ui-chart__legend { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px 16px; margin: -8px 0 12px; color: var(--ui-fg-2); }
+.ui-chart__legend-item { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.ui-chart__key { flex: none; width: 12px; height: 2px; border-radius: 1px; background: var(--ui-chart-c); }
+.ui-chart__key[data-compare] { background: linear-gradient(90deg, var(--ui-chart-c) 0 4px, transparent 4px 8px, var(--ui-chart-c) 8px); }
+
+/* Подписи делений — в одной ячейке, каждая на высоте своей доли поля. */
+.ui-chart__y { display: grid; height: var(--ui-chart-h); }
+.ui-chart__y > span { grid-area: 1 / 1; align-self: start; justify-self: end; transform: translateY(calc(var(--ui-chart-h) * (1 - var(--ui-chart-p)) - 50%)); white-space: nowrap; }
+
+.ui-chart__plot { position: relative; height: var(--ui-chart-h); border-radius: var(--ui-r-xs); outline: none; direction: ltr; touch-action: pan-y; }
+.ui-chart__plot:focus-visible { box-shadow: 0 0 0 var(--ui-focus-w-sm) var(--ui-focus); }
+.ui-chart__svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.ui-chart__grid { fill: none; stroke: var(--ui-chart-grid); stroke-width: 1; shape-rendering: crispEdges; }
+.ui-chart__line { fill: none; stroke: var(--ui-chart-c); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ui-chart__series[data-compare] .ui-chart__line { stroke-width: 1.5; stroke-dasharray: 4 4; }
+.ui-chart__fill stop { stop-color: var(--ui-chart-c); stop-opacity: var(--ui-chart-area); }
+.ui-chart__fill stop + stop { stop-opacity: 0; }
+.ui-chart__empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--ui-fg-2); font-size: var(--ui-text-sm); line-height: var(--ui-leading-sm); }
+
+/* Вертикаль, точки и подсказка стоят по --ui-chart-x/-y; показ — без перехода. */
+.ui-chart__cursor { position: absolute; top: 0; bottom: 0; left: 0; width: 1px; background: var(--ui-chart-cursor); transform: translateX(var(--ui-chart-x, 0)); visibility: hidden; pointer-events: none; }
+.ui-chart__dot { position: absolute; top: 0; left: 0; --ui-chart-dot: 10px; width: var(--ui-chart-dot); height: var(--ui-chart-dot); margin: calc(var(--ui-chart-dot) / -2) 0 0 calc(var(--ui-chart-dot) / -2); border-radius: 50%; background: var(--ui-chart-c); box-shadow: 0 0 0 2px var(--ui-chart-bg); transform: translate(var(--ui-chart-x, 0), var(--ui-chart-y, 0)); visibility: hidden; pointer-events: none; }
+.ui-chart__tip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  display: grid;
+  gap: 2px;
+  padding: var(--ui-tooltip-pad);
+  border-radius: var(--ui-tooltip-r);
+  background: var(--ui-pop);
+  color: var(--ui-fg-2);
+  filter: var(--ui-tooltip-surface-shadow);
+  font: 400 var(--ui-tooltip-text) / var(--ui-tooltip-leading) var(--ui-font);
+  white-space: nowrap;
+  transform: translateX(calc(var(--ui-chart-x, 0px) + 12px));
+  visibility: hidden;
+  pointer-events: none;
+}
+.ui-chart__tip[data-side="left"] { transform: translateX(calc(var(--ui-chart-x, 0px) - 100% - 12px)); }
+.ui-chart__tip-row { display: flex; align-items: center; gap: 8px; }
+.ui-chart__tip-row > b { color: var(--ui-fg); font-weight: 500; }
+.ui-chart__tip-row > span:empty { display: none; }
+.ui-chart__plot.is-active > :is(.ui-chart__cursor, .ui-chart__dot:not([data-off]), .ui-chart__tip) { visibility: visible; }
+
+/* Подписи оси X: крайние — у краёв поля, остальные — по центру своей точки. */
+.ui-chart__x { position: relative; grid-column: 2; height: var(--ui-leading-2xs); margin-top: 8px; direction: ltr; }
+.ui-chart__x > span { position: absolute; top: 0; left: 0; transform: translateX(calc(var(--ui-chart-x) - 50%)); white-space: nowrap; }
+.ui-chart__x > span:first-child { transform: translateX(var(--ui-chart-x)); }
+.ui-chart__x > span:last-child:not(:first-child) { transform: translateX(calc(var(--ui-chart-x) - 100%)); }
+
+@media (forced-colors: active) {
+  :is(.ui-chart__series, .ui-chart__dot, .ui-chart__key) { --ui-chart-c: CanvasText; }
+  .ui-chart__area { display: none; }
+  .ui-chart__tip { border: 1px solid CanvasText; }
+}

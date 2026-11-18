@@ -1,0 +1,114 @@
+/* ---- Число ----------------------------------------------------------------- */
+
+/* Числовое поле (модуль numberField): нативный input type=number и кнопки шага —
+   по бокам или обе справа (data-layout="end"). Рамка, наведение, кольцо фокуса и
+   недоступный вид — общие с .ui-input (input/input.css), у обёртки, одни на всё
+   поле: щелчок по кнопке переносит фокус на неё, поэтому кольцо держит
+   :focus-within. Отступ текста в раскладке справа — как у .ui-input. */
+.ui-number-field {
+  --ui-nf-h: var(--ui-h);
+  --ui-nf-step: var(--ui-h-sm);
+  --ui-nf-pad: calc((var(--ui-nf-h) - var(--ui-nf-step)) / 2);
+  --ui-nf-r: var(--ui-control-r);
+  --ui-nf-inset: var(--ui-control-px);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: var(--ui-nf-h);
+  padding: 0 var(--ui-nf-pad);
+}
+.ui-number-field--sm { --ui-nf-h: var(--ui-h-sm); --ui-nf-step: 20px; --ui-nf-r: var(--ui-control-r-sm); --ui-nf-inset: var(--ui-control-px-sm); border-radius: var(--ui-nf-r); }
+/* До монтирования хост — пустой div: держим высоту, чтобы форма не прыгала. */
+[data-ui-number-field]:not(.ui-number-field) { min-height: var(--ui-h); }
+/* Недоступное поле гаснет целиком, кнопки — вместе с ним, без своего затухания.
+   Путь в :has() — по детям: инпут всегда в __value, полосы цифр не обходятся. */
+.ui-number-field:has(> .ui-number-field__value > .ui-number-field__input:disabled) > .ui-number-field__step { opacity: 1; pointer-events: none; }
+
+/* Поле и слой бегущих цифр — одна ячейка грида и одни метрики текста: слой
+   ложится ровно на текст поля. Шрифт целиком на обоих — поле его не наследует,
+   а font сбрасывает цифровые настройки, поэтому они после него. */
+.ui-number-field__value { display: grid; grid-template: 100% / minmax(0, 1fr); flex: 1 1 auto; min-width: 0; height: 100%; text-align: center; }
+.ui-number-field[data-layout="end"] > .ui-number-field__value { padding-inline-start: calc(var(--ui-nf-inset) - var(--ui-nf-pad)); text-align: start; }
+.ui-number-field__input, .ui-number-field__digits {
+  grid-area: 1 / 1;
+  color: var(--ui-fg);
+  font: 400 var(--ui-text) / var(--ui-leading) var(--ui-font);
+  font-feature-settings: normal;
+  letter-spacing: normal;
+}
+.ui-number-field--sm :is(.ui-number-field__input, .ui-number-field__digits) { font-size: var(--ui-text-sm); line-height: var(--ui-leading-sm); }
+.ui-number-field__input {
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  text-align: inherit;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+/* Системные стрелки убраны совсем: даже со textfield Chromium держит под них 15 px. */
+.ui-number-field__input::-webkit-inner-spin-button, .ui-number-field__input::-webkit-outer-spin-button { margin: 0; appearance: none; -webkit-appearance: none; }
+.ui-number-field__input:disabled { cursor: not-allowed; }
+
+/* Слой цифр виден вместе с прозрачным текстом поля — только под классом модуля;
+   указатель, каретка и выделение остаются полю под ним. Скрытый слой разложен
+   (visibility, не display): модуль меряет, влезает ли значение, одним чтением. */
+.ui-number-field__digits {
+  display: flex;
+  visibility: hidden;
+  align-items: center;
+  justify-content: safe center;
+  overflow: hidden;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+.ui-number-field[data-layout="end"] .ui-number-field__digits { justify-content: flex-start; }
+.ui-number-field__value--digits > .ui-number-field__digits { visibility: visible; }
+.ui-number-field__value--digits > .ui-number-field__input { color: transparent; caret-color: var(--ui-fg); }
+/* Разряд — окно в строку, внутри едет полоса из 12 цифр (DIGIT_SLOTS модуля);
+   сдвиг пишет модуль. */
+.ui-number-field__digit { flex: 0 0 auto; height: 1lh; overflow: hidden; }
+.ui-number-field__strip { display: grid; grid-auto-rows: 1lh; height: 1200%; transition: transform var(--ui-duration-mark) var(--ui-ease); }
+.ui-number-field__digits--instant .ui-number-field__strip { transition: none; }
+
+/* Кнопка шага: подложка — слой ::before, при нажатии сжимается только он. */
+.ui-number-field__step {
+  position: relative;
+  isolation: isolate;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: var(--ui-nf-step);
+  height: var(--ui-nf-step);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: calc(var(--ui-nf-r) - var(--ui-nf-pad));
+  background: none;
+  color: var(--ui-fg-3);
+  font: inherit;
+  cursor: pointer;
+  appearance: none;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--ui-t), opacity var(--ui-t);
+}
+/* Шагать некуда (граница, поле только для чтения) — кнопка гаснет и не нажимается. */
+.ui-number-field__step[aria-disabled="true"] { opacity: var(--ui-opacity-disabled); pointer-events: none; }
+.ui-number-field__step::before { content: ""; position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: var(--ui-chip-hover); opacity: 0; transition: opacity var(--ui-t), transform var(--ui-spring-press-time) var(--ui-spring-press); }
+.ui-number-field__step > .ui-icon { --ui-icon-size: 16px; }
+.ui-number-field--sm .ui-number-field__step > .ui-icon { --ui-icon-size: 14px; }
+@media (hover: hover) and (pointer: fine) {
+  .ui-number-field__step:hover { color: var(--ui-fg); }
+  .ui-number-field__step:hover::before { opacity: 1; }
+}
+.ui-number-field__step:active { color: var(--ui-fg); }
+.ui-number-field__step:active::before { opacity: 1; transform: scale(0.88); }
+.ui-number-field__step:focus-visible { outline: none; color: var(--ui-fg); }
+.ui-number-field__step:focus-visible::before { opacity: 1; }

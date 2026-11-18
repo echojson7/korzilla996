@@ -1,0 +1,85 @@
+/* ---- Прогресс -------------------------------------------------------------- */
+
+/* Полоса стоит парой с числом: без числа она не читается. Доля — --ui-value без
+   единиц (0–100), её же берёт кольцо; тон — data-tone. Заливка во всю ширину
+   выезжает слева трансформом (не width: тот перекладывал бы полосу каждый кадр),
+   полоса её обрезает. У полосы без aria-valuenow срок неизвестен: по ней бежит
+   отрезок, тоже трансформом; вне экрана он стоит (data-offscreen ставит модуль
+   spinner). */
+.ui-progress { display: grid; gap: 6px; min-width: 0; }
+.ui-progress__head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; min-width: 0; }
+.ui-progress__label { min-width: 0; font-weight: 500; }
+.ui-progress__value { flex: none; color: var(--ui-fg-2); font-size: var(--ui-text-sm); }
+.ui-progress__bar {
+  position: relative;
+  display: block;
+  height: var(--ui-progress-h, 6px);
+  overflow: hidden;
+  border-radius: var(--ui-r-full);
+  background: var(--ui-line);
+}
+.ui-progress__bar::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 100%;
+  border-radius: inherit;
+  background: var(--ui-tone, var(--ui-accent));
+  transform: translateX(calc((var(--ui-value, 0) - 100) * 1%));
+  transition: transform var(--ui-duration-progress) var(--ui-ease);
+}
+.ui-progress__bar:not([aria-valuenow])::before { width: 40%; transform: none; animation: ui-progress-run 1.4s cubic-bezier(0.65, 0, 0.35, 1) infinite; }
+@keyframes ui-progress-run { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+.ui-progress--sm { --ui-progress-h: 4px; gap: 4px; font-size: var(--ui-text-sm); }
+
+/* Кольцо: та же доля по окружности; число в центре — у среднего и крупного. */
+.ui-progress-ring { position: relative; display: inline-grid; place-items: center; flex: none; width: var(--ui-ring, 40px); height: var(--ui-ring, 40px); }
+.ui-progress-ring > svg { position: absolute; inset: 0; width: 100%; height: 100%; fill: none; stroke-width: var(--ui-ring-stroke, 3.5); transform: rotate(-90deg); }
+.ui-progress-ring__track { stroke: var(--ui-line); }
+/* Нулевая доля — без заливки: круглый конец штриха нулевой длины рисовал бы точку. */
+.ui-progress-ring__fill { stroke: var(--ui-tone, var(--ui-accent)); stroke-width: calc(var(--ui-ring-stroke, 3.5) * min(var(--ui-value, 0), 1)); stroke-linecap: round; stroke-dasharray: var(--ui-value, 0) 100; transition: stroke-dasharray var(--ui-duration-progress) var(--ui-ease); }
+.ui-progress-ring__value { font: 600 calc(var(--ui-ring, 40px) * 0.26) / 1 var(--ui-font); letter-spacing: -0.02em; }
+.ui-progress-ring--sm { --ui-ring: 20px; --ui-ring-stroke: 5; }
+.ui-progress-ring--lg { --ui-ring: 64px; --ui-ring-stroke: 3; }
+
+/* Шаги: сколько пройдено из нескольких (тур, мастер, анкета). Отрезок на шаг —
+   пройденный и текущий залиты (заливка едет трансформом, как у полосы); точки
+   (--dots) — для коротких рядов: текущая вытягивается в черту, пройденные
+   темнее будущих. Состояние шага — data-state="done | current" на нём, доля
+   для диктора — role="progressbar" с aria-valuenow на ряду. */
+.ui-progress-steps { --ui-steps-gap: 4px; display: flex; align-items: center; gap: var(--ui-steps-gap); min-width: 0; }
+.ui-progress-steps__step {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 8px;
+  height: var(--ui-progress-h, 4px);
+  overflow: hidden;
+  border-radius: var(--ui-r-full);
+  background: var(--ui-line);
+}
+.ui-progress-steps__step::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--ui-tone, var(--ui-accent));
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform var(--ui-duration-progress) var(--ui-ease);
+}
+.ui-progress-steps__step:dir(rtl)::before { transform-origin: right center; }
+.ui-progress-steps__step:is([data-state="done"], [data-state="current"])::before { transform: none; }
+/* Точки: 6, текущая — 16; ширина точки — мелкая метка, её и ведёт переход
+   (как активная точка карусели). */
+.ui-progress-steps--dots { --ui-steps-gap: 6px; }
+.ui-progress-steps--dots > .ui-progress-steps__step {
+  flex: none;
+  width: 6px;
+  min-width: 0;
+  height: 6px;
+  background: var(--ui-line-strong);
+  transition: width var(--ui-duration-progress) var(--ui-ease), background-color var(--ui-duration-progress) var(--ui-ease);
+}
+.ui-progress-steps--dots > .ui-progress-steps__step::before { display: none; }
+.ui-progress-steps--dots > [data-state="done"] { background: var(--ui-fg-3); }
+.ui-progress-steps--dots > [data-state="current"] { width: 16px; background: var(--ui-tone, var(--ui-fg)); }

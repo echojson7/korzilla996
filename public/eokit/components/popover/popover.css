@@ -1,0 +1,135 @@
+/* ---- Поповер и меню -------------------------------------------------------- */
+
+.ui-popover { position: relative; display: inline-flex; max-width: 100%; }
+
+.ui-popover__panel {
+  --ui-popover-gap: 6px;
+  --ui-popover-edge: 8px;
+  border-radius: calc(var(--ui-item-r) + var(--ui-list-pad));
+  left: var(--ui-popover-x, 0);
+  top: var(--ui-popover-y, 0);
+  min-width: var(--ui-list-min-w);
+  max-height: min(480px, var(--ui-popover-space, 100vh));
+}
+.ui-popover__panel[data-side="left"] { --ui-surface-from-x: 4px; --ui-surface-from-y: 0px; --ui-origin: right center; }
+.ui-popover__panel[data-side="right"] { --ui-surface-from-x: -4px; --ui-surface-from-y: 0px; --ui-origin: left center; }
+.ui-popover__panel[data-side="right"][data-align="start"] { --ui-origin: left top; }
+/* Календарь и выбор цвета всегда просят align start и растут из того же угла, что меню. */
+:is(.ui-popover__panel, .ui-datepicker__panel, .ui-colorpicker__panel)[data-side="bottom"][data-align="start"] { --ui-origin: var(--ui-inline-start) top; }
+.ui-popover__panel[data-side="bottom"][data-align="end"] { --ui-origin: var(--ui-inline-end) top; }
+:is(.ui-popover__panel, .ui-datepicker__panel, .ui-colorpicker__panel)[data-side="top"][data-align="start"] { --ui-origin: var(--ui-inline-start) bottom; }
+.ui-popover__panel[data-side="top"][data-align="end"] { --ui-origin: var(--ui-inline-end) bottom; }
+.ui-popover__panel[data-nested] { --ui-popover-gap: 2px; z-index: var(--ui-z-dropdown-nested); }
+
+/* Пункт меню — та же .ui-btn, перенастроенная переменными в строку списка
+   селекта: строка 32, поля 8, иконка 16 и зазор 8, текст 14, отмеченный пункт —
+   500, как выбранная строка. */
+.ui-popover__menu { display: flex; flex-direction: column; }
+.ui-popover__menu > .ui-popover { width: 100%; }
+.ui-popover__menu > .ui-btn,
+.ui-popover__menu > .ui-popover > .ui-btn,
+.ui-popover__fold > .ui-btn,
+.ui-popover__fold-list > .ui-btn {
+  --ui-btn-h: var(--ui-h);
+  --ui-btn-px: 8px;
+  --ui-btn-r: var(--ui-item-r);
+  --ui-btn-font: 400 var(--ui-text) / 1 var(--ui-font);
+  /* Текст пункта всегда основной: ghost-кнопка в меню иначе серела бы. */
+  --ui-btn-fg: var(--ui-fg);
+  --ui-btn-bg: transparent;
+  --ui-btn-edge: transparent;
+  --ui-btn-shadow: none;
+  --ui-btn-hover: var(--ui-chip);
+  --ui-btn-icon-fg: var(--ui-fg-2);
+  --ui-e3d: 18px;
+  /* Строка списка: иконки пунктов стоят столбцом с текстом пунктов без иконки. */
+  --ui-btn-icon-pad: 1;
+  gap: 8px;
+  width: 100%;
+  justify-content: flex-start;
+}
+/* По строкам ведут мышью — подсветка без перехода, иначе за курсором тянется след. */
+.ui-popover__menu .ui-btn::before { transition: none; }
+/* Опасный пункт красный: общее правило пунктов выше красит текст в --ui-fg. */
+.ui-popover__menu .ui-btn--destructive-ghost { --ui-btn-fg: var(--ui-danger); --ui-btn-icon-fg: currentColor; --ui-btn-hover: var(--ui-red-soft); }
+.ui-popover__menu .ui-btn:focus-visible::before { box-shadow: none; background: var(--ui-chip); }
+/* Хвост 16 после текста: панель по содержимому не прижимает подпись к краю, а
+   галочка, стрелка подменю и счётчик не липнут к ней — воздух как в списке селекта. */
+.ui-popover__menu .ui-btn__label { flex: 1; padding-inline-end: 16px; text-align: start; }
+.ui-popover__menu .ui-btn[aria-checked="true"] { font-weight: 500; }
+.ui-popover__menu .ui-btn > :is(.ui-kbd-group, .ui-kbd, .ui-badge) { margin-inline-start: auto; }
+
+/* Ветка меню: пункт, стрелка в слоте слева и список под ним, свёрнутый или
+   раскрытый (у стрелки aria-expanded; свёрнутому списку модуль ставит inert).
+   Пункт и стрелка — в одной ячейке сетки: стрелка поверх поля пункта, текст
+   пункта сдвинут на её слот. В меню с ветками слот есть у всех пунктов, поэтому
+   подписи стоят столбцом. Вложенный список — со сдвигом 24 и волосяной
+   направляющей под стрелкой родителя; раскрытие — строка сетки 0fr → 1fr,
+   как у дерева. Строка пункта — min-content, а не auto: пока доля списка
+   меньше 1fr, auto-строка растягивалась бы на свободное место, и пункт со
+   стрелкой ехал бы по центру растущей ветки. */
+.ui-popover__menu:has(.ui-popover__fold) .ui-btn:not(.ui-popover__fold-toggle) { --ui-btn-ps: 32px; }
+.ui-popover__fold {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: min-content 1fr;
+  align-content: start;
+  transition: grid-template-rows 200ms var(--ui-ease-out);
+}
+.ui-popover__fold:has(> .ui-popover__fold-toggle[aria-expanded="false"]) { grid-template-rows: min-content 0fr; transition-duration: 150ms; }
+/* Список гаснет и проявляется целиком, в такт высоте. На слабой машине (lite)
+   высота не анимируется — как вся анимация раскладки кита. */
+.ui-popover__fold-toggle[aria-expanded="false"] ~ .ui-popover__fold-list { opacity: 0; transition-duration: 150ms; }
+:root[data-ui-motion="lite"] .ui-popover__fold { transition: none; }
+.ui-popover__fold > .ui-btn { grid-area: 1 / 1; }
+.ui-popover__fold-toggle {
+  display: inline-grid; place-items: center; grid-area: 1 / 1; align-self: center; justify-self: start;
+  width: 24px; height: 24px; margin: 0; margin-inline-start: 4px; padding: 0;
+  border: 0; border-radius: var(--ui-r-sm); outline: none; background: none; color: var(--ui-fg-3);
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+/* Шеврон вниз, у свёрнутой ветки повёрнут по ходу текста. */
+.ui-popover__fold-toggle > .ui-icon { --ui-icon-size: 14px; --ui-turn: -90deg; transform: rotate(var(--ui-turn)); transition: --ui-turn var(--ui-duration-turn) var(--ui-ease); }
+.ui-popover__fold-toggle:dir(rtl) > .ui-icon { --ui-turn: 90deg; }
+.ui-popover__fold-toggle[aria-expanded="true"] > .ui-icon { --ui-turn: 0deg; }
+@media (hover: hover) and (pointer: fine) {
+  .ui-popover__fold-toggle:hover { background: var(--ui-chip-hover); color: var(--ui-fg); }
+  .ui-popover__fold > .ui-btn:has(+ .ui-popover__fold-toggle:hover) { --ui-btn-face: var(--ui-btn-hover); }
+  .ui-popover__fold > .ui-btn:not([data-pick]):hover + .ui-popover__fold-toggle { color: var(--ui-fg); }
+}
+.ui-popover__fold-list {
+  display: flex; flex-direction: column; min-height: 0; overflow: hidden;
+  transition: opacity 200ms var(--ui-ease-out);
+  margin-inline-start: 16px; padding-inline-start: 8px; box-shadow: inset 1px 0 var(--ui-line);
+}
+/* Малый поповер — как малый селект: строки 28, текст 13, остальное (поля, иконки,
+   зазоры) как у среднего; панель по содержимому. */
+.ui-popover__panel[data-size="sm"] { min-width: var(--ui-list-min-w-sm); border-radius: calc(var(--ui-item-r-sm) + var(--ui-list-pad)); }
+.ui-popover__panel[data-size="sm"] .ui-popover__menu .ui-btn { --ui-btn-h: var(--ui-h-sm); --ui-btn-r: var(--ui-item-r-sm); --ui-btn-font: 400 var(--ui-text-sm) / 1 var(--ui-font); }
+/* Пункт с описанием: в подписи после текста — .ui-popover__desc, вторая строка
+   13/16 приглушённая, как подзаголовок строки списка. Строка 44 (4 + 20 + 16 + 4),
+   у малого меню 40 (13/16 и 12/16). Вести слева может аватар 32. */
+.ui-popover__menu .ui-btn:has(> .ui-btn__label > .ui-popover__desc) { --ui-btn-h: 44px; }
+.ui-popover__menu .ui-btn__label:has(> .ui-popover__desc) { line-height: var(--ui-leading); }
+.ui-popover__desc { display: block; overflow: hidden; color: var(--ui-fg-2); font: 400 var(--ui-text-sm) / var(--ui-leading-sm) var(--ui-font); text-overflow: ellipsis; }
+.ui-popover__panel[data-size="sm"] .ui-popover__menu .ui-btn:has(> .ui-btn__label > .ui-popover__desc) { --ui-btn-h: 40px; }
+.ui-popover__panel[data-size="sm"] .ui-popover__menu .ui-btn__label:has(> .ui-popover__desc) { line-height: var(--ui-leading-sm); }
+.ui-popover__panel[data-size="sm"] .ui-popover__desc { font-size: var(--ui-text-2xs); }
+/* Подпись группы — одна на меню и палитру команд (--ui-group-label). */
+.ui-popover__menu-label, .ui-command__heading { padding: var(--ui-group-label-pad); color: var(--ui-group-label-fg); font: var(--ui-group-label); }
+.ui-popover__menu-sep { height: 1px; margin: 4px -4px; background: var(--ui-line); }
+/* Галочка у правого края — одна у пункта-флажка или варианта (menuitemcheckbox,
+   menuitemradio) и у строки селекта. В меню видна только у отмеченного. */
+.ui-popover__menu .ui-popover__check, .ui-select__check { --ui-icon-size: 18px; margin-inline-start: auto; color: var(--ui-accent); stroke-width: 1.75; }
+.ui-popover__menu .ui-popover__check { visibility: hidden; }
+.ui-popover__menu [aria-checked="true"] > .ui-popover__check { visibility: visible; }
+/* Поиск по пунктам: поле во всю ширину над списком, без своей рамки. */
+/* Строка поиска — одна у меню и палитры команд: иконка, поле во всю ширину без
+   своей рамки, волосяная черта снизу. Размеры у каждой свои. */
+.ui-popover__search, .ui-command__search { display: flex; align-items: center; box-shadow: inset 0 -1px var(--ui-line); }
+:is(.ui-popover__search, .ui-command__search) > .ui-icon { color: var(--ui-fg-3); }
+.ui-popover__search > input, .ui-command__input { flex: 1; min-width: 0; height: 100%; margin: 0; padding: 0; border: 0; background: none; }
+:is(.ui-popover__search > input, .ui-command__input)::placeholder { color: var(--ui-fg-3); opacity: 1; }
+.ui-popover__search { gap: 8px; height: var(--ui-h); margin: -4px -4px 4px; padding: 0 10px; }
+.ui-popover__search > .ui-icon { --ui-icon-size: 14px; }
+.ui-popover__search > input { outline: none; color: inherit; font: inherit; }

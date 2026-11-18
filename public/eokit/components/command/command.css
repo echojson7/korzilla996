@@ -1,0 +1,81 @@
+/* ---- Палитра команд -------------------------------------------------------- */
+
+/* Слой модуль уносит в body и ловит им нажатия мимо; подложка только красит.
+   Карточка — как окно модалки кита (радиус и тень те же): 560 px на 12 vh. Центр — отступами, transform занят движением. */
+.ui-command__layer { position: fixed; inset: 0; z-index: var(--ui-z-modal); contain: layout style; }
+.ui-command__backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--ui-scrim);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--ui-duration-surface-out) var(--ui-ease-out);
+}
+/* data-open модуль ставит слою на время открытия: подложка проявляется за время
+   входа, а гаснет за время ухода (базовое правило). Без :has() по карточке. */
+.ui-command__layer[data-open] > .ui-command__backdrop { opacity: 1; transition-duration: var(--ui-duration-surface-in); }
+@starting-style { .ui-command__layer[data-open] > .ui-command__backdrop { opacity: 0; } }
+
+.ui-command__dialog {
+  --ui-surface-from-y: -6px;
+  --ui-surface-scale: 0.98;
+  position: absolute;
+  top: 12vh;
+  inset-inline: 0;
+  display: flex;
+  flex-direction: column;
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(88vh - 16px);
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: var(--ui-r-modal);
+  background: var(--ui-pop);
+  color: var(--ui-fg);
+  box-shadow: var(--ui-shadow-pop);
+}
+
+/* Шапка с полем поиска — выше крупного контрола на 8: 48 у мыши, 56 у пальца. */
+.ui-command__search { flex: none; gap: 12px; height: calc(var(--ui-h-lg) + 8px); padding: 0 16px; }
+.ui-command__search > .ui-icon { --ui-icon-size: calc(var(--ui-control-icon) + 4px); }
+.ui-command__input { outline: 2px solid transparent; color: var(--ui-fg); font: 400 var(--ui-text) / var(--ui-leading) var(--ui-font); }
+.ui-command__search > :is(.ui-kbd, .ui-kbd-group) { flex: none; pointer-events: none; }
+
+/* Прокручивает только список: модуль сам двигает его scrollTop за подсветкой. */
+.ui-command__list {
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: min(400px, 56vh);
+  margin: 0;
+  padding: 4px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+/* Черта только между видимыми группами: при поиске скрытые соседи её не дают. */
+.ui-command__group:not([hidden]) ~ .ui-command__group:not([hidden]) { margin-top: 4px; padding-top: 4px; box-shadow: inset 0 1px var(--ui-line); }
+.ui-command__item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 8px;
+  height: var(--ui-h);
+  padding: 0 8px;
+  border-radius: var(--ui-item-r);
+  color: var(--ui-fg);
+  cursor: pointer;
+  user-select: none;
+}
+/* Пункт — как строка дерева в сайдбаре admin2: высота контрола, поле и зазор 8, слот иконки 20, 3D на 2 больше. */
+.ui-command__item > :is(.ui-icon, .ui-e3d) { --ui-icon-size: 20px; --ui-e3d: 22px; color: var(--ui-fg-2); }
+.ui-command__item > .ui-e3d { margin-inline: -1px; }
+.ui-command__item.is-active { background: var(--ui-chip); }
+.ui-command__item.is-active > .ui-icon { color: var(--ui-fg); }
+.ui-command__item[aria-disabled="true"] { opacity: var(--ui-opacity-disabled); pointer-events: none; }
+.ui-command__label { grid-column: 2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Строка запроса (data-command-query): приставка приглушена, запрос — основным. */
+.ui-command__item[data-command-query] > .ui-command__label { color: var(--ui-fg-2); }
+.ui-command__query { color: var(--ui-fg); }
+.ui-command__meta { grid-column: 3; color: var(--ui-fg-3); font-size: var(--ui-text-2xs); white-space: nowrap; }
+.ui-command__empty { margin: 0; padding: 28px 16px; color: var(--ui-fg-2); text-align: center; }
+.ui-command__foot { display: flex; flex: none; align-items: center; gap: 12px; min-height: 32px; padding: 0 12px; color: var(--ui-fg-3); font-size: var(--ui-text-2xs); box-shadow: inset 0 1px var(--ui-line); }
+.ui-command__foot:empty { display: none; }
+.ui-command__foot > span { display: inline-flex; align-items: center; gap: 6px; }

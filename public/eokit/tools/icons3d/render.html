@@ -1,0 +1,441 @@
+<!doctype html>
+<!-- Рендер объёмных иконок кита. Страницу открывает render.mjs в безголовом Chromium,
+     вызывает renderIcon(spec) для каждой иконки из specs/ и пишет картинки в eokit/icons3d.
+     Сцена: детали из слоёв (силуэт lucide с фаской, плита, брусок, цилиндр со скруглённой
+     кромкой, тело вращения, кольцо, трубка, шар), матовый пластик, перелив цвета по детали.
+     Набор снимается в look "studio": вид сверху-сбоку, предмет вписан в кадр, свет набирается
+     из 16 проходов (купол направлений + софтбокс), рендер в 4–8 раз крупнее итога.
+     Глянца нет намеренно — владелец его отклонил. -->
+<html><head><meta charset="utf-8">
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.js", "three/addons/": "./vendor/" } }</script>
+</head><body style="margin:0;background:transparent">
+<script type="module">
+import * as THREE from "three";
+import { SVGLoader } from "three/addons/SVGLoader.js";
+import { RoomEnvironment } from "three/addons/RoomEnvironment.js";
+import { RoundedBoxGeometry } from "three/addons/RoundedBoxGeometry.js";
+
+const SIZE = 640;
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setSize(SIZE, SIZE);
+renderer.setPixelRatio(1);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.NeutralToneMapping;
+renderer.toneMappingExposure = 0.86;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.VSMShadowMap;
+document.body.appendChild(renderer.domElement);
+const pmrem = new THREE.PMREMGenerator(renderer);
+const env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+/* Студия для look "studio": серая комната, большой софтбокс слева сверху, полоса света
+   сверху и слабый заполняющий справа. Фаски ловят софтбокс мягкой полосой, низ уходит
+   в тень — объём читается без бликов-точек. */
+function studioEnv() {
+  const room = new THREE.Scene();
+  room.background = new THREE.Color(0x3c3f45);
+  const panel = (w, h, pos, power) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: new THREE.Color(1, 1, 1).multiplyScalar(power), side: THREE.DoubleSide }));
+    m.position.set(...pos); m.lookAt(0, 0, 0); room.add(m);
+  };
+  panel(16, 16, [-9, 9, 9], 2.6);
+  panel(26, 7, [0, 13, 1], 1.5);
+  panel(10, 16, [13, -1, 7], 0.7);
+  panel(26, 26, [0, 0, 18], 0.55);
+  return pmrem.fromScene(room, 0.02).texture;
+}
+const studio = studioEnv();
+
+const loader = new SVGLoader();
+const svgOf = (d, rule = "nonzero") => `<svg xmlns="http://www.w3.org/2000/svg"><g transform="translate(-12 12) scale(1 -1)"><path d="${d}" fill="#000" fill-rule="${rule}"/></g></svg>`;
+
+/* soft — матовый пластик, краска, ткань (по умолчанию); satin — гладкий, но без блеска;
+   silver — шлифованный металл; gold — латунь; paper — бумага и картон; lens — стекло
+   объектива и экраны, единственный материал с лёгким отблеском. */
+const MATERIALS = {
+  soft: { roughness: 0.55, metalness: 0, sheen: 0.25, sheenRoughness: 0.8 },
+  satin: { roughness: 0.38, metalness: 0 },
+  silver: { roughness: 0.42, metalness: 0.35 },
+  gold: { roughness: 0.4, metalness: 0.45 },
+  paper: { roughness: 0.75, metalness: 0, sheen: 0.3, sheenRoughness: 0.9 },
+  lens: { roughness: 0.16, metalness: 0, clearcoat: 0.4, clearcoatRoughness: 0.2 },
+  clay: { roughness: 0.72, metalness: 0, specularIntensity: 0.35 },
+  /* plastic — матовый пластик look "studio": ровный цвет, мягкие полосы света на фасках. */
+  plastic: { roughness: 0.5, metalness: 0, specularIntensity: 0.45 },
+  frost: { roughness: 0.32, metalness: 0, transmission: 0.95, thickness: 2.4, ior: 1.3, attenuationDistance: 6 },
+};
+
+/* Зерно для кожи и матового пластика: шум как карта рельефа. */
+let grain = null;
+function grainTexture() {
+  if (grain) return grain;
+  const c = document.createElement("canvas"); c.width = c.height = 256;
+  const g = c.getContext("2d"), img = g.createImageData(256, 256);
+  let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  for (let i = 0; i < img.data.length; i += 4) { const v = 128 + (rnd() - 0.5) * 120; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255; }
+  g.putImageData(img, 0, 0);
+  grain = new THREE.CanvasTexture(c); grain.wrapS = grain.wrapT = THREE.RepeatWrapping; grain.repeat.set(6, 6);
+  return grain;
+}
+
+function material(layer) {
+  const preset = MATERIALS[layer.mat ?? "soft"];
+  if (!preset) throw new Error(`нет материала «${layer.mat}»`);
+  const metal = preset.metalness > 0.2;
+  const m = new THREE.MeshPhysicalMaterial({ color: layer.grad ? new THREE.Color("#ffffff") : vivid(layer.color), map: layer.grad ? rampTexture(layer.grad) : null, envMapIntensity: layer.env ?? (STUDIO ? 1 : metal ? 0.35 : preset === MATERIALS.clay ? 0.25 : 0.55), ...preset, ...(layer.props ?? {}) });
+  m.dithering = true;
+  if (layer.bump) { m.bumpMap = grainTexture(); m.bumpScale = layer.bump; }
+  if (layer.emissive) { m.emissive = new THREE.Color(layer.emissive); m.emissiveIntensity = layer.emissiveIntensity ?? 0.4; }
+  return m;
+}
+
+/* Контур в точки без повторов: на стыках дуг SVGLoader даёт совпадающие точки,
+   и фаска на них выстреливает иглами. */
+function clean(points) {
+  const out = [];
+  for (const p of points) if (!out.length || out.at(-1).distanceTo(p) > 1e-3) out.push(p);
+  if (out.length > 2 && out[0].distanceTo(out.at(-1)) < 1e-3) out.pop();
+  return out;
+}
+
+/* Перелив цвета по детали, как у Fluent: стопы [t, цвет] сверху вниз (или по углу gradAngle).
+   Два стопа с одним t дают чёткую границу — так делаются двухцветные корпуса. Цвет берётся
+   из полоски-текстуры по координате вдоль градиента, поэтому граница резкая и на больших гранях. */
+function paint(geometry, layer) {
+  if (!layer.grad) return geometry;
+  const a = ((layer.gradAngle ?? 90) * Math.PI) / 180, dx = Math.cos(a), dy = -Math.sin(a);
+  const pos = geometry.attributes.position, n = pos.count;
+  let lo = Infinity, hi = -Infinity;
+  const proj = new Float32Array(n);
+  for (let i = 0; i < n; i++) { const v = pos.getX(i) * dx + pos.getY(i) * dy; proj[i] = v; lo = Math.min(lo, v); hi = Math.max(hi, v); }
+  const uv = new Float32Array(n * 2);
+  for (let i = 0; i < n; i++) uv.set([(proj[i] - lo) / (hi - lo || 1), 0.5], i * 2);
+  geometry.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
+  return geometry;
+}
+
+/* Цвета сочнее заданных: насыщенность ×VIVID, а светлые цветные тона чуть глубже —
+   пастель на свету выглядит тусклой. Нейтраль (графит, молочный, сталь) не трогается. */
+const VIVID = 1.1;
+let STUDIO = false;
+function vivid(css) {
+  const c = new THREE.Color(css), hsl = {};
+  if (STUDIO) return c;
+  c.getHSL(hsl, THREE.SRGBColorSpace);
+  if (hsl.s < 0.2) return c;
+  const l = hsl.l > 0.5 ? hsl.l - (hsl.l - 0.5) * 0.15 : hsl.l;
+  return c.setHSL(hsl.h, Math.min(1, hsl.s * VIVID), l, THREE.SRGBColorSpace);
+}
+
+function rampTexture(stops) {
+  const c = document.createElement("canvas"); c.width = 512; c.height = 1;
+  const g = c.getContext("2d"), lg = g.createLinearGradient(0, 0, 512, 0);
+  for (const [t, col] of stops) lg.addColorStop(t, `#${vivid(col).getHexString(THREE.SRGBColorSpace)}`);
+  g.fillStyle = lg; g.fillRect(0, 0, 512, 1);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace; tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+  tex.minFilter = THREE.LinearFilter; tex.generateMipmaps = false;
+  return tex;
+}
+
+/* Нормали со «складкой»: соседние грани под малым углом сглаживаются, острые углы остаются.
+   ExtrudeGeometry отдаёт плоские нормали — фаска из-за них шла полосками. Плоские крышки
+   (смотрят прямо на нас или от нас) держат свою нормаль, чтобы кромка не размазывалась по грани. */
+function crease(geometry, angle = 0.5) {
+  const pos = geometry.attributes.position, n = pos.count, faces = n / 3;
+  const fn = [], groups = new Map(), key = (i) => `${Math.round(pos.getX(i) * 1e4)},${Math.round(pos.getY(i) * 1e4)},${Math.round(pos.getZ(i) * 1e4)}`;
+  const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
+  for (let f = 0; f < faces; f++) {
+    a.fromBufferAttribute(pos, f * 3); b.fromBufferAttribute(pos, f * 3 + 1); c.fromBufferAttribute(pos, f * 3 + 2);
+    fn.push(new THREE.Vector3().crossVectors(b.sub(a), c.sub(a)));
+    for (let k = 0; k < 3; k++) { const id = key(f * 3 + k); if (!groups.has(id)) groups.set(id, []); groups.get(id).push(f); }
+  }
+  const cos = Math.cos(angle), normals = new Float32Array(n * 3), sum = new THREE.Vector3();
+  for (let i = 0; i < n; i++) {
+    const own = fn[Math.floor(i / 3)], dir = own.clone().normalize();
+    sum.set(0, 0, 0);
+    if (Math.abs(dir.z) > 0.9995) sum.copy(dir);
+    else for (const f of groups.get(key(i))) if (fn[f].clone().normalize().dot(dir) > cos) sum.add(fn[f]);
+    sum.normalize();
+    normals.set([sum.x, sum.y, sum.z], i * 3);
+  }
+  geometry.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
+  return geometry;
+}
+
+function shapeMesh(layer) {
+  const data = loader.parse(svgOf(layer.d, layer.rule));
+  const shapes = data.paths.flatMap((path) => SVGLoader.createShapes(path)).map((shape) => {
+    const solid = new THREE.Shape(clean(shape.getPoints(24)));
+    solid.holes = shape.holes.map((hole) => new THREE.Path(clean(hole.getPoints(24))));
+    return solid;
+  });
+  const depth = layer.depth ?? 1.6, bevel = layer.bevel ?? Math.min(0.9, depth * 0.5);
+  const size = bevel * (layer.bevelSize ?? 0.8);
+  const geometry = new THREE.ExtrudeGeometry(shapes, { depth, bevelEnabled: bevel > 0, bevelThickness: bevel, bevelSize: size, bevelOffset: -size, bevelSegments: 16, curveSegments: 1 });
+  geometry.translate(0, 0, layer.z ?? 0);
+  crease(geometry);
+  return new THREE.Mesh(paint(geometry, layer), material(layer));
+}
+
+/* Плита со скруглёнными углами и круглой кромкой: rrect [w, h], r — радиус углов, depth —
+   толщина, bevel — радиус кромки; центр (x, y) в сетке lucide, слой начинается с z.
+   В отличие от бруска, углы и кромка скругляются по-разному: тонкая плита с крупными углами. */
+function plateMesh(layer) {
+  const [w, h] = layer.rrect, r = Math.min(layer.r ?? 1.2, w / 2, h / 2);
+  const s = new THREE.Shape(), x = -w / 2, y = -h / 2;
+  s.moveTo(x + r, y); s.lineTo(x + w - r, y); s.absarc(x + w - r, y + r, r, -Math.PI / 2, 0);
+  s.lineTo(x + w, y + h - r); s.absarc(x + w - r, y + h - r, r, 0, Math.PI / 2);
+  s.lineTo(x + r, y + h); s.absarc(x + r, y + h - r, r, Math.PI / 2, Math.PI);
+  s.lineTo(x, y + r); s.absarc(x + r, y + r, r, Math.PI, Math.PI * 1.5);
+  const depth = layer.depth ?? 1, bevel = Math.min(layer.bevel ?? depth * 0.45, r * 0.95);
+  const core = Math.max(0.01, depth - bevel * 2);
+  const geometry = new THREE.ExtrudeGeometry(new THREE.Shape(clean(s.getPoints(16))), { depth: core, bevelEnabled: true, bevelThickness: bevel, bevelSize: bevel, bevelOffset: -bevel, bevelSegments: 16, curveSegments: 1 });
+  geometry.translate(0, 0, bevel);
+  crease(geometry);
+  const m = new THREE.Mesh(paint(geometry, layer), material(layer));
+  const [px, py, pz] = layer.pos ?? [12, 12, 0];
+  m.position.set(px - 12, 12 - py, pz);
+  if (layer.rot) m.rotation.set(...layer.rot);
+  return m;
+}
+
+function tubeMesh(layer) {
+  const data = loader.parse(svgOf(layer.tube));
+  const group = new THREE.Group();
+  const r = layer.r ?? 1, z = (layer.z ?? 0) + r;
+  for (const path of data.paths) for (const sub of path.subPaths) {
+    const pts = sub.getSpacedPoints(Math.max(24, Math.round(sub.getLength() * 8)));
+    const curve = new THREE.CurvePath();
+    for (let i = 1; i < pts.length; i++) curve.add(new THREE.LineCurve3(new THREE.Vector3(pts[i - 1].x, pts[i - 1].y, z), new THREE.Vector3(pts[i].x, pts[i].y, z)));
+    const mat = material(layer);
+    group.add(new THREE.Mesh(new THREE.TubeGeometry(curve, pts.length * 2, r, 32, false), mat));
+    if (layer.caps !== false) for (const p of [pts[0], pts.at(-1)]) { const s = new THREE.Mesh(new THREE.SphereGeometry(r, 32, 16), mat); s.position.set(p.x, p.y, z); group.add(s); }
+  }
+  return group;
+}
+
+function sphereMesh(layer) {
+  const m = new THREE.Mesh(paint(new THREE.SphereGeometry(layer.r, 64, 32), layer), material(layer));
+  m.position.set(layer.x - 12, 12 - layer.y, (layer.z ?? 0) + layer.r * (layer.flat ?? 1));
+  m.scale.z = layer.flat ?? 1;
+  return m;
+}
+
+/* Скруглённый брусок: размеры, радиус, центр в сетке lucide (x, y) и z, поворот. */
+function boxMesh(layer) {
+  const [w, h, d] = layer.rbox;
+  const m = new THREE.Mesh(paint(new RoundedBoxGeometry(w, h, d, 10, layer.r ?? 0.6), layer), material(layer));
+  const [x, y, z] = layer.pos ?? [12, 12, 0];
+  m.position.set(x - 12, 12 - y, z + d / 2);
+  if (layer.rot) m.rotation.set(...layer.rot);
+  return m;
+}
+
+/* Цилиндр по оси z (axis "y" — стоит вертикально): центр (x, y), радиус (r2 — второй
+   торец), высота; для оси z слой начинается с z, для оси y z — его центр. */
+function cylMesh(layer) {
+  const up = layer.axis === "y";
+  const seg = layer.seg ?? 64;
+  let geometry;
+  if (seg > 12) {
+    /* Круглая кромка, как у настоящей детали: профиль со скруглёнными углами вращается. */
+    const top = layer.r, bottom = layer.r2 ?? layer.r, h = layer.h;
+    const f = Math.min(layer.fillet ?? 0.32, h / 3, Math.max(top, bottom) / 3);
+    const ft = Math.min(f, top * 0.9), fb = Math.min(f, bottom * 0.9), pts = [new THREE.Vector2(0, -h / 2)];
+    const arc = (cx, cy, rr, a0, a1) => { for (let i = 0; i <= 8; i++) { const t = a0 + ((a1 - a0) * i) / 8; pts.push(new THREE.Vector2(cx + rr * Math.cos(t), cy + rr * Math.sin(t))); } };
+    if (fb > 0.01) arc(bottom - fb, -h / 2 + fb, fb, -Math.PI / 2, 0); else pts.push(new THREE.Vector2(bottom, -h / 2));
+    if (ft > 0.01) arc(top - ft, h / 2 - ft, ft, 0, Math.PI / 2); else pts.push(new THREE.Vector2(top, h / 2));
+    pts.push(new THREE.Vector2(0, h / 2));
+    geometry = new THREE.LatheGeometry(pts, seg);
+  } else geometry = new THREE.CylinderGeometry(layer.r, layer.r2 ?? layer.r, layer.h, seg, 1);
+  if (layer.twist) geometry.rotateY(layer.twist);
+  if (!up) geometry.rotateX(Math.PI / 2);
+  const m = new THREE.Mesh(paint(geometry, layer), material(layer));
+  m.position.set(layer.x - 12, 12 - layer.y, up ? layer.z ?? 0 : (layer.z ?? 0) + layer.h / 2);
+  return m;
+}
+
+/* Тело вращения (колокол, чашка): профиль [r, y] в сетке lucide, ось вертикальная в x. */
+function latheMesh(layer) {
+  const geometry = new THREE.LatheGeometry(layer.lathe.map(([r, y]) => new THREE.Vector2(r, 12 - y)), 96);
+  const m = new THREE.Mesh(paint(geometry, layer), material(layer));
+  m.position.set(layer.x - 12, 0, layer.z ?? 0);
+  return m;
+}
+
+/* Кольцо: центр (x, y), радиус R, толщина r; axis z — смотрит на нас, y — лежит,
+   x — стоит боком (кольцо пружины блокнота). */
+function torusMesh(layer) {
+  const geometry = new THREE.TorusGeometry(layer.R, layer.r, 32, 96, layer.arc ?? Math.PI * 2);
+  if (layer.axis === "y") geometry.rotateX(Math.PI / 2);
+  if (layer.axis === "x") geometry.rotateY(Math.PI / 2);
+  const m = new THREE.Mesh(paint(geometry, layer), material(layer));
+  m.position.set(layer.x - 12, 12 - layer.y, layer.z ?? 0);
+  return m;
+}
+
+function build(layer) {
+  if (layer.group) {
+    const g = new THREE.Group();
+    for (const child of layer.group) g.add(build(child));
+    if (layer.rot) g.rotation.set(...layer.rot);
+    if (layer.pos) g.position.set(...layer.pos);
+    return g;
+  }
+  return layer.tube ? tubeMesh(layer) : layer.sphere ? sphereMesh(layer) : layer.rbox ? boxMesh(layer) : layer.rrect ? plateMesh(layer) : layer.cyl ? cylMesh(layer) : layer.lathe ? latheMesh(layer) : layer.torus ? torusMesh(layer) : shapeMesh(layer);
+}
+
+/* studio: предмет вписывается в кадр по своим вершинам на экране — все иконки набора
+   одного размера и по центру, сколько бы ни весил силуэт. fill — доля кадра (0.86). */
+function studioCamera(spec) {
+  const fov = spec.fov ?? 18, camera = new THREE.PerspectiveCamera(fov, 1, 1, 400);
+  camera.position.set(0, 0, 13.35 / Math.tan((fov * Math.PI) / 360));
+  camera.lookAt(0, 0, 0);
+  camera.updateMatrixWorld();
+  return camera;
+}
+function fit(model, spec) {
+  const camera = studioCamera(spec), v = new THREE.Vector3();
+  for (let round = 0; round < 3; round++) {
+    model.updateMatrixWorld(true);
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    model.traverse((o) => {
+      if (!o.isMesh) return;
+      const pos = o.geometry.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld).project(camera);
+        x0 = Math.min(x0, v.x); x1 = Math.max(x1, v.x); y0 = Math.min(y0, v.y); y1 = Math.max(y1, v.y);
+      }
+    });
+    const k = (2 * (spec.fill ?? 0.86)) / Math.max(x1 - x0, y1 - y0);
+    model.scale.multiplyScalar(k);
+    model.position.x -= ((x0 + x1) / 2) * 13.35 * k;
+    model.position.y -= ((y0 + y1) / 2) * 13.35 * k;
+  }
+}
+
+/* spec: { layers, tiltX, tiltY, scale, dy, shadow, lamp }. Сетка lucide 24×24, y вниз,
+   z к зрителю. out — сторона картинки, type — формат. */
+window.renderIcon = (spec, out = 128, type = "image/webp", quality = 0.92) => {
+  STUDIO = spec.look === "studio";
+  const scene = new THREE.Scene();
+  scene.environment = STUDIO ? studio : env;
+  const model = new THREE.Group();
+  for (const layer of spec.layers) {
+    const mesh = build(layer);
+    mesh.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+    model.add(mesh);
+  }
+  model.rotation.set(spec.tiltX ?? (STUDIO ? 0.32 : 0.1), spec.tiltY ?? (STUDIO ? 0.55 : 0.12), 0);
+  model.scale.setScalar(spec.scale ?? 1);
+  model.position.y = spec.dy ?? 0;
+  scene.add(model);
+  if (STUDIO) fit(model, spec);
+
+  /* look "soft": свет большой софтбокс, без земли и тени под предметом — объём держится на
+     мягкой светотени самого предмета, как в иконках Яндекса. */
+  const soft = spec.look === "soft";
+  renderer.shadowMap.type = THREE.VSMShadowMap;
+  if (STUDIO) return shoot(scene, spec, out, type, quality);
+  renderer.toneMapping = THREE.NeutralToneMapping;
+  renderer.toneMappingExposure = soft ? 0.95 : 0.86;
+  const key = new THREE.DirectionalLight(0xffffff, soft ? 0.8 : 1.2);
+  key.position.set(-5, 9, 30);
+  key.castShadow = true;
+  key.shadow.mapSize.set(2048, 2048);
+  Object.assign(key.shadow.camera, { left: -18, right: 18, top: 18, bottom: -18, near: 1, far: 80 });
+  key.shadow.radius = 10; key.shadow.blurSamples = 24; key.shadow.bias = -0.0004;
+  scene.add(key);
+  /* Близкий точечный свет: на плоских гранях появляется перелив, как на фото. */
+  const lamp = new THREE.PointLight(0xffffff, spec.lamp ?? (soft ? 40 : 150), 0, 2); lamp.position.set(-9, 11, 16); scene.add(lamp);
+  const fill = new THREE.DirectionalLight(0xdfe8ff, soft ? 0.7 : 0.5); fill.position.set(14, -4, 10); scene.add(fill);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xcfd6e0, soft ? 0.6 : 0.35));
+  if (soft) scene.environmentIntensity = 1;
+
+  {
+  /* У soft — едва заметная тень касания: предмет не висит в пустоте, но и «пола» нет. */
+  const catcher = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), new THREE.ShadowMaterial({ opacity: spec.shadow ?? (soft ? 0.07 : 0.16) }));
+  catcher.position.z = -1.4; catcher.receiveShadow = true;
+  scene.add(catcher);
+  }
+
+  return shoot(scene, spec, out, type, quality, true);
+};
+
+/* look "studio": свет почти весь от окружения; направленный — только ради мягких теней
+   деталей друг на друга. Тень на пол — едва заметная. */
+/* Свет look "studio" на один проход. Рассеянный свет — купол направлений над предметом;
+   за проход берётся DOME из них со смещением, за все проходы — весь купол. Ключевой свет
+   слева сверху каждый проход чуть сдвигается: это большой софтбокс, а не точка. Среднее
+   проходов даёт мягкие тени и затенение в стыках без ступенек, как у трассировки. */
+const DOME = 8;
+function studioLights(scene, spec, pass, passes) {
+  renderer.toneMapping = THREE.NeutralToneMapping;
+  renderer.toneMappingExposure = spec.exposure ?? 1;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  scene.environmentIntensity = spec.env ?? 0.45;
+  const lights = new THREE.Group(), total = DOME * passes, gain = spec.light ?? 1;
+  const shadowed = (light, size, span) => {
+    light.castShadow = true;
+    light.shadow.mapSize.set(size, size);
+    Object.assign(light.shadow.camera, { left: -span, right: span, top: span, bottom: -span, near: 1, far: 90 });
+    light.shadow.bias = -0.0006; light.shadow.normalBias = 0.02;
+    lights.add(light);
+  };
+  const main = new THREE.Vector3(-0.55, 0.6, 0.58).normalize();
+  for (let k = 0; k < DOME; k++) {
+    const i = k * passes + pass, t = (i + 0.5) / total, az = i * 2.39996, el = Math.acos(1 - t * 0.9);
+    const dir = new THREE.Vector3(Math.sin(el) * Math.cos(az), Math.sin(el) * Math.sin(az), Math.cos(el));
+    const w = 0.55 + 0.45 * Math.max(0, dir.dot(main));
+    const light = new THREE.DirectionalLight(0xffffff, ((6.5 * w) / DOME) * gain);
+    light.position.copy(dir.multiplyScalar(40));
+    shadowed(light, 1024, 16);
+  }
+  const jitter = (pass * 2.39996) % (Math.PI * 2), rr = Math.sqrt((pass + 0.5) / passes) * 4;
+  const key = new THREE.DirectionalLight(0xfff8f0, 1.6 * gain);
+  key.position.set(-14 + rr * Math.cos(jitter), 12 + rr * Math.sin(jitter), 22);
+  shadowed(key, 2048, 18);
+  scene.add(lights);
+  return lights;
+}
+
+function shoot(scene, spec, out, type, quality, lit = false) {
+  /* Рендер в 4–8 раз крупнее итога и понижение по шагам: чистые края без лесенки. */
+  const size = lit ? SIZE : Math.min(2048, Math.max(1024, out * 4));
+  renderer.setSize(size, size);
+  let camera = studioCamera(spec);
+  if (lit) { camera = new THREE.PerspectiveCamera(16, 1, 1, 200); camera.position.set(0, 0, 95); camera.lookAt(0, 0, 0); }
+  let src = renderer.domElement;
+  if (lit) renderer.render(scene, camera);
+  else {
+    const passes = spec.passes ?? 16, acc = new Float32Array(size * size * 4);
+    const grab = document.createElement("canvas"); grab.width = grab.height = size;
+    const g = grab.getContext("2d", { willReadFrequently: true });
+    for (let pass = 0; pass < passes; pass++) {
+      const lights = studioLights(scene, spec, pass, passes);
+      renderer.render(scene, camera);
+      g.clearRect(0, 0, size, size); g.drawImage(renderer.domElement, 0, 0);
+      const px = g.getImageData(0, 0, size, size).data;
+      for (let i = 0; i < px.length; i++) acc[i] += px[i];
+      scene.remove(lights);
+      lights.traverse((o) => o.shadow?.map?.dispose());
+    }
+    const img = g.createImageData(size, size);
+    for (let i = 0; i < acc.length; i++) img.data[i] = Math.round(acc[i] / passes);
+    g.putImageData(img, 0, 0);
+    src = grab;
+  }
+
+  /* Понижение в несколько шагов — чистые края на мелких размерах. */
+  for (let s = src.width / 2; s >= out; s /= 2) {
+    const c = document.createElement("canvas"); c.width = c.height = s;
+    const g = c.getContext("2d"); g.imageSmoothingQuality = "high"; g.drawImage(src, 0, 0, s, s); src = c;
+  }
+  if (src.width !== out) { const c = document.createElement("canvas"); c.width = c.height = out; const g = c.getContext("2d"); g.imageSmoothingQuality = "high"; g.drawImage(src, 0, 0, out, out); src = c; }
+  scene.traverse((o) => { o.geometry?.dispose?.(); o.material?.dispose?.(); });
+  return src.toDataURL(type, quality);
+}
+window.ready = true;
+</script>
+</body></html>

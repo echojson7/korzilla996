@@ -1,0 +1,34 @@
+/* ---- Избранное ------------------------------------------------------------- */
+
+/* Сердечко «в избранное»: белое с серым контуром, отмеченное — красное.
+   Кнопка без подложки — ставится поверх фото товара или рядом с названием.
+   Модуль fav переключает aria-pressed и шлёт fav:change.
+
+     <button class="ui-fav" type="button" aria-pressed="false" aria-label="В избранное">
+       <span class="ui-icon" data-ui-icon="heart" aria-hidden="true"></span></button>
+
+   Размер — --ui-fav-size (по умолчанию высота контрола xs, 24). */
+
+.ui-fav {
+  --ui-fav-size: var(--ui-h-xs);
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: var(--ui-fav-size);
+  height: var(--ui-fav-size);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ui-r-full);
+  background: none;
+  color: var(--ui-fg-3);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--ui-t), transform var(--ui-spring-press-time) var(--ui-spring-press);
+}
+.ui-fav > .ui-icon { --ui-icon-size: 100%; stroke-width: 1.25; fill: var(--ui-surface); fill-opacity: 0.9; transition: fill var(--ui-t), fill-opacity var(--ui-t); }
+.ui-fav:active { transform: scale(0.88); }
+.ui-fav:focus-visible { outline: none; box-shadow: 0 0 0 var(--ui-focus-w-sm) var(--ui-focus); }
+.ui-fav:disabled { opacity: var(--ui-opacity-disabled); pointer-events: none; }
+.ui-fav[aria-pressed="true"] { color: var(--ui-red); }
+.ui-fav[aria-pressed="true"] > .ui-icon { fill: currentColor; fill-opacity: 1; }

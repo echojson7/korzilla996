@@ -1,0 +1,112 @@
+/* ---- Поле ------------------------------------------------------------------ */
+
+/* Рамка одна на поле, многострочное, нативный select и числовое поле (у него
+   фокус и недоступность — с инпута внутри обёртки). */
+.ui-input, .ui-textarea, .ui-select:not(.ui-select--enhanced), .ui-number-field, .ui-scale-slider--input, .ui-editor, .ui-code, .ui-prompt {
+  --ui-input-edge: var(--ui-control-edge);
+  width: 100%;
+  min-width: 0;
+  border-radius: var(--ui-control-r);
+  background: var(--ui-input-bg, var(--ui-surface));
+  color: var(--ui-fg);
+  box-shadow: inset 0 0 0 var(--ui-control-edge-w) var(--ui-input-edge), var(--ui-input-shadow, var(--ui-shadow-xs));
+  transition: background-color var(--ui-t), box-shadow var(--ui-t);
+}
+.ui-input, .ui-textarea, .ui-select:not(.ui-select--enhanced) {
+  height: var(--ui-input-h, var(--ui-h));
+  margin: 0;
+  padding: 0 var(--ui-control-px);
+  border: 0;
+  outline: none;
+  font: 400 var(--ui-text) / var(--ui-leading) var(--ui-font);
+}
+.ui-textarea { display: block; height: auto; min-height: 72px; padding: 6px 12px; resize: vertical; }
+/* Код: моноширинный, без переноса строк (длинная строка уходит вбок), табуляция
+   в два пробела. Высота — rows, тянется вниз. */
+.ui-textarea--code { font: 400 var(--ui-text-sm) / var(--ui-leading-sm) var(--ui-font-code); white-space: pre; overflow-wrap: normal; overflow-x: auto; tab-size: 2; padding-block: 8px; }
+:is(.ui-input, .ui-textarea)::placeholder { color: var(--ui-fg-3); }
+@media (hover: hover) and (pointer: fine) {
+  :is(.ui-input, .ui-textarea, .ui-select, .ui-number-field, .ui-scale-slider--input, .ui-editor, .ui-code, .ui-prompt):hover { --ui-input-edge: var(--ui-control-edge-hover); }
+}
+/* Серый вариант (--secondary): заливка как у серой кнопки, без рамки и тени; рамка
+   цвета акцента — только в фокусе, красная — при ошибке. Список с этим классом
+   модуль select помечает обёртку data-variant="secondary" (select/select.css). */
+:is(.ui-input--secondary, .ui-textarea--secondary, .ui-select--secondary, .ui-number-field--secondary, .ui-scale-slider--secondary, .ui-editor--secondary, .ui-code--secondary, .ui-prompt--secondary) { --ui-input-bg: var(--ui-chip); --ui-input-shadow: var(--ui-shadow-none); }
+:is(.ui-input--secondary, .ui-textarea--secondary, .ui-select--secondary, .ui-number-field--secondary, .ui-editor--secondary, .ui-code--secondary, .ui-prompt--secondary):not(:focus, :focus-within) { --ui-input-edge: transparent; }
+/* Шкала-поле обводится только при фокусе с клавиатуры — см. scale-slider/scale-slider.css. */
+.ui-scale-slider--secondary:not(:has(> .ui-scale-slider__input:focus-visible)) { --ui-input-edge: transparent; }
+@media (hover: hover) and (pointer: fine) {
+  :is(.ui-input--secondary, .ui-textarea--secondary, .ui-select--secondary, .ui-number-field--secondary, .ui-scale-slider--secondary, .ui-editor--secondary, .ui-code--secondary, .ui-prompt--secondary):hover { --ui-input-bg: var(--ui-chip-hover); }
+}
+:is(.ui-input, .ui-textarea, .ui-select):focus, .ui-number-field:focus-within, .ui-editor:has(> .ui-editor__area:focus), .ui-code:has(.cm-editor.cm-focused), .ui-prompt:has(> .ui-prompt__area:focus), .ui-scale-slider--input:has(> .ui-scale-slider__input:focus-visible) { --ui-input-edge: var(--ui-accent); box-shadow: inset 0 0 0 1px var(--ui-input-edge), 0 0 0 var(--ui-field-focus-w) var(--ui-field-focus); }
+:is(.ui-input, .ui-textarea)[aria-invalid="true"] { --ui-control-edge-w: 1px; --ui-input-edge: var(--ui-danger); --ui-field-focus: color-mix(in srgb, var(--ui-danger) 18%, transparent); }
+:is(.ui-input, .ui-textarea, .ui-select):disabled,
+.ui-number-field:has(> .ui-number-field__value > .ui-number-field__input:disabled) { opacity: var(--ui-opacity-disabled); background: var(--ui-soft); cursor: not-allowed; }
+:is(.ui-input, .ui-textarea)[readonly] { background: var(--ui-soft); }
+
+/* Размеры — шаги шкалы контролов (styles/tokens.css): у xs и sm текст 13, как у
+   кнопки того же размера. */
+.ui-input--xs { --ui-input-h: var(--ui-h-xs); padding: 0 var(--ui-control-px-xs); border-radius: var(--ui-control-r-xs); }
+.ui-input--sm { --ui-input-h: var(--ui-h-sm); padding: 0 var(--ui-control-px-sm); border-radius: var(--ui-control-r-sm); }
+.ui-input--lg { --ui-input-h: var(--ui-h-lg); padding: 0 var(--ui-control-px-lg); border-radius: var(--ui-control-r-lg); }
+.ui-input--xs { font-size: var(--ui-text-sm); line-height: var(--ui-leading-sm); }
+.ui-input--sm { font-size: var(--ui-text-control-sm); line-height: var(--ui-leading-control-sm); }
+/* Нативный select — без системной стрелки, со стрелкой кита справа, как у
+   обёртки модуля: до монтирования, с optgroup и с data-native — такие модуль
+   оставляет нативными. */
+select.ui-select:not(.ui-select--enhanced) {
+  /* Место стрелки: отступ 8, стрелка 14, зазор 8. */
+  padding-right: calc(8px + 14px + 8px);
+  appearance: none;
+  background-image: var(--ui-select-arrow);
+  background-position: right 8px center;
+  background-repeat: no-repeat;
+  background-size: 14px;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+select.ui-select--sm:not(.ui-select--enhanced) { --ui-input-h: var(--ui-h-sm); padding: 0 calc(6px + 14px + 6px) 0 var(--ui-control-px-sm); border-radius: var(--ui-control-r-sm); background-position: right 6px center; font-size: var(--ui-text-control-sm); }
+
+/* Обёртка: иконка слева, приставка или действие справа — поверх поля. */
+/* Всё считается от высоты поля h, его отступа px = h/2 − 4 и скругления r:
+   иконка стоит на месте текста, текст после неё через 8; действие — квадрат
+   h − 8 в 4 от края со скруглением r − 4, kbd — по центру по высоте, приставка —
+   на отступе поля. */
+.ui-input__wrap { --ui-wrap-h: var(--ui-h); --ui-wrap-px: var(--ui-control-px); --ui-wrap-r: var(--ui-control-r); --ui-wrap-icon: var(--ui-control-icon); position: relative; display: flex; align-items: center; min-width: 0; }
+.ui-input__wrap:has(> .ui-input--xs) { --ui-wrap-h: var(--ui-h-xs); --ui-wrap-px: var(--ui-control-px-xs); --ui-wrap-r: var(--ui-control-r-xs); --ui-wrap-icon: var(--ui-control-icon-xs); }
+.ui-input__wrap:has(> .ui-input--sm) { --ui-wrap-h: var(--ui-h-sm); --ui-wrap-px: var(--ui-control-px-sm); --ui-wrap-r: var(--ui-control-r-sm); }
+.ui-input__wrap:has(> .ui-input--lg) { --ui-wrap-h: var(--ui-h-lg); --ui-wrap-px: var(--ui-control-px-lg); --ui-wrap-r: var(--ui-control-r-lg); }
+.ui-input__wrap > :is(.ui-icon, .ui-input__addon, .ui-input__action, .ui-kbd) { position: absolute; z-index: 1; }
+.ui-input__wrap > .ui-icon { --ui-icon-size: var(--ui-wrap-icon); left: var(--ui-wrap-px); color: var(--ui-fg-3); }
+.ui-input__wrap > .ui-icon ~ .ui-input { padding-left: calc(var(--ui-wrap-px) + var(--ui-wrap-icon) + 8px); }
+.ui-input__wrap > .ui-input__addon { right: var(--ui-wrap-px); }
+.ui-input__wrap > .ui-input__action { right: 4px; }
+.ui-input__wrap > .ui-kbd { right: calc((var(--ui-wrap-h) - 20px) / 2); }
+.ui-input__wrap:has(> :is(.ui-input__addon, .ui-input__action, .ui-kbd)) > .ui-input { padding-right: var(--ui-wrap-h); }
+.ui-input__addon { color: var(--ui-fg-3); font-family: var(--ui-mono); font-size: var(--ui-text-sm); pointer-events: none; }
+/* Действие в поле. Тот же вид у «Убрать» загрузки-поля: там кнопка стоит в ряду
+   зоны, а не поверх инпута, и видна, только пока есть что убирать. */
+.ui-input__action, .ui-file-upload__clear[data-show] {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: calc(var(--ui-wrap-h, var(--ui-h)) - 8px);
+  height: calc(var(--ui-wrap-h, var(--ui-h)) - 8px);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: calc(var(--ui-wrap-r, var(--ui-control-r)) - 4px);
+  background: none;
+  color: var(--ui-fg-3);
+  cursor: pointer;
+}
+@media (hover: hover) and (pointer: fine) {
+  .ui-input__action:hover, .ui-file-upload__clear:hover { background: var(--ui-chip); color: var(--ui-fg); }
+}
+.ui-input__action:focus-visible, .ui-file-upload__clear:focus-visible, .ui-help:focus-visible { outline: none; color: var(--ui-fg); box-shadow: 0 0 0 var(--ui-focus-w-sm) var(--ui-focus); }
+:is(.ui-input__action, .ui-file-upload__clear) > .ui-icon { --ui-icon-size: 14px; }
+/* Недоступное поле гасит и всё, что лежит поверх него. */
+.ui-input__wrap:has(> .ui-input:disabled) > :is(.ui-icon, .ui-input__addon, .ui-input__action, .ui-kbd),
+.ui-input__action:disabled { opacity: var(--ui-opacity-disabled); pointer-events: none; }
+.ui-input__action[aria-pressed="true"] > .ui-icon:first-child,
+.ui-input__action:not([aria-pressed="true"]) > .ui-icon + .ui-icon { display: none; }

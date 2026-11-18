@@ -1,0 +1,79 @@
+/* ---- Поверхность ----------------------------------------------------------- */
+
+/* Место панели (core/floating пишет его на саму панель при каждом пересчёте) не
+   наследуется: иначе каждая запись пересчитывала бы стиль всего содержимого —
+   у селекта на 2000 пунктов это тысячи узлов на каждый сдвиг. Читает их только
+   сама панель. Так же — точка роста (--ui-origin и стороны строки, из которых она
+   собрана; у подсказки — --ui-tooltip-origin). Смещение стрелки подсказки
+   наследуется: его читает .ui-tooltip__arrow. */
+@property --ui-popover-x { syntax: "*"; inherits: false; }
+@property --ui-popover-y { syntax: "*"; inherits: false; }
+@property --ui-popover-space { syntax: "*"; inherits: false; }
+@property --ui-popover-anchor-w { syntax: "*"; inherits: false; }
+@property --ui-select-x { syntax: "*"; inherits: false; }
+@property --ui-select-y { syntax: "*"; inherits: false; }
+@property --ui-select-space { syntax: "*"; inherits: false; }
+@property --ui-select-anchor-w { syntax: "*"; inherits: false; }
+@property --ui-datepicker-x { syntax: "*"; inherits: false; }
+@property --ui-datepicker-y { syntax: "*"; inherits: false; }
+@property --ui-datepicker-space { syntax: "*"; inherits: false; }
+@property --ui-colorpicker-x { syntax: "*"; inherits: false; }
+@property --ui-colorpicker-y { syntax: "*"; inherits: false; }
+@property --ui-colorpicker-space { syntax: "*"; inherits: false; }
+@property --ui-tooltip-x { syntax: "*"; inherits: false; }
+@property --ui-tooltip-y { syntax: "*"; inherits: false; }
+@property --ui-tooltip-origin { syntax: "*"; inherits: false; }
+@property --ui-origin { syntax: "*"; inherits: false; }
+@property --ui-inline-start { syntax: "*"; inherits: false; }
+@property --ui-inline-end { syntax: "*"; inherits: false; }
+
+/* Панели у якоря — меню, список селекта, календарь, выбор цвета — один материал. Модули уносят
+   их в body (в окне — в его слой); contain держит перекладку внутри панели.
+   Ширина — по содержимому, но не шире окна; скругление — у каждой своё. */
+.ui-popover__panel, .ui-select__panel, .ui-datepicker__panel, .ui-colorpicker__panel {
+  --ui-surface-from-y: -4px;
+  --ui-surface-scale: 0.95;
+  position: fixed;
+  z-index: var(--ui-z-dropdown);
+  width: max-content;
+  max-width: calc(100vw - 16px);
+  margin: 0;
+  padding: var(--ui-list-pad);
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 0;
+  outline: none;
+  background: var(--ui-pop);
+  color: var(--ui-fg);
+  box-shadow: var(--ui-shadow-pop);
+  transform-origin: var(--ui-origin, center top);
+  contain: layout style;
+}
+/* Серая панель (data-variant="secondary") — та же заливка, что у серого поля: chip
+   поверх поверхности, без кольца-рамки, только тень. Подсветка строк — на ступень
+   плотнее, чтобы читалась на сером. */
+:is(.ui-popover__panel, .ui-select__panel)[data-variant="secondary"] { background: linear-gradient(var(--ui-chip), var(--ui-chip)), var(--ui-surface); box-shadow: var(--ui-pop-secondary-shadow); }
+.ui-popover__panel[data-variant="secondary"] .ui-popover__menu-sep { background: var(--ui-line-strong); }
+.ui-popover__panel[data-variant="secondary"] .ui-popover__menu .ui-btn { --ui-btn-hover: var(--ui-chip-hover); }
+.ui-popover__panel[data-variant="secondary"] .ui-popover__menu .ui-btn:focus-visible::before { background: var(--ui-chip-hover); }
+.ui-select__panel[data-variant="secondary"] .ui-select__option--active { background: var(--ui-chip-hover); }
+:is(.ui-popover__panel, .ui-select__panel, .ui-datepicker__panel, .ui-colorpicker__panel)[data-side="top"] { --ui-surface-from-y: 4px; --ui-origin: center bottom; }
+/* Выравнивание start и end — по направлению текста (core/floating): в RTL начало —
+   правый край якоря, и угол роста панели зеркальный. */
+.ui-popover__panel, .ui-datepicker__panel, .ui-colorpicker__panel { --ui-inline-start: left; --ui-inline-end: right; }
+:is(.ui-popover__panel, .ui-datepicker__panel, .ui-colorpicker__panel):dir(rtl) { --ui-inline-start: right; --ui-inline-end: left; }
+
+/* Вход и уход панелей у якоря, подсказки, палитры, alert в разметке и статус-бара —
+   общие кадры из base.css; амплитуду (--ui-surface-from-x/-y, -scale) задаёт сама
+   поверхность. Вход — быстрой пружиной (--ui-spring-fast): панель вырастает из точки у якоря
+   с перелётом ~1 %; уход — коротким ease-in. До data-state="open" поверхность невидима. */
+.ui-popover__panel, .ui-select__panel, .ui-datepicker__panel, .ui-colorpicker__panel, .ui-tooltip, .ui-command__dialog { opacity: 0; transform: translate3d(0, 0, 0); }
+:is(.ui-popover__panel, .ui-select__panel, .ui-datepicker__panel, .ui-colorpicker__panel, .ui-tooltip, .ui-command__dialog)[data-state="open"],
+:is(.ui-alert, .ui-alert-bar)[data-state="visible"] { opacity: 1; animation: ui-surface-in var(--ui-spring-fast-time) var(--ui-spring-fast) both; }
+:is(.ui-popover__panel, .ui-select__panel, .ui-datepicker__panel, .ui-colorpicker__panel, .ui-tooltip, .ui-command__dialog)[data-state="closing"],
+.ui-alert-bar[data-state="leaving"] { pointer-events: none; animation: ui-surface-out var(--ui-duration-surface-out) var(--ui-ease-in) both; }
+/* Статус-бар — корень переноса [data-ui-layer]: transform, оставленный последним
+   кадром входа, сделал бы его блоком отсчёта для fixed-панелей внутри, и подсказка
+   встала бы от угла бара, а не окна. Вход без заливки вперёд: в покое transform у
+   бара нет, уход играет как прежде. */
+.ui-alert-bar[data-state="visible"] { animation-fill-mode: backwards; }

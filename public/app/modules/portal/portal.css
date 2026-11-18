@@ -1,0 +1,49 @@
+/* Портал Korzilla 996: канбан сделок, строки задач и сотрудников. Только
+   раскладка страниц, на токенах кита. Канбан потом переедет в кит. */
+
+/* ---- Сделки: канбан ---------------------------------------------------------- */
+.dl-board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(248px, 1fr); gap: 12px; margin-top: 12px; padding-bottom: 8px; overflow-x: auto; align-items: start; }
+.dl-col { display: grid; gap: 8px; min-width: 0; padding: 8px; border-radius: var(--ui-r-xl); background: var(--ui-plate); }
+.dl-col__head { display: flex; align-items: center; gap: 6px; min-height: 28px; padding: 0 4px; }
+.dl-col__head::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--dl-tone); }
+.dl-col__title { min-width: 0; overflow: hidden; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.dl-col__sum { margin-left: auto; color: var(--ui-fg-2); font-size: var(--ui-text-sm); white-space: nowrap; }
+.dl-col__list.ui-sortable { min-height: 64px; padding: 0; background: none; box-shadow: none; }
+.dl-col__list .ui-sortable__list, .dl-col__list { gap: 8px; }
+.dl-col__list .ui-sortable__row { align-items: flex-start; padding: 8px 8px 8px 4px; border-radius: var(--ui-r-lg); background: var(--ui-surface); box-shadow: var(--ui-shadow-card); }
+@media (hover: hover) and (pointer: fine) { .dl-col__list .ui-sortable__row:hover { background: var(--ui-surface); box-shadow: 0 0 0 1px var(--ui-line-strong); } }
+.dl-col__list .dl-card { display: grid; flex: 1; gap: 2px; min-width: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; white-space: normal; cursor: pointer; }
+.dl-card > span { display: block; min-width: 0; }
+.dl-card > .dl-card__row, .dl-card > .dl-next { display: flex; }
+.dl-card__title { font-weight: 500; }
+.dl-card__company { color: var(--ui-fg-2); font-size: var(--ui-text-sm); }
+.dl-card__row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; }
+.dl-card__sum { font-weight: 500; }
+.dl-next { display: flex; align-items: center; gap: 4px; margin-top: 4px; color: var(--ui-fg-2); font-size: var(--ui-text-2xs); line-height: var(--ui-leading-2xs); }
+.dl-next > .ui-icon { --ui-icon-size: 12px; flex: none; }
+.dl-next.is-late { color: var(--ui-red); }
+.dl-sheet { display: grid; gap: 20px; }
+.dl-sheet__head { margin-bottom: 8px; }
+.dl-person, .tk-person { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.tk-person > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---- Задачи ------------------------------------------------------------------ */
+.tk-row { cursor: pointer; }
+.tk-title { display: block; font-weight: 500; }
+.tk-title.is-done { color: var(--ui-fg-3); text-decoration: line-through; }
+.tk-sub, .bp-note { display: block; color: var(--ui-fg-2); font-size: var(--ui-text-sm); }
+.tk-late { color: var(--ui-red); }
+
+/* ---- Сотрудники -------------------------------------------------------------- */
+.st-person { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.st-person__text { display: grid; min-width: 0; }
+.st-person__name { font-weight: 500; }
+.st-person__role { color: var(--ui-fg-2); font-size: var(--ui-text-sm); }
+
+/* ---- Процессы и обзор -------------------------------------------------------- */
+.bp-name { display: block; font-weight: 500; }
+.bp-bar { margin-top: 16px; }
+.ov-dot { flex: none; width: 8px; height: 8px; margin: 0 4px; border-radius: 50%; background: var(--ov-tone); }
+.ov-sum { min-width: 112px; color: var(--ui-fg); font-weight: 500; text-align: right; }
+.dl-col > *, .dl-col__list .ui-sortable__item, .dl-col__list .ui-sortable__row { min-width: 0; }
+.dl-col__list .dl-card, .dl-col__list .dl-card * { white-space: normal; overflow-wrap: anywhere; }

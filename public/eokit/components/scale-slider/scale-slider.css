@@ -1,0 +1,206 @@
+/* ---- Шкала ----------------------------------------------------------------- */
+
+/* Шкала (модуль scaleSlider): нативный range поверх нарисованной дорожки.
+   Значение — одна переменная --ui-ss-ratio (0…1), её пишет модуль на хост;
+   заливка, подсказка и риски читают её. Переход — у самой переменной: всё едет
+   вместе, а пока тянут (data-dragging) — без задержки за пальцем. Нативный
+   ползунок ходит от половины своей ширины до ширины минус половина, инпут стоит
+   с отступом --ui-ss-pad от краёв хоста: формулы ниже берут те же --ui-ss-thumb
+   (ширина ползунка) и --ui-ss-pad. Центр ползунка — --ui-ss-at. Боковых отступов
+   у обычной шкалы нет — поле во всю ширину.
+   Ползунок — вертикальная полоска со скруглёнными концами (--ui-ss-thumb ×
+   --ui-ss-thumb-h). Вид «поле» (--input) — рамка и высота .ui-input (раздел
+   «Поле»), заливка тоном акцента во всю высоту, полоска акцента внутри.
+   Резиновый край (оба вида): тянут за край шкалы — она растягивается в сторону
+   пальца (--ui-ss-sx, от противоположного края, data-stretch) и чуть сужается
+   (--ui-ss-sy), с сопротивлением; отпустили — пружинит назад. Растяжение и
+   сопротивление считает модуль, только transform; значение в поле и подсказку
+   растяжение не трогает — у них обратный масштаб. При reduced motion модуль не
+   тянет. */
+@property --ui-ss-ratio { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --ui-ss-sx { syntax: "<number>"; inherits: true; initial-value: 1; }
+@property --ui-ss-sy { syntax: "<number>"; inherits: true; initial-value: 1; }
+.ui-scale-slider {
+  --ui-ss-h: 24px;
+  --ui-ss-track: 10px;
+  --ui-ss-thumb: 8px;
+  --ui-ss-thumb-h: 20px;
+  --ui-ss-pad: 0px;
+  --ui-ss-dot: 2px;
+  --ui-ss-knob: var(--ui-on-tone);
+  --ui-ss-knob-shadow: var(--ui-slider-knob-shadow);
+  --ui-ss-at: calc(var(--ui-ss-pad) + var(--ui-ss-thumb) / 2 + var(--ui-ss-ratio) * (100% - 2 * var(--ui-ss-pad) - var(--ui-ss-thumb)));
+  /* Возврат растяжения — пружиной кита, с лёгким перелётом назад. */
+  --ui-ss-springs: --ui-ss-sx var(--ui-duration-spring) var(--ui-ease-spring), --ui-ss-sy var(--ui-duration-spring) var(--ui-ease-spring);
+  position: relative;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  transition: --ui-ss-ratio var(--ui-duration-value) var(--ui-ease-out), var(--ui-ss-springs);
+}
+/* data-stretch остаётся и после отпускания: без него пружина оборвалась бы. */
+.ui-scale-slider[data-stretch] { transform: scale(var(--ui-ss-sx), var(--ui-ss-sy)); }
+.ui-scale-slider[data-stretch="start"] { transform-origin: right center; }
+.ui-scale-slider[data-stretch="end"] { transform-origin: left center; }
+.ui-scale-slider[data-stretch] > :is(.ui-scale-slider__value, .ui-scale-slider__tooltip) { scale: calc(1 / var(--ui-ss-sx)) calc(1 / var(--ui-ss-sy)); }
+.ui-scale-slider--sm { --ui-ss-h: 20px; --ui-ss-track: 8px; --ui-ss-thumb: 6px; --ui-ss-thumb-h: 16px; }
+.ui-scale-slider[data-dragging] { transition: none; }
+.ui-scale-slider:has(> .ui-scale-slider__input:disabled) { opacity: var(--ui-opacity-disabled); }
+
+.ui-scale-slider__track, .ui-scale-slider__ticks {
+  position: absolute;
+  top: calc((var(--ui-ss-h) - var(--ui-ss-track)) / 2);
+  right: 0;
+  left: 0;
+  height: var(--ui-ss-track);
+  pointer-events: none;
+}
+.ui-scale-slider__track { --ui-ss-tone: var(--ui-accent); overflow: hidden; border-radius: var(--ui-r-full); background: var(--ui-chip-hover); }
+/* Заливка — один слой во всю дорожку, сдвинутый влево так, что его край стоит
+   на центре ползунка: процент в translate — от ширины самого слоя, она же
+   ширина дорожки. Один слой — нет шва на стыке, когда шкалу растягивают. */
+.ui-scale-slider__fill { position: absolute; top: 0; bottom: 0; left: 0; width: 100%; background: var(--ui-ss-tone); transform: translateX(calc(var(--ui-ss-at) - 100%)); }
+
+/* Риски — точки на дорожке, у каждой своя --ui-ss-ratio; значение хоста
+   переносим в --ui-ss-value: точки под заливкой светлые, за ней — серые.
+   --ui-ss-at не годится: var() в нём подставлен ещё на хосте, с его долей.
+   Отступа --ui-ss-pad у рисок нет — они только у обычной шкалы. */
+.ui-scale-slider__ticks { --ui-ss-value: var(--ui-ss-ratio); }
+.ui-scale-slider__tick {
+  position: absolute;
+  top: 50%;
+  left: calc(var(--ui-ss-ratio) * (100% - var(--ui-ss-thumb)) + var(--ui-ss-thumb) / 2);
+  width: var(--ui-ss-dot);
+  height: var(--ui-ss-dot);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--ui-on-tone) calc(clamp(0, (var(--ui-ss-value) - var(--ui-ss-ratio)) * 10000, 1) * 80%), var(--ui-fg-3));
+  translate: -50% -50%;
+}
+
+.ui-scale-slider__input {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: calc(100% - 2 * var(--ui-ss-pad));
+  min-width: 0;
+  height: var(--ui-ss-h);
+  margin: 0 var(--ui-ss-pad);
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.ui-scale-slider__input:disabled { cursor: not-allowed; }
+.ui-scale-slider__input::-webkit-slider-runnable-track { height: var(--ui-ss-track); border: 0; background: transparent; }
+.ui-scale-slider__input::-moz-range-track { height: var(--ui-ss-track); border: 0; background: transparent; }
+.ui-scale-slider__input::-moz-range-progress { background: transparent; }
+/* Ползунок — белая полоска с тенью, как бегунок переключателя. Правила для
+   движков раздельные: чужой псевдоэлемент гасит всё правило; общие цвет, тень и
+   прозрачность поэтому — в переменных хоста. */
+.ui-scale-slider__input::-webkit-slider-thumb {
+  box-sizing: border-box;
+  width: var(--ui-ss-thumb);
+  height: var(--ui-ss-thumb-h);
+  margin-top: calc((var(--ui-ss-track) - var(--ui-ss-thumb-h)) / 2);
+  border: 0;
+  border-radius: var(--ui-r-full);
+  background: var(--ui-ss-knob);
+  box-shadow: var(--ui-ss-halo, 0 0 transparent), var(--ui-ss-knob-shadow);
+  appearance: none;
+  -webkit-appearance: none;
+  transition: box-shadow var(--ui-t);
+}
+.ui-scale-slider__input::-moz-range-thumb {
+  box-sizing: border-box;
+  width: var(--ui-ss-thumb);
+  height: var(--ui-ss-thumb-h);
+  border: 0;
+  border-radius: var(--ui-r-full);
+  background: var(--ui-ss-knob);
+  box-shadow: var(--ui-ss-halo, 0 0 transparent), var(--ui-ss-knob-shadow);
+  transition: box-shadow var(--ui-t);
+}
+@media (hover: hover) and (pointer: fine) {
+  .ui-scale-slider__input:hover:not(:disabled) { --ui-ss-halo: 0 0 0 4px color-mix(in srgb, var(--ui-accent) 16%, transparent); }
+}
+.ui-scale-slider[data-dragging] > .ui-scale-slider__input { --ui-ss-halo: 0 0 0 5px color-mix(in srgb, var(--ui-accent) 20%, transparent); }
+.ui-scale-slider__input:focus-visible { --ui-ss-halo: 0 0 0 var(--ui-focus-w) var(--ui-focus); }
+
+/* Вид «поле»: дорожка — всё поле (заливка под рамкой, тоном), полоска — акцент
+   без тени и ореола: наведение и фокус показывает рамка, как у .ui-input. Отступ
+   полоски от рамки — 6 px сверху и снизу, столько же от краёв по бокам; значение
+   — у правого края с отступом текста поля. Дошла полоска до значения
+   (data-covered ставит модуль) — значение уходит влево от полоски и едет за ней;
+   отошла — возвращается к краю. Место считает CSS по --ui-ss-ratio в единицах
+   контейнера (хост — контейнер по ширине), сдвиг — только translate, смена
+   стороны — короткое появление (data-moved: не на первой отрисовке). Кольцо фокуса — только с клавиатуры
+   (:focus-visible): щелчок и перетаскивание поле не обводят. */
+.ui-scale-slider--input {
+  --ui-ss-h: var(--ui-h);
+  --ui-ss-track: var(--ui-ss-h);
+  --ui-ss-thumb: 4px;
+  --ui-ss-thumb-h: calc(var(--ui-ss-h) - 12px);
+  --ui-ss-pad: 6px;
+  --ui-ss-knob: var(--ui-accent);
+  --ui-ss-knob-shadow: 0 0 transparent;
+  --ui-ss-value-x: 12px;
+  --ui-ss-value-gap: 8px;
+  container-type: inline-size;
+  height: var(--ui-ss-h);
+  transition: --ui-ss-ratio var(--ui-duration-value) var(--ui-ease-out), var(--ui-ss-springs), background-color var(--ui-t), box-shadow var(--ui-t);
+}
+.ui-scale-slider--input.ui-scale-slider--sm { --ui-ss-h: var(--ui-h-sm); --ui-ss-value-x: 10px; border-radius: var(--ui-control-r-sm); }
+.ui-scale-slider--input > .ui-scale-slider__track { --ui-ss-tone: color-mix(in srgb, var(--ui-accent) 14%, transparent); border-radius: inherit; background: transparent; }
+.ui-scale-slider--input > .ui-scale-slider__input { --ui-ss-halo: 0 0 transparent; }
+.ui-scale-slider__value {
+  position: absolute;
+  top: 0;
+  right: var(--ui-ss-value-x);
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  color: var(--ui-fg);
+  font: 400 var(--ui-text) / var(--ui-leading) var(--ui-font);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.ui-scale-slider--sm > .ui-scale-slider__value { font-size: var(--ui-text-sm); line-height: var(--ui-leading-sm); }
+/* Правый край значения — за --ui-ss-value-gap слева от полоски: сдвиг от места у
+   правого края (100cqw − --ui-ss-value-x) до края полоски минус зазор. */
+.ui-scale-slider--input[data-covered] > .ui-scale-slider__value {
+  translate: calc(var(--ui-ss-pad) + var(--ui-ss-ratio) * (100cqw - 2 * var(--ui-ss-pad) - var(--ui-ss-thumb)) - var(--ui-ss-value-gap) - 100cqw + var(--ui-ss-value-x)) 0;
+}
+.ui-scale-slider--input[data-moved] > .ui-scale-slider__value { animation: ui-ss-value-back var(--ui-duration-surface-in) var(--ui-ease-out); }
+.ui-scale-slider--input[data-moved][data-covered] > .ui-scale-slider__value { animation-name: ui-ss-value-aside; }
+@keyframes ui-ss-value-aside { from { opacity: 0; transform: translateX(8px); } }
+@keyframes ui-ss-value-back { from { opacity: 0; transform: translateX(-8px); } }
+
+/* Подсказка над ползунком: кожа .ui-tooltip (токены --ui-tooltip-*), видна при
+   наведении, перетаскивании и фокусе с клавиатуры. */
+.ui-scale-slider__tooltip {
+  position: absolute;
+  z-index: 2;
+  bottom: calc(100% + 7px);
+  left: var(--ui-ss-at);
+  padding: var(--ui-tooltip-pad);
+  border-radius: var(--ui-tooltip-r);
+  box-shadow: var(--ui-tooltip-shadow);
+  background: var(--ui-tooltip-bg);
+  color: var(--ui-tooltip-fg);
+  font: 400 var(--ui-tooltip-text) / var(--ui-tooltip-leading) var(--ui-font);
+  white-space: nowrap;
+  opacity: 0;
+  translate: -50% 3px;
+  pointer-events: none;
+  transition: opacity var(--ui-t), translate var(--ui-t) var(--ui-ease-out);
+}
+.ui-scale-slider__tooltip::after { content: ""; position: absolute; top: 100%; left: 50%; width: 10px; height: 5px; background: inherit; translate: -50% 0; clip-path: path("M0 0H10L5.9 4.3Q5 5.2 4.1 4.3Z"); }
+@media (hover: hover) and (pointer: fine) {
+  .ui-scale-slider:hover:not(:has(> .ui-scale-slider__input:disabled)) > .ui-scale-slider__tooltip { opacity: 1; translate: -50% 0; }
+}
+.ui-scale-slider[data-dragging] > .ui-scale-slider__tooltip,
+.ui-scale-slider__input:focus-visible ~ .ui-scale-slider__tooltip { opacity: 1; translate: -50% 0; }

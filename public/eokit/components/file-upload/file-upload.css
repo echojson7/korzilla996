@@ -1,0 +1,225 @@
+/* ---- Загрузка файлов ------------------------------------------------------- */
+
+/* Загрузка файлов (модуль fileUpload): зона выбора и очередь. Зона целиком —
+   цель щелчка и сброса; варианты: лоток с пунктиром (по умолчанию), кнопка
+   (зона — сама .ui-btn, data-variant="button") и поле, похожее на .ui-input
+   (data-variant="input"). Очередь — карточка со строками или чипы
+   (data-list="chips" на списке). Серый вид, как у полей, — класс
+   .ui-file-upload--secondary на хосте. Нативное поле выбора прячем классом —
+   модуль ставит его и авторскому полю без класса. */
+.ui-file-upload {
+  --ui-fu-bg: var(--ui-surface);
+  --ui-fu-hover: var(--ui-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  color: var(--ui-fg);
+}
+.ui-file-upload--secondary { --ui-fu-bg: var(--ui-chip); --ui-fu-hover: var(--ui-chip-hover); }
+.ui-file-upload__input { display: none; }
+
+/* Лоток: значок в рамке, подпись в две строки, кнопка справа. Пунктир — тон
+   сильной линии: на белом и на сером он виден, но тише рамки поля. */
+.ui-file-upload__zone:not(.ui-btn) {
+  --ui-fu-edge: var(--ui-line-strong);
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  min-height: 64px;
+  padding: 12px;
+  border: 1px dashed var(--ui-fu-edge);
+  border-radius: var(--ui-control-r-lg);
+  outline: none;
+  background: var(--ui-fu-bg);
+  color: var(--ui-fg);
+  font: 400 var(--ui-text) / var(--ui-leading) var(--ui-font);
+  text-align: start;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--ui-t), border-color var(--ui-t), box-shadow var(--ui-t);
+}
+@media (hover: hover) and (pointer: fine) {
+  .ui-file-upload__zone:not(.ui-btn):hover { --ui-fu-edge: color-mix(in srgb, var(--ui-line-strong) 40%, var(--ui-fg-3)); background: var(--ui-fu-hover); }
+}
+.ui-file-upload__zone:not(.ui-btn):focus-visible { --ui-fu-edge: var(--ui-accent); box-shadow: 0 0 0 var(--ui-focus-w) var(--ui-focus); }
+.ui-file-upload__zone:not(.ui-btn)[aria-invalid="true"] { --ui-control-edge-w: 1px; --ui-fu-edge: var(--ui-danger); }
+/* Файл над зоной: пунктир и заливка — цветом акцента, даже после отказа. Флаг
+   ставит модуль и сам держит его, пока файл ходит по детям зоны. */
+.ui-file-upload__zone:not(.ui-btn)[data-drag] { --ui-control-edge-w: 1px; --ui-fu-edge: var(--ui-accent); background: color-mix(in srgb, var(--ui-accent) 6%, var(--ui-surface)); }
+.ui-file-upload[data-loading="true"] .ui-file-upload__zone { cursor: wait; opacity: var(--ui-opacity-loading); }
+.ui-file-upload__zone:is(:disabled, [aria-disabled="true"]) { opacity: var(--ui-opacity-disabled); cursor: not-allowed; }
+
+/* Значок лотка — плитка в рост малого контрола, как лицо обычной кнопки: белая,
+   с рамкой поля; на сером лотке она так же белая. */
+.ui-file-upload__icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: var(--ui-h);
+  height: var(--ui-h);
+  border-radius: var(--ui-control-r);
+  background: var(--ui-surface);
+  color: var(--ui-fg-2);
+  box-shadow: inset 0 0 0 var(--ui-control-edge-w) var(--ui-control-edge), var(--ui-shadow-xs);
+}
+.ui-file-upload__zone[data-drag] .ui-file-upload__icon { color: var(--ui-accent-fg); }
+.ui-file-upload__copy { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; }
+.ui-file-upload__title { color: var(--ui-fg); font-weight: 500; }
+.ui-file-upload__hint { color: var(--ui-fg-2); font-size: var(--ui-text-sm); line-height: var(--ui-leading-sm); text-wrap: pretty; }
+.ui-file-upload__action { flex: none; margin-inline-start: auto; }
+.ui-file-upload__browse, .ui-file-upload__clear { display: none; }
+
+/* Сообщение модуля (отказ по формату, по размеру): строка под зоной, пустая не
+   занимает места — живой регион остаётся в дереве. Отказ модуль помечает на
+   хосте (data-status); без модуля — data-tone="destructive" на самой строке. */
+.ui-file-upload__status { color: var(--ui-fg-2); font-size: var(--ui-text-sm); line-height: var(--ui-leading-sm); }
+.ui-file-upload__status:empty { display: none; }
+.ui-file-upload[data-status="error"] .ui-file-upload__status, .ui-file-upload__status[data-tone="destructive"] { color: var(--ui-danger); }
+
+/* ---- Очередь: карточка со строками. */
+.ui-file-upload__list {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-height: 248px;
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  contain: layout style;
+  border-radius: var(--ui-control-r-lg);
+  background: var(--ui-surface);
+  box-shadow: var(--ui-shadow-card);
+  list-style: none;
+}
+.ui-file-upload__list:empty { display: none; }
+.ui-file-upload__row {
+  display: grid;
+  flex: none;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 0 8px;
+  border-radius: var(--ui-r);
+}
+/* Строка вне прокрутки не рисуется и не раскладывается: пачка в тысячи файлов
+   стоит столько же, сколько видимые строки; высота пропущенной — 48px, пока
+   браузер не запомнит настоящую. Первые пять видны всегда (список — 248px):
+   им пропуск ничего не даёт. */
+.ui-file-upload__row:nth-child(n + 6) { content-visibility: auto; contain-intrinsic-block-size: auto 48px; }
+/* Подсветка строки под мышью — сразу, без перехода: по строкам ведут курсором. */
+@media (hover: hover) and (pointer: fine) {
+  .ui-file-upload__row:hover { background: var(--ui-chip); }
+}
+.ui-file-upload__row .ui-file-upload__media {
+  display: grid;
+  place-items: center;
+  width: var(--ui-h);
+  height: var(--ui-h);
+  overflow: hidden;
+  border-radius: var(--ui-r-sm);
+  background: var(--ui-chip);
+  color: var(--ui-fg-2);
+}
+/* Рамка поверх превью: светлое фото не растворяется в белой карточке. */
+.ui-file-upload__media:has(> .ui-file-upload__preview) { position: relative; }
+.ui-file-upload__media:has(> .ui-file-upload__preview)::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ui-fg) 8%, transparent); pointer-events: none; }
+.ui-file-upload__preview { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+.ui-file-upload__text { display: flex; flex-direction: column; min-width: 0; }
+.ui-file-upload__name, .ui-file-upload__meta { min-height: 1lh; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ui-file-upload__name { color: var(--ui-fg); font-weight: 500; line-height: var(--ui-leading); }
+.ui-file-upload__meta { color: var(--ui-fg-2); font-size: var(--ui-text-2xs); line-height: var(--ui-leading-2xs); }
+/* Убрать файл: крестик тише строки. С клавиатуры кнопки очереди — одна
+   остановка табуляции, по ним ходят стрелки. */
+.ui-file-upload__remove.ui-btn { --ui-btn-fg: var(--ui-fg-3); }
+@media (hover: hover) and (pointer: fine) {
+  .ui-file-upload__remove.ui-btn:hover { --ui-btn-fg: var(--ui-fg); }
+}
+
+/* ---- Чипы: очередь строкой, без карточки. Чип — не кнопка: рамка тоньше и без
+   тени, у документа вместо плитки — значок. */
+.ui-file-upload__list[data-list="chips"] {
+  flex-flow: row wrap;
+  gap: 6px;
+  max-height: none;
+  padding: 0;
+  overflow: visible;
+  contain: none;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+.ui-file-upload__list[data-list="chips"] .ui-file-upload__row {
+  display: inline-flex;
+  gap: 6px;
+  min-height: 0;
+  height: var(--ui-h-sm);
+  max-width: 100%;
+  padding: 0 2px 0 8px;
+  border-radius: var(--ui-control-r-sm);
+  background: var(--ui-fu-bg);
+  box-shadow: inset 0 0 0 1px var(--ui-line);
+  font-size: var(--ui-text-sm);
+  line-height: var(--ui-leading-sm);
+  /* Ширина чипа — по имени: пропущенный чип схлопнулся бы в ноль. */
+  content-visibility: visible;
+}
+.ui-file-upload--secondary .ui-file-upload__list[data-list="chips"] .ui-file-upload__row { box-shadow: none; }
+@media (hover: hover) and (pointer: fine) {
+  .ui-file-upload__list[data-list="chips"] .ui-file-upload__row:hover { background: var(--ui-fu-hover); }
+}
+.ui-file-upload__list[data-list="chips"] .ui-file-upload__media { flex: none; width: 16px; height: 16px; border-radius: var(--ui-r-xs); background: none; color: var(--ui-fg-3); }
+.ui-file-upload__list[data-list="chips"] .ui-file-upload__media:has(> .ui-file-upload__preview) { width: 20px; height: 20px; margin-inline-start: -4px; }
+.ui-file-upload__list[data-list="chips"] .ui-file-upload__text { flex-direction: row; align-items: baseline; gap: 6px; }
+.ui-file-upload__list[data-list="chips"] :is(.ui-file-upload__name, .ui-file-upload__meta) { font-size: inherit; line-height: inherit; }
+.ui-file-upload__list[data-list="chips"] .ui-file-upload__name { max-width: 220px; }
+.ui-file-upload__list[data-list="chips"] .ui-file-upload__meta { flex: none; color: var(--ui-fg-3); }
+.ui-file-upload__list[data-list="chips"] .ui-file-upload__remove.ui-btn { --ui-btn-h: var(--ui-h-xs); --ui-btn-r: calc(var(--ui-control-r-sm) - 2px); }
+.ui-file-upload__list[data-list="chips"] .ui-file-upload__remove > .ui-icon { --ui-icon-size: 14px; }
+
+/* ---- Кнопка: зона — сама кнопка, очередь чипами под ней. */
+.ui-file-upload[data-variant="button"] { align-items: flex-start; }
+.ui-file-upload__zone.ui-btn[data-drag] { --ui-control-edge-w: 1px; --ui-btn-edge: var(--ui-accent); --ui-btn-face: color-mix(in srgb, var(--ui-accent) 8%, var(--ui-btn-bg)); }
+
+/* ---- Поле: зона в рост .ui-input — значок, имя файла, «Убрать» и «Обзор».
+   «Убрать» нарисована как .ui-input__action (input/input.css). Серый вид — как у
+   .ui-input--secondary: заливка без рамки, рамка — только в фокусе и при ошибке. */
+.ui-file-upload[data-variant="input"] > .ui-file-upload__zone:not(.ui-btn) {
+  --ui-fu-edge: var(--ui-control-edge);
+  gap: 8px;
+  min-height: 0;
+  height: var(--ui-h);
+  padding: 0 4px 0 var(--ui-control-px);
+  border: 0;
+  border-radius: var(--ui-control-r);
+  box-shadow: inset 0 0 0 var(--ui-control-edge-w) var(--ui-fu-edge), var(--ui-fu-shadow, var(--ui-shadow-xs));
+}
+.ui-file-upload--secondary[data-variant="input"] > .ui-file-upload__zone:not(.ui-btn) { --ui-fu-shadow: var(--ui-shadow-none); }
+.ui-file-upload--secondary[data-variant="input"] > .ui-file-upload__zone:not(.ui-btn):not(:focus-visible, [aria-invalid="true"], [data-drag]) { --ui-fu-edge: transparent; }
+@media (hover: hover) and (pointer: fine) {
+  .ui-file-upload[data-variant="input"]:not(.ui-file-upload--secondary) > .ui-file-upload__zone:not(.ui-btn):hover { --ui-fu-edge: var(--ui-control-edge-hover); background: var(--ui-surface); }
+}
+.ui-file-upload[data-variant="input"] > .ui-file-upload__zone:not(.ui-btn):focus-visible { box-shadow: inset 0 0 0 1px var(--ui-fu-edge), 0 0 0 var(--ui-field-focus-w) var(--ui-field-focus); }
+.ui-file-upload[data-variant="input"] .ui-file-upload__zone > .ui-icon { color: var(--ui-fg-3); }
+.ui-file-upload[data-variant="input"] .ui-file-upload__title { overflow: hidden; font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
+.ui-file-upload__title[data-empty] { color: var(--ui-fg-3); }
+/* «Обзор» — малая кнопка внутри поля: белое лицо с рамкой, на сером поле тоже. */
+.ui-file-upload[data-variant="input"] .ui-file-upload__browse {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  height: var(--ui-h-xs);
+  padding: 0 var(--ui-control-px-xs);
+  border-radius: calc(var(--ui-control-r) - 4px);
+  background: var(--ui-surface);
+  box-shadow: inset 0 0 0 var(--ui-control-edge-w) var(--ui-control-edge), var(--ui-shadow-xs);
+  color: var(--ui-fg);
+  font: 500 var(--ui-text-sm) / 1 var(--ui-font);
+  white-space: nowrap;
+}

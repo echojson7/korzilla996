@@ -1,0 +1,103 @@
+/* ---- Бейдж, аватар, клавиша ------------------------------------------------ */
+
+/* Бейдж — по сетке кнопок (владелец, 20.10.2026): шаг шкалы контролов
+   (styles/tokens.css), как у .ui-btn того же размера: высота, отступ h/2 − 4,
+   скругление h/4 + 2, текст 13 у xs и sm и 14 у md и lg, 500, иконка и зазор. Серая плашка и
+   основной текст. Тон (data-tone) — цветная точка, а если впереди иконка — сама
+   иконка: так же выглядит и статус с иконкой. Заливку тоном получает только счётчик. */
+.ui-badge {
+  --ui-badge-h: var(--ui-h);
+  --ui-badge-x: var(--ui-control-px);
+  --ui-badge-r: var(--ui-control-r);
+  --ui-badge-icon: var(--ui-control-icon);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ui-badge-gap, var(--ui-control-gap));
+  max-width: 100%;
+  height: var(--ui-badge-h);
+  padding: 0 var(--ui-badge-x);
+  border-radius: var(--ui-badge-r);
+  background: var(--ui-badge-bg, var(--ui-chip-hover));
+  box-shadow: var(--ui-badge-ring, 0 0 transparent), var(--ui-badge-focus, 0 0 transparent);
+  color: var(--ui-badge-fg, var(--ui-fg));
+  font: 500 var(--ui-text) / var(--ui-leading) var(--ui-font);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.ui-badge--xs, .ui-badge--sm { font-size: var(--ui-text-sm); line-height: var(--ui-leading-sm); }
+.ui-badge--xs { --ui-badge-h: var(--ui-h-xs); --ui-badge-x: var(--ui-control-px-xs); --ui-badge-r: var(--ui-control-r-xs); --ui-badge-icon: var(--ui-control-icon-xs); --ui-badge-gap: var(--ui-control-gap-xs); }
+.ui-badge--sm { --ui-badge-h: var(--ui-h-sm); --ui-badge-x: var(--ui-control-px-sm); --ui-badge-r: var(--ui-control-r-sm); }
+.ui-badge--lg { --ui-badge-h: var(--ui-h-lg); --ui-badge-x: var(--ui-control-px-lg); --ui-badge-r: var(--ui-control-r-lg); }
+.ui-badge > .ui-icon { --ui-icon-size: var(--ui-badge-icon); color: var(--ui-tone, var(--ui-fg-2)); }
+.ui-badge > .ui-e3d { --ui-e3d: var(--ui-badge-icon); }
+.ui-badge__label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+:is(.ui-badge[data-tone], .ui-badge--dot):not(.ui-badge--count, :has(> :is(.ui-icon, .ui-e3d):first-child))::before { content: ""; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--ui-tone, var(--ui-fg-3)); }
+/* Статус — серый чип, у которого тон показывает значок (владелец, 10.11.2026):
+   зелёный — галочка в круге, жёлтый — восклицательный знак, красный — крестик.
+   Прочие тона — точкой, своя ведущая иконка — как у любого бейджа. */
+.ui-badge--status:is([data-tone="green"], [data-tone="amber"], [data-tone="red"]):not(:has(> :is(.ui-icon, .ui-e3d):first-child))::before {
+  width: var(--ui-badge-icon);
+  height: var(--ui-badge-icon);
+  border-radius: 0;
+  background: var(--ui-tone);
+  -webkit-mask: var(--ui-badge-glyph) center / contain no-repeat;
+  mask: var(--ui-badge-glyph) center / contain no-repeat;
+}
+.ui-badge--status[data-tone="green"] { --ui-badge-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9.75'/%3E%3Cpath d='M8.25 13.25 10.5 15.25 15.25 9.375'/%3E%3C/svg%3E"); }
+.ui-badge--status[data-tone="amber"] { --ui-badge-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9.75'/%3E%3Cpath d='M12 7.75v4.75M12 16.25h.01'/%3E%3C/svg%3E"); }
+.ui-badge--status[data-tone="red"] { --ui-badge-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9.75'/%3E%3Cpath d='m8.625 8.625 6.75 6.75M15.375 8.625l-6.75 6.75'/%3E%3C/svg%3E"); }
+.ui-badge--outline { --ui-badge-bg: transparent; --ui-badge-ring: inset 0 0 0 1px var(--ui-line-strong); }
+.ui-badge--mono { font-family: var(--ui-mono); }
+/* Счётчик — 18 с цифрами 12 (владелец: 20 был ростом с подпись, 16 — мелок, цифры 13 —
+   крупны). 18 — вне сетки 4 px, это осознанно. */
+.ui-badge--count { --ui-badge-h: 18px; justify-content: center; min-width: 18px; padding: 0 6px; border-radius: var(--ui-r-full); font-family: var(--ui-mono); font-size: var(--ui-text-2xs); }
+.ui-badge--count[data-tone] { background: var(--ui-tone-soft); color: var(--ui-tone); }
+
+/* Мягкий — заливка тоном и подпись --ui-tone-fg (текст тона по его вуали, держит
+   контраст в обеих темах). Контур с тоном — рамка и подпись тоном. Цвет уже
+   говорит о тоне, точки у них нет. Двухцветный глиф duo-* — тоном иконки. */
+.ui-badge[data-tone]:is(.ui-badge--soft, .ui-badge--outline) { --ui-badge-fg: var(--ui-badge-ink); }
+.ui-badge--soft[data-tone] { --ui-badge-bg: var(--ui-tone-soft); }
+.ui-badge--outline[data-tone] { --ui-badge-ring: inset 0 0 0 1px color-mix(in srgb, var(--ui-tone) 45%, transparent); }
+.ui-badge { --ui-badge-ink: var(--ui-tone-fg, var(--ui-fg)); }
+.ui-badge[data-tone]:is(.ui-badge--soft, .ui-badge--outline):not([aria-pressed="true"])::before { content: none; }
+
+/* Чип-выбор — <button class="ui-badge" aria-pressed>: модуль badge переключает
+   aria-pressed и шлёт badge:change. Выбранный серый — тёмный, мягкий — сплошной
+   тон, контур — рамка и заливка тоном. Без ведущей иконки у выбранного — галочка
+   на месте точки; иконка с .ui-icon--fill (сердце, звезда) заливается. */
+button.ui-badge { border: 0; cursor: pointer; transition: background-color var(--ui-t), box-shadow var(--ui-t), color var(--ui-t); }
+button.ui-badge:focus-visible { outline: none; --ui-badge-focus: 0 0 0 3px var(--ui-focus); }
+button.ui-badge:disabled { opacity: var(--ui-opacity-disabled); cursor: not-allowed; }
+@media (hover: hover) and (pointer: fine) {
+  button.ui-badge:not(:disabled):hover { --ui-badge-bg: color-mix(in srgb, var(--ui-fg) 13%, transparent); }
+  button.ui-badge--soft[data-tone]:not(:disabled):hover { --ui-badge-bg: color-mix(in srgb, var(--ui-tone) 24%, transparent); }
+  button.ui-badge--outline:not(:disabled):hover { --ui-badge-bg: var(--ui-tone-soft, var(--ui-chip)); }
+}
+.ui-badge[aria-pressed="true"] { --ui-badge-bg: var(--ui-fg-2); --ui-badge-fg: var(--ui-surface); }
+.ui-badge[aria-pressed="true"] > .ui-icon { color: inherit; }
+.ui-badge--soft[data-tone][aria-pressed="true"] { --ui-badge-bg: var(--ui-tone); --ui-badge-fg: var(--ui-on-tone); }
+.ui-badge--outline[aria-pressed="true"] { --ui-badge-bg: var(--ui-tone-soft, var(--ui-chip)); --ui-badge-fg: var(--ui-badge-ink); --ui-badge-ring: inset 0 0 0 1.5px var(--ui-tone, var(--ui-fg-2)); }
+.ui-badge--outline[aria-pressed="true"] > .ui-icon { color: var(--ui-tone, var(--ui-fg-2)); }
+@media (hover: hover) and (pointer: fine) {
+  button.ui-badge[aria-pressed="true"]:not(:disabled):hover { --ui-badge-bg: color-mix(in oklab, var(--ui-fg-2) 88%, var(--ui-fg)); }
+  button.ui-badge--soft[data-tone][aria-pressed="true"]:not(:disabled):hover { --ui-badge-bg: color-mix(in oklab, var(--ui-tone) 88%, var(--ui-fg)); }
+  button.ui-badge--outline[aria-pressed="true"]:not(:disabled):hover { --ui-badge-bg: color-mix(in srgb, var(--ui-tone, var(--ui-fg)) 20%, transparent); }
+}
+.ui-badge[aria-pressed="true"]:not(.ui-badge--count, :has(> :is(.ui-icon, .ui-e3d):first-child))::before {
+  content: "";
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 0;
+  background: currentColor;
+  -webkit-mask: var(--ui-badge-check) center / contain no-repeat;
+  mask: var(--ui-badge-check) center / contain no-repeat;
+}
+.ui-badge--outline[aria-pressed="true"]::before { background: var(--ui-tone, currentColor); }
+.ui-badge { --ui-badge-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E"); }
+.ui-badge--xs[aria-pressed="true"]::before { width: 12px; height: 12px; }
+.ui-badge > .ui-icon--fill { fill: currentColor; }
+.ui-badge[aria-pressed="false"] > .ui-icon--fill { color: color-mix(in srgb, var(--ui-tone, var(--ui-fg-3)) 35%, transparent); }
+.ui-badge[aria-pressed="true"] > .ui-icon--fill { color: var(--ui-tone, currentColor); }
+.ui-badge--soft[data-tone][aria-pressed="true"] > .ui-icon--fill { color: inherit; }

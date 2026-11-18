@@ -1,0 +1,17 @@
+/* ---- Выпадашка -------------------------------------------------------------- */
+
+/* Кнопка меню с выбором на ней (components/dropdown): приставка «Сортировка» —
+   второстепенным цветом, значение — цветом кнопки, шеврон поворачивается, как у
+   селекта. Панель и пункты — меню поповера. */
+.ui-dropdown__prefix { flex: none; color: var(--ui-fg-2); font-weight: 400; }
+.ui-btn--primary > .ui-dropdown__prefix { color: inherit; opacity: var(--ui-opacity-loading); }
+/* Шеврон раскрытия — один поворот у выпадашки, селекта и заголовка календаря. */
+/* Шевроны выпадашки, селекта и подписи календаря — шеврон раскрытия кита
+   (icons.css, data-ui-turn="flip"), здесь только размер и угол без атрибута. */
+.ui-btn > .ui-dropdown__chevron, .ui-select__chevron > .ui-icon, .ui-datepicker__caption > .ui-icon { --ui-icon-size: 14px; transform: rotate(var(--ui-turn)); transition: --ui-turn var(--ui-duration-turn) var(--ui-ease); }
+.ui-btn[aria-expanded="true"] > .ui-dropdown__chevron, .ui-select__trigger[aria-expanded="true"] .ui-select__chevron > .ui-icon, .ui-datepicker__caption[aria-expanded="true"] > .ui-icon { --ui-turn: 180deg; }
+.ui-btn > .ui-dropdown__chevron { color: color-mix(in srgb, currentColor 60%, transparent); }
+/* Сплит-кнопка: действие и меню других способов одной парой, шов — зазор 1 px. */
+.ui-dropdown-split { display: inline-flex; gap: 1px; }
+.ui-dropdown-split > .ui-btn { border-start-end-radius: 0; border-end-end-radius: 0; }
+.ui-dropdown-split > .ui-popover > .ui-btn { border-start-start-radius: 0; border-end-start-radius: 0; }

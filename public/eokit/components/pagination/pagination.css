@@ -1,0 +1,49 @@
+/* ---- Пагинация ------------------------------------------------------------- */
+
+/* Сколько номеров влезает, модуль решает сам: меряет ширину ряда, стрелки и
+   шаг (column-gap). Поэтому ряд — во всю ширину, номера — одной ширины,
+   промежутки — только gap. Ряд высотой в одну клетку: лишние клетки переносятся
+   за нижний край и в том же кадре убираются, высота не прыгает. Номера
+   прозрачные, текущий — белая пилюля с рамкой, как выбранная вкладка. За номерами,
+   перед «вперёд», — поле перехода к странице. */
+.ui-pagination {
+  --ui-pagination-slot: var(--ui-h);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ui-pagination-gap);
+  width: 100%;
+  min-width: 0;
+  height: var(--ui-pagination-slot);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ui-pagination--sm { --ui-pagination-slot: var(--ui-h-sm); gap: var(--ui-pagination-gap-sm); }
+.ui-pagination__cell { min-width: 0; }
+.ui-pagination :is(.ui-pagination__page, .ui-pagination__nav) {
+  --ui-btn-h: var(--ui-pagination-slot);
+  --ui-btn-bg: transparent;
+  --ui-btn-fg: var(--ui-fg-2);
+  --ui-btn-edge: transparent;
+  --ui-btn-shadow: none;
+  --ui-btn-hover: var(--ui-chip);
+  width: var(--ui-pagination-slot);
+  padding: 0;
+}
+.ui-pagination--sm :is(.ui-pagination__page, .ui-pagination__nav) { --ui-btn-r: var(--ui-control-r-sm); --ui-btn-font: 500 var(--ui-text-control-sm) / 1 var(--ui-font); }
+/* По ряду номеров ведут мышью: заливка меняется сразу, плавным остаётся только нажатие. */
+.ui-pagination :is(.ui-pagination__page, .ui-pagination__nav)::before { transition: transform var(--ui-t) var(--ui-ease-out); }
+.ui-pagination .ui-pagination__page[aria-current="page"] { --ui-btn-bg: var(--ui-surface); --ui-btn-fg: var(--ui-fg); --ui-btn-edge: var(--ui-control-edge); --ui-btn-shadow: var(--ui-shadow-xs); --ui-btn-hover: var(--ui-surface); }
+.ui-pagination__gap { display: inline-grid; place-items: center; width: var(--ui-pagination-slot); height: var(--ui-pagination-slot); color: var(--ui-fg-3); user-select: none; }
+/* Поле перехода — отдельная деталь ряда, а не ещё один номер: отступы до него
+   с обеих сторон больше шага между номерами. Отступ — внутри клетки, его считает замер ширины. */
+.ui-pagination__field { display: flex; padding-inline: var(--ui-pagination-field-gap); }
+.ui-pagination .ui-pagination__input {
+  --ui-input-h: var(--ui-pagination-slot);
+  width: var(--ui-pagination-field-w);
+  padding: 0 var(--ui-pagination-field-px);
+  text-align: center;
+}
+.ui-pagination--sm .ui-pagination__input { border-radius: var(--ui-control-r-sm); font-size: var(--ui-text-control-sm); line-height: var(--ui-leading-control-sm); }
