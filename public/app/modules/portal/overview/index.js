@@ -1,11 +1,11 @@
-/* Обзор: показатели дня, мои задачи, воронка «Сайты» по стадиям и лента
+/* Обзор: показатели дня, мои задачи и лента
    событий компании. */
 
 import { html } from "../../../js/ui/html.js";
 import { avatar } from "../../../js/ui/icons.js";
 import { pageHead, card, stat, status } from "../../../js/ui/blocks.js";
 import { money, shortDate, time, number } from "../../../js/ui/format.js";
-import { DEALS, TASKS, TASK_STATES, FUNNELS, FEED, WHO, ME, STAFF, TODAY, day, plural } from "../data.js";
+import { DEALS, TASKS, TASK_STATES, FEED, WHO, ME, STAFF, TODAY, day } from "../data.js";
 import { overdue, open } from "../module.js";
 
 const sum = (list) => list.reduce((total, deal) => total + deal.sum, 0);
@@ -19,10 +19,8 @@ export default {
   render({ index, page }) {
     const mine = TASKS.filter((task) => task.owner === ME.id && open(task));
     const late = TASKS.filter(overdue);
-    const active = DEALS.filter((deal) => deal.funnel === "sites");
     const fresh = DEALS.filter((deal) => deal.created >= day(-6));
     const away = STAFF.filter((one) => one.away);
-    const funnel = FUNNELS.sites;
 
     return html`<div class="page ov">
       ${pageHead(`${greeting()}, ${ME.name.split(" ")[0]}`, new Intl.DateTimeFormat("ru-RU", { weekday: "long", day: "numeric", month: "long" }).format(TODAY), "", page.icon)}
@@ -32,28 +30,15 @@ export default {
         ${stat({ label: "Мои задачи", value: number(mine.length), sub: html`<span>${late.length ? `просрочено в компании: ${late.length}` : "всё в срок"}</span>` })}
         ${stat({ label: "Сотрудники", value: number(STAFF.length), sub: html`<span>${away.length ? `в отпуске: ${away.length}` : "все на месте"}</span>` })}
       </div>
-      <div class="grid g-main">
-        <div class="stack">
-          ${card({
-            title: "Мои задачи", end: html`<a class="ui-link" href="${index.href("tasks")}">Все задачи</a>`, flush: true,
-            body: html`<div class="ui-list">${mine.map((task) => html`<a class="ui-list__row" href="${index.href("tasks", { query: { open: task.id } })}">
-              ${avatar(WHO[task.author], "sm")}
-              <span class="ui-list__text"><span class="ui-list__title">${task.title}</span><span class="ui-list__sub">от ${WHO[task.author].name}${task.deadline ? ` · до ${shortDate(task.deadline)}` : ""}</span></span>
-              <span class="ui-list__end">${overdue(task) ? status("Просрочена", "red") : status(TASK_STATES[task.state].label, TASK_STATES[task.state].tone)}</span>
-            </a>`)}</div>`,
-          })}
-          ${card({
-            title: `Воронка «${funnel.name}»`, sub: `${plural(active.length, "сделка", "сделки", "сделок")} на ${money(sum(active))}`, end: html`<a class="ui-link" href="${index.href("deals")}">Канбан</a>`, flush: true,
-            body: html`<div class="ui-list ui-list--sm">${funnel.stages.map(([id, label, tone]) => {
-              const list = active.filter((deal) => deal.stage === id);
-              return html`<a class="ui-list__row" href="${index.href("deals", { query: { funnel: "sites" } })}">
-                <span class="ov-dot" style="--ov-tone: var(--ui-${tone})"></span>
-                <span class="ui-list__text"><span class="ui-list__title">${label}</span></span>
-                <span class="ui-list__end"><span class="faint">${plural(list.length, "сделка", "сделки", "сделок")}</span><span class="ov-sum">${money(sum(list))}</span></span>
-              </a>`;
-            })}</div>`,
-          })}
-        </div>
+      <div class="stack">
+        ${card({
+          title: "Мои задачи", end: html`<a class="ui-link" href="${index.href("tasks")}">Все задачи</a>`, flush: true,
+          body: html`<div class="ui-list">${mine.map((task) => html`<a class="ui-list__row" href="${index.href("tasks", { query: { open: task.id } })}">
+            ${avatar(WHO[task.author], "sm")}
+            <span class="ui-list__text"><span class="ui-list__title">${task.title}</span><span class="ui-list__sub">от ${WHO[task.author].name}${task.deadline ? ` · до ${shortDate(task.deadline)}` : ""}</span></span>
+            <span class="ui-list__end">${overdue(task) ? status("Просрочена", "red") : status(TASK_STATES[task.state].label, TASK_STATES[task.state].tone)}</span>
+          </a>`)}</div>`,
+        })}
         ${card({
           title: "Лента",
           body: html`<ol class="ui-timeline">${FEED.map((entry) => html`<li class="ui-timeline__item">

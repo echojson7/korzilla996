@@ -43,7 +43,5 @@
 /* ---- Процессы и обзор -------------------------------------------------------- */
 .bp-name { display: block; font-weight: 500; }
 .bp-bar { margin-top: 16px; }
-.ov-dot { flex: none; width: 8px; height: 8px; margin: 0 4px; border-radius: 50%; background: var(--ov-tone); }
-.ov-sum { min-width: 112px; color: var(--ui-fg); font-weight: 500; text-align: right; }
 .dl-col > *, .dl-col__list .ui-sortable__item, .dl-col__list .ui-sortable__row { min-width: 0; }
 .dl-col__list .dl-card, .dl-col__list .dl-card * { white-space: normal; overflow-wrap: anywhere; }
