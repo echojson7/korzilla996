@@ -66,7 +66,7 @@
 .section-head__end { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 
 .grid { display: grid; gap: 16px; }
-.grid + .grid, .grid + .card, .card + .grid { margin-top: 16px; }
+.grid + .grid, .grid + .card, .card + .grid, .grid + .stack, .stack + .grid { margin-top: 16px; }
 .g-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .g-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .g-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
