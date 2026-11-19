@@ -168,6 +168,13 @@
 .ui-sortable.is-dragging * { cursor: inherit; }
 .ui-sortable:is(.is-dragging, .is-drop-target) .ui-sortable__item { transition: none; }
 
+/* Карточки (data-drag="item"): пункт берут за всю строку, ручка нужна только
+   клавиатуре — она в углу строки и видна, пока на ней фокус. */
+.ui-sortable[data-drag="item"] .ui-sortable__row { cursor: grab; }
+.ui-sortable[data-drag="item"] .ui-sortable__row > .ui-sortable__handle.ui-btn { position: absolute; z-index: 2; top: 4px; inset-inline-end: 4px; opacity: 0; pointer-events: none; }
+.ui-sortable[data-drag="item"] .ui-sortable__row > .ui-sortable__handle.ui-btn:focus-visible,
+.ui-sortable[data-drag="item"] .ui-sortable__item:is(.is-keyboard-moving, .is-actions-open) > .ui-sortable__row > .ui-sortable__handle.ui-btn { opacity: 1; pointer-events: auto; background: var(--ui-pop); }
+
 /* Меню действий у ручки — панель поповера (popover/popover.css): «выше», «ниже», «в соседний
    список». Открыто одно на документ; ближе к ручке и шире обычного меню. */
 .ui-popover__panel.ui-sortable-menu { --ui-popover-gap: 4px; min-width: 224px; }

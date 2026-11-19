@@ -14,6 +14,9 @@
      </nav>
 
    data-group связывает списки одного вида: пункт переносят между ними.
+   data-drag="item" на корне — пункт берут за всю строку, как карточку канбана
+   (мышью и пером; касание по строке прокручивает, берут за ручку); ручка
+   остаётся для клавиатуры и видна при фокусе.
    data-ui-sortable-disabled закрепляет пункт: его не берут, но вокруг и внутрь
    него переносить можно. data-collapsed — ветка свёрнута при старте. Своя ручка —
    [data-ui-sortable-handle] среди детей пункта.
@@ -762,22 +765,34 @@ function placeTree(state, { record, rect }, x) {
 
 /* Ближе края прокрутки — шаг за кадр, тем больше, чем ближе. box — рамка
    прокрутки, прочитанная в начале кадра вместе с корнями. */
-function autoScroll(state, box) {
-  const above = state.y - box.top;
-  const below = box.bottom - state.y;
-  const step = above < state.edge ? -SCROLL_STEP * (1 - Math.max(0, above) / state.edge) : below < state.edge ? SCROLL_STEP * (1 - Math.max(0, below) / state.edge) : 0;
+const edgeStep = (near, edge) => SCROLL_STEP * (1 - Math.max(0, near) / edge);
+function autoScroll(state, box, scroller, axis) {
+  const [at, from, to] = axis === "x" ? [state.x, box.left, box.right] : [state.y, box.top, box.bottom];
+  const before = at - from;
+  const after = to - at;
+  const step = before < state.edge ? -edgeStep(before, state.edge) : after < state.edge ? edgeStep(after, state.edge) : 0;
   if (!step) return false;
-  const target = state.scroller ?? document.scrollingElement;
-  const was = target.scrollTop;
-  target.scrollBy({ top: step, behavior: "instant" });
-  return target.scrollTop !== was;
+  const target = scroller ?? document.scrollingElement;
+  const key = axis === "x" ? "scrollLeft" : "scrollTop";
+  const was = target[key];
+  target.scrollBy({ [axis === "x" ? "left" : "top"]: step, behavior: "instant" });
+  return target[key] !== was;
 }
 
-function scrollerOf(root) {
-  for (let node = root.parentElement; node && node !== document.body; node = node.parentElement) {
-    if (/(auto|scroll)/.test(getComputedStyle(node).overflowY) && node.scrollHeight > node.clientHeight) return node;
+/* Ближайший прокручиваемый по оси узел: сам корень (колонка канбана со своей
+   прокруткой) или предок. */
+function scrollerOf(root, axis = "y") {
+  for (let node = root; node && node !== document.body; node = node.parentElement) {
+    const style = getComputedStyle(node);
+    const fits = axis === "x" ? node.scrollWidth > node.clientWidth : node.scrollHeight > node.clientHeight;
+    if (/(auto|scroll)/.test(axis === "x" ? style.overflowX : style.overflowY) && fits) return node;
   }
   return null;
+}
+/* Прокрутка по вертикали — у корня под указателем, кешируется на время переноса. */
+function scrollerFor(state, record) {
+  if (!state.scrollers.has(record)) state.scrollers.set(record, scrollerOf(record.root));
+  return state.scrollers.get(record);
 }
 
 /* Призрак внутри рамки корней ходит за указателем, за ней — резиново (по каждой
@@ -798,8 +813,10 @@ function step(state) {
   const { x, y } = state;
   noteTravel(state, y);
   const boxes = state.roots.filter((record) => record.root.isConnected).map((record) => ({ record, rect: record.root.getBoundingClientRect() }));
-  const edge = state.scroller ? state.scroller.getBoundingClientRect() : { top: 0, bottom: state.viewH };
   const target = targetAt(boxes, x, y);
+  const scroller = scrollerFor(state, target?.record ?? state.record);
+  const edge = scroller ? scroller.getBoundingClientRect() : { top: 0, bottom: state.viewH };
+  const sideEdge = state.sideScroller?.getBoundingClientRect();
   if (target) {
     /* Глубину задаёт x; за боковым краем — последний x внутри рамки, иначе пункт
        уходил бы на крайний уровень вложенности. */
@@ -809,7 +826,9 @@ function step(state) {
   }
   const [left, top] = ghostAt(state, boxes);
   state.ghost.style.transform = `translate3d(${left}px, ${top}px, 0)`;
-  if (autoScroll(state, edge)) state.pump();
+  const scrolledY = autoScroll(state, edge, scroller, "y");
+  const scrolledX = sideEdge ? autoScroll(state, sideEdge, state.sideScroller, "x") : false;
+  if (scrolledY || scrolledX) state.pump();
 }
 
 function ghostOf(item, width, count) {
@@ -848,7 +867,9 @@ function begin(state) {
   state.depth = depthOf(item.parentElement);
   state.depthRoot = record.root;
   state.roots = [...records].filter((other) => other === record || (record.group && other.group === record.group && other.tree === record.tree));
-  state.scroller = scrollerOf(record.root);
+  state.scrollers = new Map();
+  /* По горизонтали — общий предок группы (доска канбана), если он прокручивается. */
+  state.sideScroller = scrollerOf(record.root.parentElement, "x");
   state.viewH = document.documentElement.clientHeight;
   state.from = position(item);
   state.opened = new Set();
@@ -961,6 +982,19 @@ function onRowToggle(event, root) {
   return true;
 }
 
+/* Пункт под указателем у корня с data-drag="item": строка своего пункта, не
+   ручка и не кнопка, поле или ссылка строки (подпись-кнопка — можно). */
+function ownRow(event, root) {
+  if (root.dataset.drag !== "item" || event.pointerType === "touch") return null;
+  const item = event.target.closest?.(ITEM);
+  if (!item || rootOf(item) !== root) return null;
+  const row = rowOf(item);
+  if (!row.contains(event.target)) return null;
+  const hit = event.target.closest(ACTIVE);
+  if (hit && row.contains(hit) && !hit.matches(LABEL)) return null;
+  return item;
+}
+
 /* Ручка своего пункта (не вложенного сортируемого) под событием. */
 function ownHandle(event, root) {
   const handle = event.target.closest?.(HANDLE);
@@ -994,7 +1028,7 @@ function create(root, ctx) {
   ctx.on(root, "pointerdown", (event) => {
     record.mute = null;
     if (onToggle(event, root)) return;
-    const item = ownHandle(event, root);
+    const item = ownHandle(event, root) ?? ownRow(event, root);
     if (!item || !event.isPrimary || event.button !== 0 || drag || isDisabled(item)) return;
     if (moving) finish(true);
     const state = { record, item, startX: event.clientX, startY: event.clientY, x: event.clientX, y: event.clientY, peak: event.clientY, travel: 0 };

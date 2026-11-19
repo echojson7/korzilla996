@@ -10,7 +10,7 @@
    load() ставит новые модули на документ; дальше mount(root) — после своей отрисовки. */
 
 /* Версия кита: меняется вместе с CHANGELOG.md. */
-export const version = "1.70.0";
+export const version = "1.71.0";
 
 export const catalog = {
   accordion: () => import("./components/accordion/accordion.js"),
