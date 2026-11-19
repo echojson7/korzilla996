@@ -10,10 +10,13 @@ CRM-сделки с воронками, задачи, бизнес-процес�
 ```
 app/, routes/, database/   сервер на Laravel 13: вход сотрудников, учётки
 public/index.php           вход в сервер; API — /index.php/api/…
-public/eokit/              дизайн-система EOKIT (копия frontend/eokit из ветки Kirye)
-public/app/                оболочка admin2 и модули портала, без сборки
-  modules/portal/          обзор, сделки (канбан), задачи, сотрудники, процессы;
-                           data.js — демо-данные, пока их нет на сервере
+web/                       интерфейс: Vue 3 + Vite + Tailwind 4 + стили HeroUI v3
+  src/pages/               обзор, сделки (канбан), задачи (канбан и таблица),
+                           сотрудники, процессы
+  src/lib/data.ts          демо-данные, пока их нет на сервере
+  public/bg/               фоны-фотографии (Unsplash License)
+public/portal/             готовая сборка web/ (коммитится: на стенде нет node)
+public/app/index.html      старый адрес, уводит на /portal/
 ```
 
 ## Запуск
@@ -24,6 +27,14 @@ cp .env.example .env && php artisan key:generate
 touch database/database.sqlite && php artisan migrate
 php artisan staff:create owner@example.ru "Имя Фамилия" --role=owner   # печатает пароль
 php artisan serve                                                     # http://localhost:8000/
+```
+
+Интерфейс:
+
+```bash
+cd web && npm ci
+npm run dev      # http://localhost:5173/, API проксируется на :8000
+npm run build    # сборка в public/portal — коммитить вместе с исходниками
 ```
 
 На стенде портал раздаётся из подпапки `/996/` стенда korzillaX: папка

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Korzilla 996</title>
+  <meta name="color-scheme" content="light dark">
+  <script>
+    /* Тема и фон до первого кадра, иначе мигнёт. Правила — копия apply()
+       из src/lib/look.ts (ключи k996.theme и k996.bg). */
+    try {
+      var root = document.documentElement;
+      var get = function (key) { try { return JSON.parse(localStorage.getItem("k996." + key)); } catch (e) { return null; } };
+      var theme = get("theme") || "system";
+      var dark = theme === "dark" || (theme === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
+      root.classList.toggle("dark", dark);
+      root.dataset.theme = dark ? "dark" : "light";
+      var colors = { fjord: "rgb(85 105 111)", peaks: "rgb(114 112 124)", forest: "rgb(66 65 48)", alpine: "rgb(78 78 62)", valley: "rgb(88 110 54)", hills: "rgb(118 118 102)", coast: "rgb(160 179 178)" };
+      var bg = get("bg");
+      if (!colors[bg]) bg = "fjord";
+      var size = Math.max(screen.width, screen.height) * devicePixelRatio > 1600 ? "" : "-1280";
+      root.style.setProperty("--bg-color", colors[bg]);
+      root.style.setProperty("--bg-image", 'url("' + new URL("./bg/" + bg + size + ".webp", location.href).href + '")');
+    } catch (e) {}
+  </script>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

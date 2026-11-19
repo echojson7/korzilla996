@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Route;
  * Портал раздаётся из подпапки стенда (/996/), поэтому адреса считаются
  * от базового пути запроса, а не от корня хоста.
  */
-Route::get('/', fn (Request $request) => redirect()->to($request->getSchemeAndHttpHost().$request->getBasePath().'/app/index.html'));
+Route::get('/', fn (Request $request) => redirect()->to($request->getSchemeAndHttpHost().$request->getBasePath().'/portal/'));
 
 /* Контракт экрана входа admin2: GET auth, POST auth/login, POST auth/logout. */
 Route::prefix('api')->group(function () {
