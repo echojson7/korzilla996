@@ -2,7 +2,8 @@
      вставка из буфера и перетаскивание добавляют файлы. Над полем —
      ответ на сообщение или правка своего. -->
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
+import { autoUpdate, computePosition, flip, offset, shift, size } from "@floating-ui/dom";
 import { Paperclip, Smile, SendHorizontal, X, Reply, Pencil, FileText, Check } from "@lucide/vue";
 import Popover from "../Popover.vue";
 import EmojiPicker from "./EmojiPicker.vue";
@@ -116,6 +117,37 @@ const candidates = computed(() => {
     .sort((a, b) => a.name.localeCompare(b.name, "ru"))
     .slice(0, 6);
 });
+/* Список упоминаний — в body, над полем по его ширине (Floating UI). */
+const root = ref<HTMLElement | null>(null);
+const mentionList = ref<HTMLElement | null>(null);
+let stopMention: (() => void) | null = null;
+function placeMention() {
+  const anchor = root.value;
+  const el = mentionList.value;
+  if (!anchor || !el) return;
+  computePosition(anchor, el, {
+    strategy: "fixed",
+    placement: "top-start",
+    middleware: [
+      offset(6),
+      flip({ padding: 8 }),
+      shift({ padding: 8 }),
+      size({ padding: 8, apply({ availableHeight, rects, elements }) {
+        elements.floating.style.width = `${Math.round(rects.reference.width)}px`;
+        elements.floating.style.maxHeight = `${Math.max(120, Math.floor(availableHeight))}px`;
+      } }),
+    ],
+  }).then(({ x, y }) => Object.assign(el.style, { left: `${x}px`, top: `${y}px` }));
+}
+watch(() => !!(mention.value && candidates.value.length), async (on) => {
+  stopMention?.();
+  stopMention = null;
+  if (!on) return;
+  await nextTick();
+  if (root.value && mentionList.value) stopMention = autoUpdate(root.value, mentionList.value, placeMention);
+});
+onBeforeUnmount(() => stopMention?.());
+
 function pickMention(one: { name: string }) {
   const at = mention.value;
   const el = box.value;
@@ -179,22 +211,24 @@ function onPick(event: Event) {
 </script>
 
 <template>
-  <div class="relative rounded-2xl bg-surface px-2 py-2 shadow-[0_2px_12px_-2px_rgb(0_0_0/0.14)] ring-1 ring-black/5 dark:ring-white/10" @click.self="box?.focus()">
-    <ul v-if="mention && candidates.length" class="absolute inset-x-1.5 bottom-full z-20 mb-1.5 overflow-hidden rounded-xl bg-overlay p-1 shadow-lg ring-1 ring-black/5" role="listbox" aria-label="Упомянуть">
-      <li v-for="(one, i) in candidates" :key="one.id">
-        <button
-          type="button"
-          role="option"
-          class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm"
-          :class="i === pickAt ? 'bg-default' : 'hover:bg-default'"
-          :aria-selected="i === pickAt"
-          @mousedown.prevent="pickMention(one)"
-          @mouseenter="pickAt = i"
-        >
-          <ChatFace :user="one" size="xs" /><span class="truncate">{{ one.name }}</span>
-        </button>
-      </li>
-    </ul>
+  <div ref="root" class="relative rounded-2xl bg-surface px-2 py-2 shadow-[0_2px_12px_-2px_rgb(0_0_0/0.14)] ring-1 ring-black/5 dark:ring-white/10" @click.self="box?.focus()">
+    <Teleport to="body">
+      <ul v-if="mention && candidates.length" ref="mentionList" class="popover-layer fixed top-0 left-0 overflow-y-auto overscroll-contain rounded-xl bg-overlay p-1 shadow-overlay thin-scroll" role="listbox" aria-label="Упомянуть">
+        <li v-for="(one, i) in candidates" :key="one.id">
+          <button
+            type="button"
+            role="option"
+            class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm"
+            :class="i === pickAt ? 'bg-default' : 'hover:bg-default'"
+            :aria-selected="i === pickAt"
+            @mousedown.prevent="pickMention(one)"
+            @mouseenter="pickAt = i"
+          >
+            <ChatFace :user="one" size="xs" /><span class="truncate">{{ one.name }}</span>
+          </button>
+        </li>
+      </ul>
+    </Teleport>
     <div v-if="editing || replyTo" class="mx-1 mt-0.5 mb-1.5 flex items-center gap-2 rounded-xl bg-surface-secondary px-3 py-2 text-sm">
       <Pencil v-if="editing" class="size-4 shrink-0 text-accent" />
       <Reply v-else class="size-4 shrink-0 text-accent" />

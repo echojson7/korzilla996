@@ -10,6 +10,7 @@ import { QUICK } from "../../lib/emoji";
 import { apiUrl } from "../../lib/api";
 import { person, viewsOf, type ChatMessage } from "../../lib/messenger";
 import { isFavorite, loadFavorites, toggleFavorite } from "../../lib/gifs";
+import { computePosition, flip, offset, shift, size } from "@floating-ui/dom";
 
 const props = withDefaults(defineProps<{ message: ChatMessage; x: number; y: number; mine: boolean; canDelete: boolean; seen?: number; startViews?: boolean }>(), { seen: 0, startViews: false });
 const emit = defineEmits<{ close: []; react: [emoji: string]; reply: []; copy: []; forward: []; edit: []; remove: [] }>();
@@ -38,14 +39,24 @@ async function showViews() {
 if (props.startViews) showViews();
 const confirming = ref(false);
 
+/* Положение — Floating UI от точки щелчка: не помещается снизу — встаёт
+   сверху, к краю экрана не прилипает, высота ограничена видимой областью. */
 async function place() {
   await nextTick();
   const el = box.value;
   if (!el) return;
-  const { width, height } = el.getBoundingClientRect();
-  const left = Math.min(Math.max(8, props.x), window.innerWidth - width - 8);
-  const top = props.y + height > window.innerHeight - 8 ? Math.max(8, props.y - height) : props.y;
-  pos.value = { left, top };
+  const point = { getBoundingClientRect: () => ({ x: props.x, y: props.y, left: props.x, top: props.y, right: props.x, bottom: props.y, width: 0, height: 0 }) };
+  const result = await computePosition(point, el, {
+    strategy: "fixed",
+    placement: "bottom-start",
+    middleware: [
+      offset(4),
+      flip({ padding: 8, fallbackPlacements: ["top-start", "bottom-end", "top-end"] }),
+      shift({ padding: 8 }),
+      size({ padding: 8, apply({ availableHeight, elements }) { elements.floating.style.maxHeight = `${Math.max(200, Math.floor(availableHeight))}px`; } }),
+    ],
+  });
+  pos.value = { left: result.x, top: result.y };
 }
 watch(() => [props.x, props.y, picking.value, viewing.value, views.value], place);
 
@@ -87,7 +98,7 @@ function remove() {
       ref="box"
       role="menu"
       aria-label="Действия с сообщением"
-      class="fixed z-[80] w-[264px] rounded-2xl bg-overlay p-1.5 text-overlay-foreground shadow-overlay"
+      class="popover-layer fixed top-0 left-0 w-[264px] overflow-y-auto overscroll-contain thin-scroll rounded-2xl bg-overlay p-1.5 text-overlay-foreground shadow-overlay"
       :style="{ left: `${pos.left}px`, top: `${pos.top}px` }"
       @contextmenu.prevent
     >
