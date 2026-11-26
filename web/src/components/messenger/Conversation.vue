@@ -4,7 +4,7 @@
 <script setup lang="ts">
 import { backdrop } from "../../lib/backdrop";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { ArrowLeft, Info, Pin, PinOff, X, ExternalLink, Download, ChevronDown, Upload } from "@lucide/vue";
+import { ArrowLeft, Info, Pin, PinOff, List, X, ExternalLink, Download, ChevronDown, Upload } from "@lucide/vue";
 import ChatFace from "./ChatFace.vue";
 import ReleaseCard from "./ReleaseCard.vue";
 import { href } from "../../lib/router";
@@ -91,14 +91,16 @@ const readUpTo = computed(() => Math.max(thread.value.readUpTo, chat.value?.read
    сначала из уже загруженных, потом с сервера. Вернулись вниз — окно
    снова короткое. */
 const WINDOW = 120;
+const pinsOnly = ref(false);
 const shown = ref(WINDOW);
 const start = computed(() => Math.max(0, thread.value.messages.length - shown.value));
 
 /* Лента: разделители дней и «шапка» у первого сообщения серии. */
 const rows = computed(() => {
   const out: { message: ChatMessage; day: string | null; head: boolean; tail: boolean }[] = [];
-  const list = thread.value.messages;
-  for (let i = start.value; i < list.length; i++) {
+  /* Режим «только закреплённые» — та же лента, но из списка закреплённых. */
+  const list = pinsOnly.value ? [...thread.value.pins].sort((a, b) => a.id - b.id) : thread.value.messages;
+  for (let i = pinsOnly.value ? 0 : start.value; i < list.length; i++) {
     const message = list[i];
     const prev = list[i - 1];
     const next = list[i + 1];
@@ -182,6 +184,7 @@ async function onScroll() {
   const el = scroller.value;
   if (!el) return;
   atBottom.value = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+  if (pinsOnly.value) return;
   if (atBottom.value) {
     read();
     if (shown.value > WINDOW && !settling) shown.value = WINDOW;
@@ -203,7 +206,7 @@ async function onScroll() {
 /* Плавно — только к новому сообщению в уже открытом чате. */
 watch(() => [props.chatId, thread.value.messages.length] as const, ([id, now], [wasId, was]) => {
   const last = thread.value.messages.at(-1);
-  if (!last || settling || id !== wasId || !was) return;
+  if (!last || settling || id !== wasId || !was || pinsOnly.value) return;
   /* Читают выше — новые снизу не должны сдвигать окно ленты. */
   if (!atBottom.value && now > was) shown.value += now - was;
   if (atBottom.value || (last.userId === meId.value && now > was)) toBottom(true);
@@ -254,6 +257,8 @@ function startEdit(message: ChatMessage) {
 /* Нажатие пальцем показывает панель реакций (наведения нет). Мышью панель
    живёт только под курсором — щелчок её не «залипает». */
 function tap(message: ChatMessage, event: MouseEvent) {
+  /* В списке закреплённых щелчок ведёт к сообщению в общей ленте. */
+  if (pinsOnly.value) return void showPins(false, message.id);
   const kind = (event as PointerEvent).pointerType;
   if (kind === "mouse" || !kind) {
     active.value = null;
@@ -322,7 +327,28 @@ function forwarded(ids: number[]) {
 /* Закреплённые, как в Telegram: плашка под шапкой показывает одно,
    щелчок ведёт к нему и переключает на следующее (более старое). */
 const pinIndex = ref(0);
-watch(() => props.chatId, () => (pinIndex.value = 0));
+watch(() => props.chatId, () => {
+  pinIndex.value = 0;
+  pinsOnly.value = false;
+});
+/* Открепили последнее, пока смотрели список, — назад в ленту. */
+watch(() => thread.value.pins.length, (n) => n || (pinsOnly.value && showPins(false)));
+
+/* Переключение ленты «все ↔ закреплённые» — на месте, мягким проявлением;
+   при возврате лента встаёт туда же, где была. */
+let feedTop = 0;
+async function showPins(on: boolean, target?: number) {
+  const el = scroller.value;
+  if (!el || pinsOnly.value === on) return;
+  if (on) feedTop = el.scrollTop;
+  active.value = null;
+  pinsOnly.value = on;
+  await nextTick();
+  if (on) el.scrollTop = el.scrollHeight;
+  else if (target) await jump(target);
+  else el.scrollTop = feedTop;
+  el.animate([{ opacity: 0, transform: "translateY(10px)" }, { opacity: 1, transform: "none" }], { duration: 240, easing: "cubic-bezier(.2,.8,.2,1)" });
+}
 const pins = computed(() => thread.value.pins);
 const pinShown = computed(() => pins.value[Math.min(pinIndex.value, pins.value.length - 1)] ?? null);
 function pinText(message: ChatMessage) {
@@ -404,17 +430,25 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
     </header>
 
     <!-- Закреплённые сообщения: полоски слева — сколько их и какое сейчас. -->
-    <div v-if="pinShown" class="flex h-[52px] shrink-0 items-center gap-2 border-b border-separator bg-surface pr-2 pl-3 md:pl-4">
-      <button type="button" class="flex min-w-0 flex-1 items-center gap-3 self-stretch text-left" :title="pins.length > 1 ? 'К сообщению; следующий щелчок — к предыдущему закреплённому' : 'К сообщению'" @click="openPin">
-        <span class="flex h-9 w-[3px] shrink-0 flex-col gap-[2px]" aria-hidden="true">
-          <span v-for="(one, i) in pins.slice(0, 4)" :key="one.id" class="min-h-0 flex-1 rounded-full" :class="Math.min(pinIndex, pins.length - 1) % 4 === i ? 'bg-accent' : 'bg-accent/25'" />
-        </span>
-        <span class="min-w-0">
-          <span class="block text-[13px] leading-4 font-semibold text-accent">Закреплённое сообщение{{ pins.length > 1 ? ` ${Math.min(pinIndex, pins.length - 1) + 1} из ${pins.length}` : "" }}</span>
-          <span class="block truncate text-[13px] leading-5"><span v-if="pinText(pinShown).who" class="text-muted">{{ pinText(pinShown).who }}: </span>{{ pinText(pinShown).text }}</span>
-        </span>
-      </button>
-      <button v-if="chat?.canPin" type="button" class="button button--ghost button--sm button--icon-only shrink-0" aria-label="Открепить" title="Открепить" @click="togglePinMessage(pinShown)"><PinOff class="size-4" /></button>
+    <div v-if="pinShown" class="pin-bar flex h-[52px] shrink-0 items-center gap-1.5 border-b border-separator bg-surface pr-2 pl-3 md:pl-4">
+      <Transition name="pin-swap" mode="out-in">
+        <!-- Список закреплённых: назад к ленте. -->
+        <button v-if="pinsOnly" key="back" type="button" class="flex min-w-0 flex-1 items-center gap-3 self-stretch text-left" title="Назад к чату" @click="showPins(false)">
+          <ArrowLeft class="size-[18px] shrink-0 text-accent" />
+          <span class="truncate text-[14px] font-semibold">{{ plural(pins.length, "закреплённое сообщение", "закреплённых сообщения", "закреплённых сообщений") }}</span>
+        </button>
+        <button v-else key="one" type="button" class="flex min-w-0 flex-1 items-center gap-3 self-stretch text-left" :title="pins.length > 1 ? 'К сообщению; следующий щелчок — к предыдущему закреплённому' : 'К сообщению'" @click="openPin">
+          <span class="flex h-9 w-[3px] shrink-0 flex-col gap-[2px]" aria-hidden="true">
+            <span v-for="(one, i) in pins.slice(0, 4)" :key="one.id" class="min-h-0 flex-1 rounded-full" :class="Math.min(pinIndex, pins.length - 1) % 4 === i ? 'bg-accent' : 'bg-accent/25'" />
+          </span>
+          <span class="min-w-0">
+            <span class="block text-[13px] leading-4 font-semibold text-accent">Закреплённое сообщение{{ pins.length > 1 ? ` ${Math.min(pinIndex, pins.length - 1) + 1} из ${pins.length}` : "" }}</span>
+            <span class="block truncate text-[13px] leading-5"><span v-if="pinText(pinShown).who" class="text-muted">{{ pinText(pinShown).who }}: </span>{{ pinText(pinShown).text }}</span>
+          </span>
+        </button>
+      </Transition>
+      <button v-if="chat?.canPin && !pinsOnly" type="button" class="button button--secondary button--sm shrink-0" @click="togglePinMessage(pinShown)"><PinOff class="size-4" />Открепить</button>
+      <button type="button" class="button button--ghost button--sm button--icon-only shrink-0" :class="pinsOnly ? 'text-accent' : ''" :aria-pressed="pinsOnly" :aria-label="pinsOnly ? 'Назад к чату' : 'Все закреплённые'" :title="pinsOnly ? 'Назад к чату' : 'Все закреплённые'" @click="showPins(!pinsOnly)"><List class="size-[18px]" /></button>
     </div>
 
     <div class="chat-wall relative flex min-h-0 flex-1 flex-col" :class="chat?.changelog ? 'chat-wall--changelog' : chat?.general ? 'chat-wall--general' : ''">
@@ -425,7 +459,8 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
         <button type="button" class="link" @click="load">Ещё раз</button>
       </div>
       <template v-else>
-        <p v-if="thread.loadingOlder" class="wall-note py-2 text-center text-xs text-muted">Загружаем…</p>
+        <p v-if="pinsOnly" class="wall-note py-3 text-center text-xs text-muted">Закреплённые сообщения · щелчок — к сообщению в чате</p>
+        <p v-else-if="thread.loadingOlder" class="wall-note py-2 text-center text-xs text-muted">Загружаем…</p>
         <p v-else-if="!thread.hasMore && !start && thread.messages.length" class="wall-note py-3 text-center text-xs text-muted">Начало переписки</p>
         <div v-if="!thread.messages.length" class="flex h-full flex-col items-center justify-center text-center text-sm text-muted">
           <ChatFace v-if="chat" :chat="chat" size="xl" />
@@ -492,7 +527,11 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
         </Transition>
       </div>
     </div>
-    <p v-if="chat?.readonly" class="relative z-10 mx-1.5 mb-1.5 rounded-2xl bg-surface/85 px-4 py-3 text-center text-sm text-muted shadow-sm backdrop-blur">{{ chat.changelog ? "Здесь владелец и администраторы рассказывают, что нового в портале" : "В общий чат писать нельзя: так настроена ваша роль" }}</p>
+    <!-- В списке закреплённых вместо поля ввода — возврат к ленте. -->
+    <div v-if="pinsOnly" class="relative z-10 mx-1.5 mb-1.5 flex justify-center rounded-2xl bg-surface/85 p-2 shadow-sm backdrop-blur">
+      <button type="button" class="button button--ghost button--sm" @click="showPins(false)"><ArrowLeft class="size-4" />Назад к чату</button>
+    </div>
+    <p v-else-if="chat?.readonly" class="relative z-10 mx-1.5 mb-1.5 rounded-2xl bg-surface/85 px-4 py-3 text-center text-sm text-muted shadow-sm backdrop-blur">{{ chat.changelog ? "Здесь владелец и администраторы рассказывают, что нового в портале" : "В общий чат писать нельзя: так настроена ваша роль" }}</p>
     <Composer v-else class="relative z-10 mx-1.5 mb-1.5" ref="composer" :draft-key="chatId" :reply-to="replyTo" :editing="editing" @send="send" @gif="sendGifHere" @typing="sendTyping(chatId)" @save="save" @cancel="replyTo = null; editing = null" />
     </div>
 

@@ -691,3 +691,8 @@ body {
     transition-delay: 0s !important;
   }
 }
+
+/* Плашка закреплённых: смена «одно ↔ список» — короткий сдвиг с проявлением. */
+.pin-swap-enter-active, .pin-swap-leave-active { transition: opacity .16s ease, transform .16s ease; }
+.pin-swap-enter-from { opacity: 0; transform: translateY(6px); }
+.pin-swap-leave-to { opacity: 0; transform: translateY(-6px); }
