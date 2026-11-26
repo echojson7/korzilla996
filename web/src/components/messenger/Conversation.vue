@@ -375,10 +375,10 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
         </template>
       </template>
     </div>
-    <Composer class="relative z-10 mx-2 mb-2 md:mx-4 md:mb-3" ref="composer" :draft-key="chatId" :reply-to="replyTo" :editing="editing" @send="send" @save="save" @cancel="replyTo = null; editing = null" />
+    <Composer class="relative z-10 mx-1.5 mb-1.5" ref="composer" :draft-key="chatId" :reply-to="replyTo" :editing="editing" @send="send" @save="save" @cancel="replyTo = null; editing = null" />
     </div>
 
-    <button v-if="!atBottom" type="button" class="absolute right-5 bottom-28 z-20 flex size-10 items-center justify-center rounded-full bg-overlay shadow-overlay" aria-label="К последним сообщениям" @click="toBottom(true)">
+    <button v-if="!atBottom" type="button" class="absolute right-5 bottom-24 z-20 flex size-10 items-center justify-center rounded-full bg-overlay shadow-overlay" aria-label="К последним сообщениям" @click="toBottom(true)">
       <ChevronDown class="size-5" />
       <span v-if="chat?.unread" class="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1 text-[11px] font-semibold text-accent-foreground">{{ chat.unread }}</span>
     </button>
