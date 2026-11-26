@@ -94,11 +94,14 @@ class GeneralChat
     /**
      * Новый сотрудник сразу появляется у каждого коллеги в списке чатов:
      * личный чат с ним и строкой «… теперь в команде». Чат на пару один
-     * (direct_key), поэтому повторное включение учётки дублей не создаёт.
+     * (direct_key), поэтому повторный вызов дублей не создаёт. $only —
+     * только с этими коллегами, $at — время строки (для задним числом).
      */
-    private static function greet(User $user): void
+    public static function greet(User $user, ?array $only = null, $at = null): int
     {
-        $others = User::query()->where('is_active', true)->whereKeyNot($user->id)->pluck('id');
+        $others = User::query()->where('is_active', true)->whereKeyNot($user->id)
+            ->when($only !== null, fn ($q) => $q->whereIn('id', $only))->pluck('id');
+        $made = 0;
         foreach ($others as $id) {
             $chat = Chat::query()->firstOrCreate(['direct_key' => Chat::directKey($user->id, (int) $id)], ['type' => 'direct', 'created_by' => $user->id]);
             if (! $chat->wasRecentlyCreated) {
@@ -108,8 +111,34 @@ class GeneralChat
                 ChatMember::query()->firstOrCreate(['chat_id' => $chat->id, 'user_id' => $member]);
             }
             $message = $chat->messages()->create(['user_id' => $user->id, 'kind' => 'system', 'body' => "{$user->name} теперь в команде", 'meta' => ['event' => 'team', 'users' => [$user->id]]]);
+            if ($at) {
+                $message->forceFill(['created_at' => $at, 'updated_at' => $at])->save();
+                $chat->forceFill(['created_at' => $at])->save();
+            }
             $chat->update(['last_message_at' => $message->created_at]);
             Realtime::emit([$user->id, (int) $id], 'chat', ['chatId' => $chat->id]);
+            $made++;
         }
+
+        return $made;
+    }
+
+    /**
+     * Задним числом: у каждой пары действующих сотрудников без личного
+     * чата он появляется со строкой от того, кто пришёл позже, — со
+     * временем его учётки.
+     */
+    public static function greetAll(): int
+    {
+        $users = User::query()->where('is_active', true)->orderBy('created_at')->orderBy('id')->get();
+        $made = 0;
+        foreach ($users as $i => $user) {
+            $earlier = $users->slice(0, $i)->pluck('id')->all();
+            if ($earlier) {
+                $made += self::greet($user, $earlier, $user->created_at);
+            }
+        }
+
+        return $made;
     }
 }

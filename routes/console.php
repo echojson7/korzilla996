@@ -115,3 +115,8 @@ Artisan::command('changelog:clear {--force : без вопроса}', function (
     \App\Support\Realtime::emit($chat->members()->pluck('user_id')->map(fn ($id) => (int) $id)->all(), 'chat', ['chatId' => $chat->id]);
     $this->info("Удалено записей: {$count}");
 })->purpose('Удалить записи портала из канала Changelog');
+
+/* Личные чаты «… теперь в команде» между всеми сотрудниками — задним числом, без дублей. */
+Artisan::command('staff:greet-all', function () {
+    $this->info('Заведено личных чатов: '.\App\Support\GeneralChat::greetAll());
+})->purpose('Завести недостающие личные чаты между сотрудниками («… теперь в команде»)');

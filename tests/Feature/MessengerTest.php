@@ -217,4 +217,17 @@ class MessengerTest extends TestCase
         $this->actingAs($owner)->getJson('/api/messenger/chats')->assertOk();
         $this->postJson("/api/messenger/chats/{$log['id']}/messages", ['body' => '## Новое'])->assertCreated();
     }
+
+    public function test_greet_all_backfills_direct_chats_once(): void
+    {
+        $make = fn (string $name) => User::withoutEvents(fn () => User::query()->create(['name' => $name, 'email' => mb_strtolower(str_replace(' ', '.', $name)).'@b.ru', 'password' => 'secret-pass-123', 'is_active' => true]));
+        $a = $make('Ася Первая');
+        $b = $make('Бэла Вторая');
+        $c = $make('Ваня Третий');
+        $this->artisan('staff:greet-all')->expectsOutputToContain('Заведено личных чатов: 3')->assertExitCode(0);
+        $this->artisan('staff:greet-all')->expectsOutputToContain('Заведено личных чатов: 0');
+        $chats = collect($this->actingAs($a)->getJson('/api/messenger/chats')->json('data.chats'))->where('type', 'direct');
+        $this->assertCount(2, $chats);
+        $this->assertEqualsCanonicalizing(['Бэла Вторая теперь в команде', 'Ваня Третий теперь в команде'], $chats->pluck('last.text')->all());
+    }
 }
