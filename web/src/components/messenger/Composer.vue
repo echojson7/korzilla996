@@ -27,9 +27,16 @@ const drafts = new Map<number, string>();
 const previews = computed(() => files.value.map((file) => ({ file, url: file.type.startsWith("image/") ? URL.createObjectURL(file) : null })));
 const canSend = computed(() => (props.editing ? true : text.value.trim().length > 0 || files.value.length > 0));
 
+/* Высота поля по тексту. Пустое поле не меряем: замер (height=auto и
+   scrollHeight) заставляет браузер пересчитать раскладку всей ленты, а при
+   смене чата это и было главной задержкой. */
 function grow() {
   const el = box.value;
   if (!el) return;
+  if (!text.value) {
+    el.style.height = "";
+    return;
+  }
   el.style.height = "auto";
   el.style.height = `${Math.min(Math.max(el.scrollHeight, 60), 220)}px`;
 }
@@ -52,9 +59,13 @@ watch(() => props.editing, (message) => {
 });
 watch(() => props.replyTo, (message) => message && focus());
 
+/* Фокус — в следующем кадре, когда лента уже разложена: так он не
+   заставляет пересчитывать её ещё раз посреди смены чата. */
+let focusing = 0;
 function focus() {
-  nextTick(() => {
-    box.value?.focus();
+  cancelAnimationFrame(focusing);
+  focusing = requestAnimationFrame(() => {
+    box.value?.focus({ preventScroll: true });
     grow();
   });
 }

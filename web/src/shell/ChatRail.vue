@@ -59,7 +59,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
         @click="open(one.id)"
       >
         <span v-if="current === one.id" class="absolute top-1/2 -left-2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-white" aria-hidden="true" />
-        <ChatFace :chat="one" size="md" class="[text-shadow:none] transition-[opacity,box-shadow]" :class="current === one.id ? 'shadow-[0_0_0_2px_rgb(255_255_255/0.9)]' : 'opacity-90 group-hover:opacity-100'" />
+        <ChatFace :chat="one" size="md" class="[text-shadow:none] transition-opacity" :class="current === one.id ? '' : 'opacity-90 group-hover:opacity-100'" />
         <span v-if="one.unread" class="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-semibold text-danger-foreground [text-shadow:none] tabular-nums">{{ one.unread > 99 ? "99+" : one.unread }}</span>
       </button>
     </div>

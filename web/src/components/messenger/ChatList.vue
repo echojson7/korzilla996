@@ -70,18 +70,18 @@ void props;
         <li v-for="one in visible" :key="one.id">
           <button
             type="button"
-            class="group flex h-[68px] w-full items-center gap-3 rounded-2xl px-3 text-left transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-focus"
-            :class="selected === one.id ? 'bg-accent text-accent-foreground' : 'hover:bg-default/70 active:bg-default'"
+            class="group relative flex h-[68px] w-full items-center gap-3 rounded-2xl px-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-focus"
+            :class="selected === one.id ? 'chat-row--on' : 'hover:bg-default/70 active:bg-default'"
             :aria-current="selected === one.id ? 'true' : undefined"
             @pointerenter="prefetch(one.id)"
             @click="emit('open', one.id)"
           >
-            <ChatFace :chat="one" size="lg" :class="selected === one.id ? 'ring-2 ring-white/70' : ''" />
+            <ChatFace :chat="one" size="lg" />
             <span class="min-w-0 flex-1">
               <span class="flex items-baseline gap-2">
                 <span class="flex min-w-0 flex-1 items-center gap-1 text-[15px] leading-5 font-semibold"><component :is="entityOf(one.entity)!.icon" v-if="entityOf(one.entity)" class="size-3.5 shrink-0 opacity-60" :aria-label="entityOf(one.entity)!.label" /><span class="truncate">{{ one.title }}</span></span>
-                <span class="flex shrink-0 items-center gap-1 text-xs tabular-nums" :class="selected === one.id ? 'text-accent-foreground/80' : one.unread ? 'font-medium text-accent' : 'text-muted'">
-                  <template v-if="mine(one) && selected !== one.id">
+                <span class="flex shrink-0 items-center gap-1 text-xs tabular-nums" :class="one.unread ? 'font-medium text-accent' : 'text-muted'">
+                  <template v-if="mine(one)">
                     <CheckCheck v-if="one.readUpTo >= one.last!.id" class="size-3.5 text-accent" aria-label="Прочитано" />
                     <Check v-else class="size-3.5" aria-label="Доставлено" />
                   </template>
@@ -89,14 +89,13 @@ void props;
                 </span>
               </span>
               <span class="mt-1 flex items-center gap-2">
-                <span class="min-w-0 flex-1 truncate text-sm leading-5" :class="selected === one.id ? 'text-accent-foreground/85' : typingIn(one.id).length ? 'text-accent' : 'text-muted'">
-                  <span v-if="mine(one)" :class="selected === one.id ? '' : 'text-foreground/80'">Вы: </span>{{ preview(one) }}
+                <span class="min-w-0 flex-1 truncate text-sm leading-5" :class="typingIn(one.id).length ? 'text-accent' : 'text-muted'">
+                  <span v-if="mine(one)" class="text-foreground/80">Вы: </span>{{ preview(one) }}
                 </span>
-                <Pin v-if="one.pinned && !one.unread" class="size-3.5 shrink-0 rotate-45" :class="selected === one.id ? 'text-accent-foreground/80' : 'text-muted'" aria-label="Закреплён" />
+                <Pin v-if="one.pinned && !one.unread" class="size-3.5 shrink-0 rotate-45 text-muted" aria-label="Закреплён" />
                 <span
                   v-if="one.unread"
-                  class="flex h-[22px] min-w-[22px] shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-semibold tabular-nums"
-                  :class="selected === one.id ? 'bg-accent-foreground text-accent' : 'bg-accent text-accent-foreground'"
+                  class="flex h-[22px] min-w-[22px] shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-semibold tabular-nums bg-accent text-accent-foreground"
                   :aria-label="`Непрочитанных: ${one.unread}`"
                 >{{ one.unread > 99 ? "99+" : one.unread }}</span>
               </span>
