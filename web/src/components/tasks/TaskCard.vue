@@ -517,15 +517,16 @@ defineExpose({ create });
       @cancel="cancelDesc"
     />
     <template v-else>
-    <section class="card card--default gap-0 p-0">
-      <header class="flex h-11 items-center gap-2 px-4">
-        <h3 class="min-w-0 flex-1 text-sm font-semibold">Описание</h3>
-        <button v-if="canEdit" type="button" class="button button--ghost button--sm -mr-2" @click="editDesc"><Pencil class="size-3.5" />{{ v.description ? "Изменить" : "Добавить" }}</button>
-      </header>
-      <div v-if="v.description" class="-mt-2 pb-1" @dblclick="canEdit && editDesc()">
-        <MarkdownField :model-value="v.description" :editable="false" />
-      </div>
-      <p v-else class="-mt-1 px-4 pb-4 text-sm text-muted">Описания нет.</p>
+    <!-- Описание — просто текст задачи, без рамки; «Изменить» — при наведении. -->
+    <section class="group/desc relative pb-1">
+      <template v-if="v.description">
+        <div class="desc-plain" @dblclick="canEdit && editDesc()">
+          <MarkdownField :model-value="v.description" :editable="false" />
+        </div>
+        <button v-if="canEdit" type="button" class="button button--ghost button--sm absolute top-0 right-0 bg-surface/80! opacity-0 backdrop-blur-sm transition-opacity group-hover/desc:opacity-100 focus-visible:opacity-100" @click="editDesc"><Pencil class="size-3.5" />Изменить</button>
+      </template>
+      <button v-else-if="canEdit" type="button" class="flex w-full items-center gap-2 rounded-xl px-1 py-2 text-left text-sm text-muted transition-colors hover:text-accent" @click="editDesc"><Pencil class="size-3.5" />Добавить описание</button>
+      <p v-else class="px-1 py-2 text-sm text-muted">Описания нет.</p>
     </section>
 
     <!-- Свойства: поле слева, значение справа -->
@@ -793,6 +794,10 @@ defineExpose({ create });
 </template>
 
 <style scoped>
+/* Описание без подложки: текст идёт прямо по фону карточки. */
+.desc-plain :deep(.md-box > div),
+.desc-plain > :deep(div.md) { padding: 0.125rem 0.25rem 0; }
+
 /* Свойства: подпись слева, значение справа, строки через черту. */
 .props {
   display: grid;
