@@ -6,7 +6,9 @@ import { ArrowRight, Briefcase, ListChecks, Users, TrendingUp } from "@lucide/vu
 import PageHead from "../components/PageHead.vue";
 import Face from "../components/Face.vue";
 import HueChip from "../components/HueChip.vue";
-import { deals, FUNNELS, FEED, WHO, TODAY, day, ME_ID, type Person } from "../lib/data";
+import { FEED, WHO, TODAY, day, ME_ID, type Person } from "../lib/data";
+import { summary, defaultPipeline, hueOf } from "../lib/crm";
+import { can } from "../lib/access";
 import { people } from "../lib/messenger";
 import ChatFace from "../components/messenger/ChatFace.vue";
 import { STATUS, person, nameOf, isOverdueTask } from "../lib/tasks";
@@ -16,30 +18,26 @@ import { compactMoney, longDate, number, plural, shortDate, time } from "../lib/
 import { href } from "../lib/router";
 import { auth } from "../lib/session";
 
-const sum = (list: { sum: number }[]) => list.reduce((total, one) => total + one.sum, 0);
 const hour = new Date().getHours();
 const greeting = hour < 6 ? "Доброй ночи" : hour < 12 ? "Доброе утро" : hour < 18 ? "Добрый день" : "Добрый вечер";
 const firstName = computed(() => (auth.me?.name ?? WHO[ME_ID].name).split(" ")[0]);
 
-const fresh = computed(() => deals.filter((one) => one.created >= day(-6)));
 /* Статусов «в отпуске» у учёток пока нет: список пуст. */
 const away: Person[] = [];
 const staffCount = computed(() => [...people.values()].filter((one) => one.active).length);
 const when = (date: Date) => (date >= TODAY ? time(date) : date >= day(-1) ? `вчера, ${time(date)}` : `${shortDate(date)}, ${time(date)}`);
 
+/* Основная воронка: рабочие стадии, число и сумма сделок (сводка с сервера). */
 const funnel = computed(() => {
-  const sites = FUNNELS[0];
-  const list = deals.filter((one) => one.funnel === sites.id);
-  const max = Math.max(1, ...sites.stages.map((stage) => sum(list.filter((one) => one.stage === stage.id))));
-  return sites.stages.map((stage) => {
-    const inStage = list.filter((one) => one.stage === stage.id);
-    return { ...stage, count: inStage.length, sum: sum(inStage), share: sum(inStage) / max };
-  });
+  const stages = defaultPipeline.value?.stages.filter((one) => one.semantic === "process") ?? [];
+  const at = (id: number) => summary.stages[id] ?? { count: 0, sum: 0 };
+  const max = Math.max(1, ...stages.map((stage) => at(stage.id).sum));
+  return stages.map((stage) => ({ id: stage.id, label: stage.title, hue: hueOf(stage.color), count: at(stage.id).count, sum: at(stage.id).sum, share: at(stage.id).sum / max }));
 });
 
 const stats = computed(() => [
-  { label: "Сделки в работе", value: number(deals.length), sub: `на ${compactMoney(sum(deals))}`, icon: Briefcase, to: href("/deals") },
-  { label: "Новые за неделю", value: number(fresh.value.length), sub: `на ${compactMoney(sum(fresh.value))}`, icon: TrendingUp, to: href("/deals") },
+  { label: "Сделки в работе", value: number(summary.open.count), sub: `на ${compactMoney(summary.open.sum)}`, icon: Briefcase, to: href("/deals") },
+  { label: "Новые за неделю", value: number(summary.week.count), sub: `на ${compactMoney(summary.week.sum)}`, icon: TrendingUp, to: href("/deals") },
   { label: "Мои задачи", value: number(myOpenTasks.value.length), sub: overdueTasks.value.length ? `просрочено в компании: ${overdueTasks.value.length}` : "всё в срок", icon: ListChecks, to: href("/tasks") },
   { label: "Сотрудники", value: number(staffCount.value), sub: "учётки портала", icon: Users, to: href("/staff") },
 ]);
@@ -81,10 +79,10 @@ const stats = computed(() => [
           </ul>
         </section>
 
-        <section class="sheet rounded-2xl shadow-surface">
+        <section v-if="can('crm', 'view')" class="sheet rounded-2xl shadow-surface">
           <header class="flex items-center justify-between px-5 pt-4 pb-3">
-            <h2 class="font-semibold">Воронка «Сайты»</h2>
-            <a :href="href('/deals')" class="link inline-flex items-center gap-1 text-sm text-accent">Канбан <ArrowRight class="size-3.5" /></a>
+            <h2 class="truncate font-semibold">Воронка «{{ defaultPipeline?.title ?? "Сделки" }}»</h2>
+            <a :href="href('/deals', { pipeline: defaultPipeline?.id })" class="link inline-flex shrink-0 items-center gap-1 text-sm text-accent">Канбан <ArrowRight class="size-3.5" /></a>
           </header>
           <ul class="flex flex-col gap-2.5 px-5 pb-5">
             <li v-for="stage in funnel" :key="stage.id" :style="{ '--hue': stage.hue }">

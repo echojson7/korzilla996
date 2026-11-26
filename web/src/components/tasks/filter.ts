@@ -7,7 +7,7 @@
 import { computed } from "vue";
 import { route, setQuery } from "../../lib/router";
 import { chats } from "../../lib/messenger";
-import { deals } from "../../lib/data";
+import { dealIndex } from "../../lib/crm";
 import { taskStore, isOpenTask, isOverdueTask, nameOf, PRIORITIES, STATUSES, type Status, type TaskBrief } from "../../lib/tasks";
 
 const me = () => taskStore.me;
@@ -130,7 +130,7 @@ export function matches(one: TaskBrief, opts: { skipOnly?: boolean } = {}) {
   }
   const words = search.value.trim().toLowerCase();
   if (words) {
-    const deal = one.dealId ? deals.find((d) => d.id === one.dealId) : null;
+    const deal = one.dealId ? dealIndex.get(one.dealId) : null;
     const people = [one.responsibleId, one.creatorId, ...one.accomplices, ...one.auditors].map(nameOf).join(" ");
     const hay = `${one.title} ${one.id} №${one.id} ${people} ${deal?.title ?? ""} ${deal?.company ?? ""} ${one.project ?? ""} ${one.tags.map((t) => `#${t}`).join(" ")}`.toLowerCase();
     if (!words.split(/\s+/).every((word) => hay.includes(word))) return false;

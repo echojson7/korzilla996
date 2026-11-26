@@ -5,7 +5,7 @@ import { backdrop } from "../lib/backdrop";
 import { computed, nextTick, ref, watch } from "vue";
 import { Search, Briefcase, ListChecks, User, CornerDownLeft } from "@lucide/vue";
 import { PAGES, isAllowed } from "../pages";
-import { deals } from "../lib/data";
+import { dealIndex } from "../lib/crm";
 import { people } from "../lib/messenger";
 import { taskStore, nameOf } from "../lib/tasks";
 import { navigate } from "../lib/router";
@@ -30,7 +30,7 @@ const hits = computed<Hit[]>(() => {
   const words = text.value.trim().toLowerCase();
   const out: Hit[] = PAGES.filter(isAllowed).map((one) => ({ ...one, title: one.id === "profile" ? "Мой профиль" : one.title })).filter((one) => !words || has(one.title, words)).map((one) => ({ group: "Разделы", label: one.title, icon: one.icon, go: () => navigate(one.path) }));
   if (!words) return out;
-  for (const one of deals) if (has(`${one.title} ${one.company} ${one.id}`, words)) out.push({ group: "Сделки", label: one.title, hint: one.company, icon: Briefcase, go: () => navigate("/deals", { funnel: one.funnel, open: one.id }) });
+  for (const one of dealIndex.values()) if (has(`${one.title} ${one.company ?? ""} ${one.id}`, words)) out.push({ group: "Сделки", label: one.title, hint: one.company ?? undefined, icon: Briefcase, go: () => navigate("/deals", { pipeline: one.pipelineId, open: one.id }) });
   for (const one of taskStore.list) if (has(`${one.title} ${one.id}`, words)) out.push({ group: "Задачи", label: one.title, hint: nameOf(one.responsibleId), icon: ListChecks, go: () => navigate("/tasks", { tab: "all", open: one.id }) });
   for (const one of people.values()) if (one.active && has(`${one.name} ${one.position ?? ""} ${one.department ?? ""}`, words)) out.push({ group: "Сотрудники", label: one.name, hint: one.position ?? undefined, icon: User, go: () => navigate("/profile", { id: one.id }) });
   return out.slice(0, 40);

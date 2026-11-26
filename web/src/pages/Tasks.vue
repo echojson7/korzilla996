@@ -23,7 +23,7 @@ import {
   taskStore, tasksEnabled, startTasks, loadTasks, STATUSES, STATUS, PERIODS, periodOf, deadlineFor, isOpenTask, isOverdueTask,
   person, nameOf, createTask, moveTask, setStatus, updateTask, overdueAll, duration, type TaskBrief, type Status, type Period, type TaskInput,
 } from "../lib/tasks";
-import { deals } from "../lib/data";
+import { dealIndex } from "../lib/crm";
 import { auth } from "../lib/session";
 import { plural } from "../lib/format";
 import { route, setQuery } from "../lib/router";
@@ -53,7 +53,7 @@ const VIEWS = [
 ];
 
 const me = () => taskStore.me;
-const dealOf = (id: number | null) => (id ? deals.find((deal) => deal.id === id) ?? null : null);
+const dealOf = (id: number | null) => (id ? dealIndex.get(id) ?? null : null);
 
 /* Отбор — в components/tasks/filter.ts (набор, поля, поиск, сортировка,
    счётчики). В таблице и «Сроках» без завершённых, если стадию не выбрали
@@ -267,7 +267,7 @@ const due = (one: TaskBrief) => dueLook(one.status, one.deadline);
               <Flame v-if="row.priority === 'high'" class="-mt-0.5 mr-0.5 inline size-3.5 text-danger" />{{ row.title }}
             </span>
             <span v-if="dealOf(row.dealId) || row.tags.length" class="block truncate text-xs text-muted">
-              <template v-if="dealOf(row.dealId)">{{ dealOf(row.dealId)!.title }} · {{ dealOf(row.dealId)!.company }}</template>
+              <template v-if="dealOf(row.dealId)">{{ [dealOf(row.dealId)!.title, dealOf(row.dealId)!.company].filter(Boolean).join(" · ") }}</template>
               <template v-for="tag in row.tags" :key="tag"> #{{ tag }}</template>
             </span>
           </template>

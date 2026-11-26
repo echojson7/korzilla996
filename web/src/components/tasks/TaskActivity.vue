@@ -11,7 +11,7 @@ import {
   person, nameOf, taskStore, STATUS, PRIORITIES, duration,
   addComment, updateComment, deleteComment, addTime, updateTime, deleteTime, type TaskFull, type HistoryItem, type Status,
 } from "../../lib/tasks";
-import { deals } from "../../lib/data";
+import { dealIndex } from "../../lib/crm";
 import { when, parseMinutes, fromLocalInput, toLocalInput } from "./when";
 import { toast } from "../../lib/toast";
 import { ApiError } from "../../lib/api";
@@ -86,7 +86,7 @@ function show(field: string, value: string | null) {
   if (field === "deadline" || field === "start_at") return when(value);
   if (field === "needs_review") return value === "1" ? "включён" : "выключен";
   if (field === "estimate") return duration(Number(value) * 60);
-  if (field === "deal_id") return deals.find((one) => one.id === Number(value))?.title ?? `№${value}`;
+  if (field === "deal_id") return dealIndex.get(Number(value))?.title ?? `№${value}`;
   if (field === "parent_id") return taskStore.list.find((one) => one.id === Number(value))?.title ?? `№${value}`;
   return value;
 }

@@ -27,7 +27,7 @@ import {
   deleteTask, toggleTimer, addCheck, updateCheck, deleteCheck, addFiles, deleteFile, upsert, forgetTask,
   type TaskFull, type TaskInput, type Status, type Priority, type TaskBrief,
 } from "../../lib/tasks";
-import { deals, FUNNEL } from "../../lib/data";
+import { dealIndex, searchDeals, pipelineById, type DealBrief } from "../../lib/crm";
 import { chats, threads } from "../../lib/messenger";
 import { apiUrl, ApiError } from "../../lib/api";
 import { href } from "../../lib/router";
@@ -261,12 +261,16 @@ async function timer() {
 /* ---------- Поля ---------- */
 
 const due = computed(() => dueLook(v.value.status, v.value.deadline));
-const dealOf = (id: number | null) => (id ? deals.find((one) => one.id === id) ?? null : null);
+const dealOf = (id: number | null) => (id ? dealIndex.get(id) ?? null : null);
 const dealQ = ref("");
-const dealList = computed(() => {
-  const words = dealQ.value.trim().toLowerCase();
-  return deals.filter((one) => !words || `${one.title} ${one.company} ${one.id}`.toLowerCase().includes(words)).slice(0, 30);
-});
+/* Сделки ищет сервер: их десятки тысяч. */
+const dealList = ref<DealBrief[]>([]);
+let dealTimer = 0;
+function loadDealList() {
+  clearTimeout(dealTimer);
+  dealTimer = window.setTimeout(() => void searchDeals(dealQ.value.trim()).then((list) => (dealList.value = list)).catch(() => undefined), 200);
+}
+watch(dealQ, loadDealList);
 const parentQ = ref("");
 const parentList = computed(() => {
   const words = parentQ.value.trim().toLowerCase();
@@ -708,19 +712,19 @@ defineExpose({ create });
         <dt>Сделка</dt>
         <dd>
           <div class="flex min-w-0 items-center gap-1.5">
-            <a v-if="dealOf(v.dealId)" :href="href('/deals', { funnel: dealOf(v.dealId)!.funnel, open: v.dealId })" class="link inline-flex min-w-0 items-center gap-1.5 text-sm">
-              <Briefcase class="size-3.5 shrink-0 text-muted" /><span class="truncate">{{ dealOf(v.dealId)!.title }} · {{ dealOf(v.dealId)!.company }}</span>
+            <a v-if="dealOf(v.dealId)" :href="href('/deals', { pipeline: dealOf(v.dealId)!.pipelineId, open: v.dealId })" class="link inline-flex min-w-0 items-center gap-1.5 text-sm">
+              <Briefcase class="size-3.5 shrink-0 text-muted" /><span class="truncate">{{ dealOf(v.dealId)!.title }}{{ dealOf(v.dealId)!.company ? ` · ${dealOf(v.dealId)!.company}` : "" }}</span>
             </a>
             <span v-else-if="v.dealId" class="text-muted">Сделка №{{ v.dealId }}</span>
             <Popover v-if="canEdit" :ref="setPicker('deal')" align="left" width="w-80">
               <template #trigger="{ toggle }">
-                <button type="button" class="value shrink-0 text-muted" :class="v.dealId ? 'value--after' : ''" @click="toggle">{{ v.dealId ? "Сменить" : "Привязать сделку" }}</button>
+                <button type="button" class="value shrink-0 text-muted" :class="v.dealId ? 'value--after' : ''" @click="toggle(); loadDealList()">{{ v.dealId ? "Сменить" : "Привязать сделку" }}</button>
               </template>
               <div class="p-1">
                 <input v-model="dealQ" class="input input--full-width h-9 text-sm" placeholder="Название, компания или номер" autofocus />
                 <div class="mt-1 max-h-64 overflow-y-auto thin-scroll">
                   <button v-for="one in dealList" :key="one.id" type="button" class="menu-row" @click="patch({ deal_id: one.id }); closePicker('deal')">
-                    <span class="min-w-0 flex-1 text-left"><span class="block truncate">{{ one.title }}</span><span class="block truncate text-xs text-muted">{{ one.company }} · {{ FUNNEL[one.funnel].name }}</span></span>
+                    <span class="min-w-0 flex-1 text-left"><span class="block truncate">{{ one.title }}</span><span class="block truncate text-xs text-muted">{{ [one.company, pipelineById.get(one.pipelineId)?.title].filter(Boolean).join(" · ") }}</span></span>
                   </button>
                 </div>
                 <button v-if="v.dealId" type="button" class="menu-row text-danger" @click="patch({ deal_id: null }); closePicker('deal')"><X class="size-4" />Отвязать</button>
