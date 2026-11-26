@@ -1,0 +1,1 @@
+import{i as e}from"./session-CyV2P35x.js";function t(t){return t instanceof e&&t.status===403?`forbidden`:t instanceof e&&t.status===404?`not_found`:`error`}var n=(e,t=350)=>{let n=new Promise(e=>setTimeout(e,t));return Promise.allSettled([e,n]).then(()=>e)};export{t as n,n as t};

@@ -395,8 +395,9 @@ function copyLink() {
             <ChatFace :user="person(one.userId ?? 0)" size="xs" class="mt-0.5" />
             <div class="min-w-0 flex-1">
               <p class="min-w-0">
-                <span class="font-medium">{{ historyLabel(one.field) }}</span>
-                <template v-if="one.field !== 'created'">: <span class="text-muted line-through decoration-1">{{ one.old || "пусто" }}</span> → {{ one.new || "пусто" }}</template>
+                <template v-if="one.field === 'robot'"><span class="font-medium">Робот «{{ one.old }}»</span>: {{ one.new }}</template>
+                <span v-else class="font-medium">{{ historyLabel(one.field) }}</span>
+                <template v-if="one.field !== 'created' && one.field !== 'robot'">: <span class="text-muted line-through decoration-1">{{ one.old || "пусто" }}</span> → {{ one.new || "пусто" }}</template>
               </p>
               <p class="flex items-center gap-1 text-xs text-muted"><Clock class="size-3" />{{ at(one.at) }} · {{ nameOf(one.userId) }}</p>
             </div>

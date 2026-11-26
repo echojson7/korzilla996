@@ -2,10 +2,11 @@
      стадиям и список со всеми сделками, включая завершённые. Карточку тянут
      между стадиями; щелчок открывает сделку справа. Воронки, стадии и поля
      настраиваются в «Настройках CRM» (шестерёнка, право crm.settings).
-     В адресе: ?pipeline, ?view=board|list, ?q, ?open, ?setup. -->
+     Роботы и триггеры стадий — ?robots=1 (вместо канбана).
+     В адресе: ?pipeline, ?view=board|list, ?q, ?open, ?setup, ?robots. -->
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
-import { Plus, Kanban, Table2, ChevronDown, Check, Settings2, Briefcase } from "@lucide/vue";
+import { computed, defineAsyncComponent, onMounted, ref, watch } from "vue";
+import { Plus, Kanban, Table2, ChevronDown, Check, Settings2, Briefcase, Bot } from "@lucide/vue";
 import PageHead from "../components/PageHead.vue";
 import Board from "../components/Board.vue";
 import DataTable from "../components/DataTable.vue";
@@ -17,6 +18,8 @@ import HueChip from "../components/HueChip.vue";
 import ChatFace from "../components/messenger/ChatFace.vue";
 import DealCard from "../components/crm/DealCard.vue";
 import CrmSettings from "../components/crm/CrmSettings.vue";
+/* Роботы — отдельным куском: нужны не каждый раз. */
+const RobotsBoard = defineAsyncComponent(() => import("../components/crm/robots/RobotsBoard.vue"));
 import {
   crm, board, crmEnabled, startCrm, loadBoard, loadList, createDeal, moveDeal, pipelineById, stageById, defaultPipeline, hueOf,
   type DealBrief, type DealFull, type Field, type FieldValue,
@@ -183,6 +186,7 @@ watch(openId, () => (opened.value = null));
 const open = (deal: DealBrief) => setQuery({ open: deal.id });
 const close = () => setQuery({ open: null });
 const setup = computed(() => route.value.query.get("setup"));
+const robotsOpen = computed(() => route.value.query.get("robots") === "1");
 
 const tabs = computed(() => crm.pipelines.map((one) => ({ ...one, count: one.open ?? 0 })));
 const pipelinePicker = ref<InstanceType<typeof Popover> | null>(null);
@@ -196,6 +200,9 @@ const sub = computed(() => {
   <div class="flex h-full min-h-0 flex-col">
     <PageHead title="Сделки" :sub="crm.loaded ? sub : ''">
       <template #actions>
+        <button type="button" class="button" :class="robotsOpen ? 'button--primary' : 'button--secondary'" title="Роботы и триггеры стадий" @click="setQuery({ robots: robotsOpen ? null : 1, open: null })">
+          <Bot class="size-4" />Роботы
+        </button>
         <button v-if="crm.can.settings" type="button" class="button button--secondary button--icon-only" aria-label="Настройки CRM" title="Воронки, стадии и поля" @click="setQuery({ setup: 'pipelines', open: null })">
           <Settings2 class="size-4" />
         </button>
@@ -219,7 +226,7 @@ const sub = computed(() => {
             </button>
           </div>
         </Popover>
-        <div class="toggle-button-group toggle-button-group--horizontal" role="radiogroup" aria-label="Вид">
+        <div v-if="!robotsOpen" class="toggle-button-group toggle-button-group--horizontal" role="radiogroup" aria-label="Вид">
           <button
             v-for="one in VIEWS"
             :key="one.key"
@@ -231,8 +238,8 @@ const sub = computed(() => {
             @click="setQuery({ view: one.key })"
           ><component :is="one.icon" class="size-4" />{{ one.label }}</button>
         </div>
-        <Segmented v-if="view === 'list'" label="Сделки" :items="CLOSED" :model-value="closed" @update:model-value="(value) => setQuery({ closed: value })" />
-        <SearchBox v-model="text" placeholder="Название, компания, контакт, ответственный" class="w-full min-w-0 sm:w-auto sm:flex-1" />
+        <Segmented v-if="view === 'list' && !robotsOpen" label="Сделки" :items="CLOSED" :model-value="closed" @update:model-value="(value) => setQuery({ closed: value })" />
+        <SearchBox v-if="!robotsOpen" v-model="text" placeholder="Название, компания, контакт, ответственный" class="w-full min-w-0 sm:w-auto sm:flex-1" />
       </template>
     </PageHead>
 
@@ -241,6 +248,10 @@ const sub = computed(() => {
     </div>
     <div v-else-if="crm.error && !crm.loaded" class="px-3 md:px-5">
       <p class="sheet rounded-2xl p-6 text-sm text-danger">{{ crm.error }}</p>
+    </div>
+
+    <div v-else-if="robotsOpen" class="min-h-0 flex-1 px-3 pb-3 md:px-5">
+      <RobotsBoard :pipeline-id="pipelineId" @close="setQuery({ robots: null })" />
     </div>
 
     <div v-else-if="view === 'board'" class="min-h-0 flex-1 px-3 pb-3 md:px-5">
