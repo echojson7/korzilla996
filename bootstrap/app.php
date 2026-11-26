@@ -12,7 +12,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        /* Входа отдельной страницей нет: гость уходит на портал, там форма. */
+        $middleware->redirectGuestsTo(fn (Request $request) => $request->getBasePath().'/portal/index.html');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

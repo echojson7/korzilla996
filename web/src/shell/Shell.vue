@@ -5,6 +5,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import Sidebar from "./Sidebar.vue";
 import Topbar from "./Topbar.vue";
 import Palette from "./Palette.vue";
+import ChatRail from "./ChatRail.vue";
 import Toasts from "../components/Toasts.vue";
 import { route } from "../lib/router";
 import { views, pageOf, warmUp } from "../pages";
@@ -43,6 +44,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
         </KeepAlive>
       </main>
     </div>
+    <ChatRail />
     <Palette :open="searching" @close="searching = false" />
     <Toasts />
   </div>

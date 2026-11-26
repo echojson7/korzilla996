@@ -1,0 +1,62 @@
+<!-- Новый чат: личный (щелчок по человеку) или групповой (название и
+     участники галочками). -->
+<script setup lang="ts">
+import { ref, watch } from "vue";
+import Modal from "./Modal.vue";
+import PeoplePicker from "./PeoplePicker.vue";
+import { startDirect, createGroup, type ChatItem, type ChatUser } from "../../lib/messenger";
+import { ApiError } from "../../lib/api";
+import { toast } from "../../lib/toast";
+
+const props = defineProps<{ open: boolean }>();
+const emit = defineEmits<{ close: []; created: [chat: ChatItem] }>();
+const mode = ref<"direct" | "group">("direct");
+const title = ref("");
+const picked = ref<number[]>([]);
+const busy = ref(false);
+
+watch(() => props.open, (on) => {
+  if (on) {
+    mode.value = "direct";
+    title.value = "";
+    picked.value = [];
+  }
+});
+
+async function run(job: () => Promise<ChatItem>) {
+  if (busy.value) return;
+  busy.value = true;
+  try {
+    emit("created", await job());
+    emit("close");
+  } catch (error) {
+    toast(error instanceof ApiError ? error.first : "Не получилось создать чат", "danger");
+  } finally {
+    busy.value = false;
+  }
+}
+const direct = (one: ChatUser) => run(() => startDirect(one.id));
+const group = () => {
+  if (!title.value.trim()) return toast("Назовите чат", "danger");
+  run(() => createGroup(title.value.trim(), picked.value));
+};
+</script>
+
+<template>
+  <Modal :open="open" title="Новый чат" @close="emit('close')">
+    <div class="mb-3 grid grid-cols-2 gap-1 rounded-xl bg-surface-secondary p-1 text-sm font-medium">
+      <button type="button" class="rounded-lg py-1.5" :class="mode === 'direct' ? 'bg-surface shadow-sm' : 'text-muted'" @click="mode = 'direct'">Личный</button>
+      <button type="button" class="rounded-lg py-1.5" :class="mode === 'group' ? 'bg-surface shadow-sm' : 'text-muted'" @click="mode = 'group'">Групповой</button>
+    </div>
+    <PeoplePicker v-if="mode === 'direct'" single @pick="direct" />
+    <template v-else>
+      <input v-model="title" class="input mb-3 w-full" maxlength="120" placeholder="Название чата, например «Отдел продаж»" aria-label="Название чата" @keydown.enter="group" />
+      <p class="mb-1 text-xs text-muted">Участники{{ picked.length ? `: ${picked.length}` : "" }}</p>
+      <PeoplePicker v-model="picked" />
+    </template>
+    <template v-if="mode === 'group'" #footer>
+      <button type="button" class="button button--secondary" @click="emit('close')">Отмена</button>
+      <button type="button" class="button button--primary" :disabled="busy" @click="group">Создать чат</button>
+    </template>
+  </Modal>
+</template>

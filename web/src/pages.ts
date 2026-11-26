@@ -3,7 +3,7 @@
    Новый раздел — строка здесь и файл в pages/. */
 
 import { defineAsyncComponent, type Component } from "vue";
-import { House, Briefcase, ListChecks, Users, Workflow } from "@lucide/vue";
+import { House, Briefcase, ListChecks, Users, Workflow, MessagesSquare } from "@lucide/vue";
 
 export interface PageDef {
   id: string;
@@ -21,6 +21,7 @@ const once = (load: () => Promise<{ default: Component }>) => {
 
 export const PAGES: PageDef[] = [
   { id: "overview", path: "/", title: "Обзор", icon: House, group: "", load: once(() => import("./pages/Overview.vue")) },
+  { id: "messenger", path: "/messenger", title: "Мессенджер", icon: MessagesSquare, group: "", load: once(() => import("./pages/Messenger.vue")) },
   { id: "deals", path: "/deals", title: "Сделки", icon: Briefcase, group: "CRM", load: once(() => import("./pages/Deals.vue")) },
   { id: "tasks", path: "/tasks", title: "Задачи", icon: ListChecks, group: "Работа", load: once(() => import("./pages/Tasks.vue")) },
   { id: "staff", path: "/staff", title: "Сотрудники", icon: Users, group: "Компания", load: once(() => import("./pages/Staff.vue")) },

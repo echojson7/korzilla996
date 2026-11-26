@@ -173,3 +173,23 @@ body {
     transition: none;
   }
 }
+
+/* Мессенджер: фон ленты, свои сообщения, подсветка при переходе к ответу. */
+.chat-wall {
+  background: color-mix(in oklab, var(--surface-secondary) 70%, var(--accent) 4%);
+}
+.bubble-mine {
+  background: oklch(0.93 0.06 150);
+  color: oklch(0.25 0.03 150);
+}
+.dark .bubble-mine {
+  background: oklch(0.36 0.06 160);
+  color: oklch(0.96 0.01 160);
+}
+.flash {
+  animation: flash 1.4s ease-out;
+}
+@keyframes flash {
+  0%, 40% { background: color-mix(in oklab, var(--accent) 22%, transparent); }
+  100% { background: transparent; }
+}

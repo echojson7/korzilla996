@@ -7,6 +7,7 @@ import { ChevronsLeft, ChevronsRight, X } from "@lucide/vue";
 import { PAGES } from "../pages";
 import { route, href } from "../lib/router";
 import { myOpenTasks, myOverdue, newDeals } from "../lib/counters";
+import { totalUnread } from "../lib/messenger";
 
 const props = defineProps<{ collapsed: boolean; mobileOpen: boolean }>();
 const emit = defineEmits<{ toggle: []; closeMobile: [] }>();
@@ -20,8 +21,8 @@ const groups = computed(() => {
   }
   return out;
 });
-const count = (id: string) => (id === "tasks" ? myOpenTasks.value.length : id === "deals" ? newDeals.value : 0);
-const hot = (id: string) => id === "tasks" && myOverdue.value > 0;
+const count = (id: string) => (id === "messenger" ? totalUnread.value : id === "tasks" ? myOpenTasks.value.length : id === "deals" ? newDeals.value : 0);
+const hot = (id: string) => (id === "tasks" && myOverdue.value > 0) || id === "messenger";
 const narrow = computed(() => props.collapsed && !props.mobileOpen);
 </script>
 

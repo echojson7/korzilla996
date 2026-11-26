@@ -8,11 +8,14 @@ CRM-сделки с воронками, задачи, бизнес-процес�
 ## Что внутри
 
 ```
-app/, routes/, database/   сервер на Laravel 13: вход сотрудников, учётки
+app/, routes/, database/   сервер на Laravel 13: вход сотрудников, учётки,
+                           мессенджер (API /api/messenger/…, файлы чатов —
+                           storage/app/private/messenger)
 public/index.php           вход в сервер; API — /index.php/api/…
 web/                       интерфейс: Vue 3 + Vite + Tailwind 4 + стили HeroUI v3
-  src/pages/               обзор, сделки (канбан), задачи (канбан и таблица),
-                           сотрудники, процессы
+  src/pages/               обзор, мессенджер, сделки (канбан), задачи (канбан
+                           и таблица), сотрудники, процессы
+  src/shell/ChatRail.vue   колонка чатов справа: обложки, счётчики, быстрый чат
   src/lib/data.ts          демо-данные, пока их нет на сервере
   public/bg/               фоны (свои, web/scripts/backgrounds.py)
 public/portal/             готовая сборка web/ (коммитится: на стенде нет node)

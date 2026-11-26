@@ -3,7 +3,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, ref, watch } from "vue";
 
-const props = withDefaults(defineProps<{ align?: "left" | "right"; width?: string }>(), { align: "right", width: "w-72" });
+const props = withDefaults(defineProps<{ align?: "left" | "right"; width?: string; up?: boolean }>(), { align: "right", width: "w-72", up: false });
 const open = ref(false);
 const root = ref<HTMLElement | null>(null);
 
@@ -32,8 +32,8 @@ void props;
     <Transition name="pop">
       <div
         v-if="open"
-        class="absolute top-full z-50 mt-2 origin-top rounded-2xl bg-overlay p-1.5 text-overlay-foreground shadow-overlay"
-        :class="[align === 'right' ? 'right-0' : 'left-0', width]"
+        class="absolute z-50 rounded-2xl bg-overlay p-1.5 text-overlay-foreground shadow-overlay"
+        :class="[align === 'right' ? 'right-0' : 'left-0', up ? 'bottom-full mb-2 origin-bottom' : 'top-full mt-2 origin-top', width]"
       >
         <slot :close="close" />
       </div>

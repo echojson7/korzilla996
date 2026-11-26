@@ -1,0 +1,541 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Chat;
+use App\Models\ChatMember;
+use App\Models\Message;
+use App\Models\MessageFile;
+use App\Models\MessageReaction;
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+
+/**
+ * Мессенджер портала: личные и групповые чаты, сообщения с файлами,
+ * реакции, отметки прочитанного. Обновления приложение забирает опросом:
+ * список чатов целиком и изменения открытого чата с момента since.
+ *
+ * Чужой чат отвечает 404, а не 403: так не видно, какие чаты вообще есть.
+ */
+class MessengerController extends Controller
+{
+    private const PAGE = 50;
+
+    /** Файл до 50 МБ, до 10 штук в сообщении. */
+    private const FILE_KB = 51200;
+
+    private const FILES = 10;
+
+    /* ---------- Люди ---------- */
+
+    public function users(Request $request): JsonResponse
+    {
+        $users = User::query()->orderBy('name')->get()->map(fn (User $user) => $this->person($user));
+
+        return response()->json(['data' => $users]);
+    }
+
+    /* ---------- Чаты ---------- */
+
+    public function chats(Request $request): JsonResponse
+    {
+        $me = $this->me($request);
+
+        return response()->json(['data' => [
+            'chats' => $this->chatList($me),
+            'me' => $me->id,
+            'now' => now()->toIso8601String(),
+        ]]);
+    }
+
+    public function createChat(Request $request): JsonResponse
+    {
+        $me = $this->me($request);
+        $data = $request->validate([
+            'type' => ['required', Rule::in(Chat::TYPES)],
+            'user_id' => ['required_if:type,direct', 'nullable', 'integer', Rule::exists('users', 'id')],
+            'title' => ['required_if:type,group', 'nullable', 'string', 'max:120'],
+            'user_ids' => ['array', 'max:200'],
+            'user_ids.*' => ['integer', Rule::exists('users', 'id')],
+        ], [
+            'title.required_if' => 'Назовите чат',
+            'user_id.required_if' => 'Выберите собеседника',
+        ]);
+
+        if ($data['type'] === 'direct') {
+            $other = (int) $data['user_id'];
+            if ($other === $me->id) {
+                throw ValidationException::withMessages(['user_id' => 'Нельзя начать чат с самим собой']);
+            }
+            $key = Chat::directKey($me->id, $other);
+            $chat = DB::transaction(function () use ($key, $me, $other) {
+                $chat = Chat::query()->firstOrCreate(['direct_key' => $key], ['type' => 'direct', 'created_by' => $me->id]);
+                foreach ([$me->id, $other] as $id) {
+                    ChatMember::query()->firstOrCreate(['chat_id' => $chat->id, 'user_id' => $id]);
+                }
+
+                return $chat;
+            });
+        } else {
+            $ids = collect($data['user_ids'] ?? [])->map(fn ($id) => (int) $id)->push($me->id)->unique();
+            $chat = DB::transaction(function () use ($data, $me, $ids) {
+                $chat = Chat::query()->create(['type' => 'group', 'title' => trim($data['title']), 'created_by' => $me->id]);
+                foreach ($ids as $id) {
+                    ChatMember::query()->create(['chat_id' => $chat->id, 'user_id' => $id]);
+                }
+
+                return $chat;
+            });
+        }
+
+        return response()->json(['data' => $this->chatOne($chat, $me)], $chat->wasRecentlyCreated ? 201 : 200);
+    }
+
+    public function updateChat(Request $request, Chat $chat): JsonResponse
+    {
+        $me = $this->me($request);
+        $this->membership($chat, $me);
+        $this->groupOnly($chat);
+        $this->canManage($chat, $me);
+        $data = $request->validate(['title' => ['required', 'string', 'max:120']], ['title.required' => 'Назовите чат']);
+        $chat->update(['title' => trim($data['title'])]);
+
+        return response()->json(['data' => $this->chatOne($chat, $me)]);
+    }
+
+    public function addMembers(Request $request, Chat $chat): JsonResponse
+    {
+        $me = $this->me($request);
+        $this->membership($chat, $me);
+        $this->groupOnly($chat);
+        $data = $request->validate([
+            'user_ids' => ['required', 'array', 'min:1', 'max:200'],
+            'user_ids.*' => ['integer', Rule::exists('users', 'id')],
+        ]);
+        foreach (array_unique($data['user_ids']) as $id) {
+            ChatMember::query()->firstOrCreate(['chat_id' => $chat->id, 'user_id' => (int) $id]);
+        }
+
+        return response()->json(['data' => $this->chatOne($chat, $me)]);
+    }
+
+    /** Выйти из группы самому или убрать участника (создатель, администратор). */
+    public function removeMember(Request $request, Chat $chat, User $user): Response
+    {
+        $me = $this->me($request);
+        $this->membership($chat, $me);
+        $this->groupOnly($chat);
+        if ($user->id !== $me->id) {
+            $this->canManage($chat, $me);
+        }
+        ChatMember::query()->where('chat_id', $chat->id)->where('user_id', $user->id)->delete();
+        if (! $chat->members()->exists()) {
+            $this->dropChat($chat);
+        }
+
+        return response()->noContent();
+    }
+
+    public function pin(Request $request, Chat $chat): JsonResponse
+    {
+        $me = $this->me($request);
+        $member = $this->membership($chat, $me);
+        $member->update(['is_pinned' => $request->boolean('pinned', ! $member->is_pinned)]);
+
+        return response()->json(['data' => $this->chatOne($chat, $me)]);
+    }
+
+    public function read(Request $request, Chat $chat): Response
+    {
+        $me = $this->me($request);
+        $member = $this->membership($chat, $me);
+        $data = $request->validate(['id' => ['required', 'integer', 'min:0']]);
+        $last = (int) $chat->messages()->withTrashed()->max('id');
+        $id = min((int) $data['id'], $last);
+        if ($id > $member->last_read_id) {
+            $member->update(['last_read_id' => $id]);
+        }
+
+        return response()->noContent();
+    }
+
+    public function uploadAvatar(Request $request, Chat $chat): JsonResponse
+    {
+        $me = $this->me($request);
+        $this->membership($chat, $me);
+        $this->groupOnly($chat);
+        $request->validate(['avatar' => ['required', 'file', 'mimetypes:'.implode(',', MessageFile::IMAGES), 'max:5120']], [
+            'avatar.mimetypes' => 'Обложка — картинка PNG, JPEG, GIF или WebP',
+            'avatar.max' => 'Обложка до 5 МБ',
+        ]);
+        $old = $chat->avatar;
+        $chat->update(['avatar' => $request->file('avatar')->store('messenger/avatars', 'local')]);
+        if ($old) {
+            Storage::disk('local')->delete($old);
+        }
+
+        return response()->json(['data' => $this->chatOne($chat, $me)]);
+    }
+
+    public function deleteAvatar(Request $request, Chat $chat): JsonResponse
+    {
+        $me = $this->me($request);
+        $this->membership($chat, $me);
+        $this->groupOnly($chat);
+        if ($chat->avatar) {
+            Storage::disk('local')->delete($chat->avatar);
+            $chat->update(['avatar' => null]);
+        }
+
+        return response()->json(['data' => $this->chatOne($chat, $me)]);
+    }
+
+    public function avatar(Request $request, Chat $chat): StreamedResponse
+    {
+        $this->membership($chat, $this->me($request));
+        abort_unless($chat->avatar && Storage::disk('local')->exists($chat->avatar), 404);
+
+        return Storage::disk('local')->response($chat->avatar, 'cover', [
+            'Cache-Control' => 'private, max-age=604800',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
+    /* ---------- Сообщения ---------- */
+
+    /**
+     * Без параметров — последние 50; before=id — 50 старше; since=время —
+     * всё, что поменялось с тех пор (новые, правки, реакции, удаления).
+     */
+    public function messages(Request $request, Chat $chat): JsonResponse
+    {
+        $me = $this->me($request);
+        $this->membership($chat, $me);
+        $request->validate(['before' => ['nullable', 'integer'], 'since' => ['nullable', 'date']]);
+
+        $query = $chat->messages()->with(['files', 'reactions', 'replyTo']);
+        if ($request->filled('since')) {
+            $since = Carbon::parse($request->input('since'));
+            $rows = $query->withTrashed()->where('updated_at', '>=', $since)->orderBy('id')->limit(500)->get();
+            $more = false;
+        } else {
+            if ($request->filled('before')) {
+                $query->where('id', '<', (int) $request->input('before'));
+            }
+            $rows = $query->orderByDesc('id')->limit(self::PAGE + 1)->get();
+            $more = $rows->count() > self::PAGE;
+            $rows = $rows->take(self::PAGE)->reverse()->values();
+        }
+
+        return response()->json(['data' => [
+            'messages' => $rows->map(fn (Message $message) => $this->message($message)),
+            'hasMore' => $more,
+            'readUpTo' => $this->readUpTo($chat, $me),
+            'now' => now()->toIso8601String(),
+        ]]);
+    }
+
+    public function send(Request $request, Chat $chat): JsonResponse
+    {
+        $me = $this->me($request);
+        $member = $this->membership($chat, $me);
+        $request->validate([
+            'body' => ['nullable', 'string', 'max:10000'],
+            'reply_to_id' => ['nullable', 'integer'],
+            'files' => ['array', 'max:'.self::FILES],
+            'files.*' => ['file', 'max:'.self::FILE_KB],
+        ], [
+            'files.max' => 'Не больше '.self::FILES.' файлов за раз',
+            'files.*.max' => 'Файл до 50 МБ',
+            'files.*.uploaded' => 'Файл не загрузился: слишком большой для сервера',
+        ]);
+        $body = trim((string) $request->input('body', ''));
+        /** @var UploadedFile[] $files */
+        $files = $request->file('files', []);
+        if ($body === '' && ! $files) {
+            throw ValidationException::withMessages(['body' => 'Пустое сообщение']);
+        }
+        $replyTo = $request->filled('reply_to_id')
+            ? $chat->messages()->whereKey((int) $request->input('reply_to_id'))->value('id')
+            : null;
+
+        $message = DB::transaction(function () use ($chat, $me, $body, $files, $replyTo, $member) {
+            $message = $chat->messages()->create(['user_id' => $me->id, 'body' => $body === '' ? null : $body, 'reply_to_id' => $replyTo]);
+            foreach ($files as $file) {
+                $mime = $file->getMimeType() ?: 'application/octet-stream';
+                $size = in_array($mime, MessageFile::IMAGES, true) ? @getimagesize($file->getRealPath()) : false;
+                $ext = Str::lower(preg_replace('/[^A-Za-z0-9]/', '', $file->getClientOriginalExtension()) ?: 'bin');
+                $message->files()->create([
+                    'name' => Str::limit($file->getClientOriginalName() ?: 'файл', 250, ''),
+                    'path' => $file->storeAs('messenger/'.$chat->id, Str::random(40).'.'.$ext, 'local'),
+                    'mime' => Str::limit($mime, 128, ''),
+                    'size' => $file->getSize() ?: 0,
+                    'width' => $size ? $size[0] : null,
+                    'height' => $size ? $size[1] : null,
+                ]);
+            }
+            $chat->update(['last_message_at' => $message->created_at]);
+            $member->update(['last_read_id' => $message->id]);
+
+            return $message;
+        });
+
+        return response()->json(['data' => $this->message($message->load(['files', 'reactions', 'replyTo']))], 201);
+    }
+
+    public function edit(Request $request, Message $message): JsonResponse
+    {
+        $me = $this->me($request);
+        $this->membership($message->chat, $me);
+        abort_unless($message->user_id === $me->id, 403, 'Править можно только свои сообщения');
+        $data = $request->validate(['body' => ['nullable', 'string', 'max:10000']]);
+        $body = trim((string) ($data['body'] ?? ''));
+        if ($body === '' && ! $message->files()->exists()) {
+            throw ValidationException::withMessages(['body' => 'Пустое сообщение']);
+        }
+        if ($body !== (string) $message->body) {
+            $message->update(['body' => $body === '' ? null : $body, 'edited_at' => now()]);
+        }
+
+        return response()->json(['data' => $this->message($message->load(['files', 'reactions', 'replyTo']))]);
+    }
+
+    public function destroy(Request $request, Message $message): Response
+    {
+        $me = $this->me($request);
+        $this->membership($message->chat, $me);
+        abort_unless($message->user_id === $me->id || $me->permissions() === ['*'], 403, 'Удалять можно только свои сообщения');
+        DB::transaction(function () use ($message) {
+            foreach ($message->files as $file) {
+                Storage::disk('local')->delete($file->path);
+            }
+            $message->files()->delete();
+            $message->reactions()->delete();
+            $message->delete();
+        });
+
+        return response()->noContent();
+    }
+
+    /** Поставить реакцию или снять, если она уже стоит. */
+    public function react(Request $request, Message $message): JsonResponse
+    {
+        $me = $this->me($request);
+        $this->membership($message->chat, $me);
+        $data = $request->validate(['emoji' => ['required', 'string', 'max:32', 'not_regex:/[\x00-\x7F]/']], [
+            'emoji.not_regex' => 'Реакция — один эмодзи',
+        ]);
+        $found = MessageReaction::query()->where(['message_id' => $message->id, 'user_id' => $me->id, 'emoji' => $data['emoji']])->first();
+        if ($found) {
+            $found->delete();
+        } else {
+            MessageReaction::query()->create(['message_id' => $message->id, 'user_id' => $me->id, 'emoji' => $data['emoji']]);
+        }
+        $message->touch();
+
+        return response()->json(['data' => $this->message($message->load(['files', 'reactions', 'replyTo']))]);
+    }
+
+    public function file(Request $request, MessageFile $file): StreamedResponse
+    {
+        $message = $file->message;
+        abort_unless($message && ! $message->trashed(), 404);
+        $this->membership($message->chat, $this->me($request));
+        abort_unless(Storage::disk('local')->exists($file->path), 404);
+        $inline = $file->isImage() && ! $request->boolean('download');
+
+        return Storage::disk('local')->response($file->path, $file->name, [
+            'Content-Type' => $inline ? $file->mime : 'application/octet-stream',
+            'Cache-Control' => 'private, max-age=604800',
+            'X-Content-Type-Options' => 'nosniff',
+            'Content-Security-Policy' => "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; sandbox",
+        ], $inline ? 'inline' : 'attachment');
+    }
+
+    /* ---------- Внутреннее ---------- */
+
+    private function me(Request $request): User
+    {
+        /** @var User|null $user */
+        $user = $request->user();
+        abort_unless($user && $user->is_active, 401);
+
+        return $user;
+    }
+
+    private function membership(?Chat $chat, User $me): ChatMember
+    {
+        $member = $chat ? ChatMember::query()->where('chat_id', $chat->id)->where('user_id', $me->id)->first() : null;
+        abort_unless($member, 404);
+
+        return $member;
+    }
+
+    private function groupOnly(Chat $chat): void
+    {
+        abort_unless($chat->type === 'group', 422, 'Это личный чат');
+    }
+
+    private function canManage(Chat $chat, User $me): void
+    {
+        abort_unless($chat->created_by === $me->id || $me->permissions() === ['*'], 403, 'Это может создатель чата');
+    }
+
+    private function dropChat(Chat $chat): void
+    {
+        Storage::disk('local')->deleteDirectory('messenger/'.$chat->id);
+        if ($chat->avatar) {
+            Storage::disk('local')->delete($chat->avatar);
+        }
+        $chat->delete();
+    }
+
+    /** До какого сообщения дочитали остальные: для галочки «прочитано». */
+    private function readUpTo(Chat $chat, User $me): int
+    {
+        return (int) ChatMember::query()->where('chat_id', $chat->id)->where('user_id', '!=', $me->id)->max('last_read_id');
+    }
+
+    private function chatOne(Chat $chat, User $me): array
+    {
+        return $this->chatList($me, $chat->id)->first();
+    }
+
+    /** Чаты сотрудника: последнее сообщение и непрочитанные — тремя запросами на всё. */
+    private function chatList(User $me, ?int $only = null): Collection
+    {
+        $mine = ChatMember::query()->where('user_id', $me->id)->when($only, fn ($q) => $q->where('chat_id', $only))->get()->keyBy('chat_id');
+        $ids = $mine->keys();
+        if ($ids->isEmpty()) {
+            return collect();
+        }
+        $chats = Chat::query()->whereIn('id', $ids)->get();
+        $members = ChatMember::query()->whereIn('chat_id', $ids)->get(['chat_id', 'user_id', 'last_read_id'])->groupBy('chat_id');
+        $users = User::query()->whereIn('id', $members->flatten()->pluck('user_id')->unique())->get()->keyBy('id');
+        $last = Message::query()->with('files')->whereIn('id', Message::query()->selectRaw('max(id)')->whereIn('chat_id', $ids)->groupBy('chat_id'))->get()->keyBy('chat_id');
+        $unread = DB::table('messages as m')
+            ->join('chat_members as cm', fn ($join) => $join->on('cm.chat_id', '=', 'm.chat_id')->where('cm.user_id', '=', $me->id))
+            ->whereIn('m.chat_id', $ids)->whereColumn('m.id', '>', 'cm.last_read_id')
+            ->where(fn ($q) => $q->where('m.user_id', '!=', $me->id)->orWhereNull('m.user_id'))
+            ->whereNull('m.deleted_at')
+            ->groupBy('m.chat_id')->selectRaw('m.chat_id, count(*) as n')->pluck('n', 'chat_id');
+
+        return $chats->map(function (Chat $chat) use ($me, $mine, $members, $users, $last, $unread) {
+            $memberIds = $members->get($chat->id, collect())->pluck('user_id')->map(fn ($id) => (int) $id)->values();
+            $peer = $chat->type === 'direct' ? $users->get($memberIds->first(fn ($id) => $id !== $me->id)) : null;
+            $title = $chat->type === 'direct' ? ($peer?->name ?? 'Собеседник удалён') : $chat->title;
+            $message = $last->get($chat->id);
+            $others = $members->get($chat->id, collect())->where('user_id', '!=', $me->id);
+
+            return [
+                'id' => $chat->id,
+                'type' => $chat->type,
+                'title' => $title,
+                'initials' => $peer ? $peer->initials() : self::initials((string) $title),
+                'hue' => $peer ? self::hue($peer->id) : self::hue($chat->id * 7 + 3),
+                'avatar' => $chat->avatar ? 'messenger/chats/'.$chat->id.'/avatar?v='.$chat->updated_at?->timestamp : null,
+                'peer' => $peer?->id,
+                'members' => $memberIds,
+                'createdBy' => $chat->created_by,
+                'pinned' => (bool) $mine[$chat->id]->is_pinned,
+                'lastReadId' => (int) $mine[$chat->id]->last_read_id,
+                'readUpTo' => (int) $others->max('last_read_id'),
+                'unread' => (int) ($unread[$chat->id] ?? 0),
+                'last' => $message ? [
+                    'id' => $message->id,
+                    'userId' => $message->user_id,
+                    'text' => self::preview($message),
+                    'at' => $message->created_at?->toIso8601String(),
+                ] : null,
+                'at' => ($chat->last_message_at ?? $chat->created_at)?->toIso8601String(),
+            ];
+        })->sortByDesc(fn ($one) => [$one['pinned'] ? 1 : 0, $one['at']])->values();
+    }
+
+    private function message(Message $message): array
+    {
+        $deleted = $message->trashed();
+        $reactions = $message->reactions->groupBy('emoji')->map(fn ($rows, $emoji) => [
+            'emoji' => $emoji,
+            'users' => $rows->pluck('user_id')->map(fn ($id) => (int) $id)->values(),
+        ])->values();
+
+        return [
+            'id' => $message->id,
+            'chatId' => $message->chat_id,
+            'userId' => $message->user_id,
+            'body' => $deleted ? null : $message->body,
+            'deleted' => $deleted,
+            'replyTo' => ! $deleted && $message->replyTo ? [
+                'id' => $message->replyTo->id,
+                'userId' => $message->replyTo->user_id,
+                'text' => $message->replyTo->trashed() ? 'Сообщение удалено' : self::preview($message->replyTo),
+            ] : null,
+            'files' => $deleted ? [] : $message->files->map(fn (MessageFile $file) => [
+                'id' => $file->id,
+                'name' => $file->name,
+                'size' => $file->size,
+                'mime' => $file->mime,
+                'image' => $file->isImage(),
+                'width' => $file->width,
+                'height' => $file->height,
+                'url' => 'messenger/files/'.$file->id,
+            ])->values(),
+            'reactions' => $deleted ? [] : $reactions,
+            'editedAt' => $message->edited_at?->toIso8601String(),
+            'at' => $message->created_at?->toIso8601String(),
+        ];
+    }
+
+    private function person(User $user): array
+    {
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'initials' => $user->initials(),
+            'position' => $user->position,
+            'department' => $user->department,
+            'active' => (bool) $user->is_active,
+            'hue' => self::hue($user->id),
+        ];
+    }
+
+    private static function preview(Message $message): string
+    {
+        if ($message->trashed()) {
+            return 'Сообщение удалено';
+        }
+        $text = trim(preg_replace('/\s+/u', ' ', (string) $message->body));
+        if ($text === '' && $message->relationLoaded('files') && $message->files->isNotEmpty()) {
+            $text = $message->files->every->isImage() ? '🖼 Картинка' : '📎 '.$message->files->first()->name;
+        } elseif ($text === '') {
+            $text = '📎 Файл';
+        }
+
+        return Str::limit($text, 120);
+    }
+
+    private static function initials(string $title): string
+    {
+        $words = preg_split('/\s+/u', trim($title), -1, PREG_SPLIT_NO_EMPTY);
+
+        return mb_strtoupper(implode('', array_map(fn ($word) => mb_substr($word, 0, 1), array_slice($words, 0, 2)))) ?: '#';
+    }
+
+    /** Цвет аватара по id: у каждого свой, и всегда тот же. */
+    private static function hue(int $id): int
+    {
+        return ($id * 47 + 200) % 360;
+    }
+}
