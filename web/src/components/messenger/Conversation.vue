@@ -2,6 +2,7 @@
      сообщения справа. Наведение на сообщение — реакции, ответ, правка,
      удаление; на телефоне то же по нажатию. Файлы можно бросить в ленту. -->
 <script setup lang="ts">
+import { backdrop } from "../../lib/backdrop";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { ArrowLeft, Info, Pin, PinOff, X, Smile, ExternalLink, MoreHorizontal, Forward, Check, CheckCheck, Clock, AlertCircle, Download, FileText, ChevronDown, Upload } from "@lucide/vue";
 import ChatFace from "./ChatFace.vue";
@@ -43,6 +44,8 @@ const editing = ref<ChatMessage | null>(null);
 const active = ref<number | null>(null);
 const infoOpen = ref(false);
 const viewer = ref<ChatFile | null>(null);
+const shutViewer = backdrop(() => (viewer.value = null));
+const shutViewer2 = backdrop(() => (viewer.value = null));
 const dropping = ref(false);
 const atBottom = ref(true);
 
@@ -590,13 +593,13 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
 
     <Teleport to="body">
       <Transition name="fade">
-        <div v-if="viewer" class="fixed inset-0 z-[70] flex flex-col bg-black/90" @click.self="viewer = null">
+        <div v-if="viewer" class="fixed inset-0 z-[70] flex flex-col bg-black/90" v-on="shutViewer">
           <div class="flex items-center gap-3 p-3 text-white">
             <span class="min-w-0 flex-1 truncate text-sm">{{ viewer.name }} · {{ fileSize(viewer.size) }}</span>
             <a :href="`${apiUrl(viewer.url)}?download=1`" class="flex size-10 items-center justify-center rounded-full hover:bg-white/15" aria-label="Скачать"><Download class="size-5" /></a>
             <button type="button" class="flex size-10 items-center justify-center rounded-full hover:bg-white/15" aria-label="Закрыть" @click="viewer = null"><X class="size-5" /></button>
           </div>
-          <div class="flex min-h-0 flex-1 items-center justify-center p-4" @click.self="viewer = null">
+          <div class="flex min-h-0 flex-1 items-center justify-center p-4" v-on="shutViewer2">
             <img :src="apiUrl(viewer.url)" :alt="viewer.name" class="max-h-full max-w-full rounded-lg object-contain" />
           </div>
         </div>

@@ -3,6 +3,7 @@
      чат этой задачи или сделки (один на сущность, живёт в мессенджере).
      Закрывает ярлычок слева, Esc или щелчок мимо. -->
 <script setup lang="ts">
+import { backdrop } from "../lib/backdrop";
 import { defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch, nextTick } from "vue";
 import { X, MessagesSquare } from "@lucide/vue";
 import { enabled, openEntityChat } from "../lib/messenger";
@@ -14,6 +15,7 @@ const Conversation = defineAsyncComponent(() => import("./messenger/Conversation
    задачи): в шапке области переключатель «Чат / <sideLabel>». */
 const props = defineProps<{ open: boolean; title: string; sub?: string; chat?: { entity: string; title: string } | null; sideLabel?: string }>();
 const emit = defineEmits<{ close: [] }>();
+const shut = backdrop(() => emit("close"));
 const panel = ref<HTMLElement | null>(null);
 const chatId = ref<number | null>(null);
 const chatFailed = ref(false);
@@ -50,7 +52,7 @@ watch(() => [props.open, props.chat?.entity, enabled.value] as const, async ([op
     <Transition name="fade">
       <div v-if="open" class="fixed inset-0 z-40 bg-black/40" />
     </Transition>
-    <div v-if="open" class="fixed inset-0 z-50 flex p-2 md:py-3 md:pr-[68px] md:pl-12" @click.self="emit('close')">
+    <div v-if="open" class="fixed inset-0 z-50 flex p-2 md:py-3 md:pr-[68px] md:pl-12" v-on="shut">
       <Transition name="slide-left" appear>
         <!-- Карточка и чат — один цельный блок: карточка уже, чат шире. -->
         <div class="relative flex min-w-0 overflow-visible" :class="chat ? 'w-full' : 'w-full md:w-[min(760px,100%)]'">

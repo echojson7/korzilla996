@@ -1,6 +1,7 @@
 <!-- Поиск по порталу (Ctrl+K): разделы, сделки, задачи, сотрудники.
      Стрелки выбирают, Enter открывает. -->
 <script setup lang="ts">
+import { backdrop } from "../lib/backdrop";
 import { computed, nextTick, ref, watch } from "vue";
 import { Search, Briefcase, ListChecks, User, CornerDownLeft } from "@lucide/vue";
 import { PAGES, isAllowed } from "../pages";
@@ -11,6 +12,7 @@ import { navigate } from "../lib/router";
 
 const props = defineProps<{ open: boolean }>();
 const emit = defineEmits<{ close: [] }>();
+const shut = backdrop(() => emit("close"));
 const text = ref("");
 const active = ref(0);
 const input = ref<HTMLInputElement | null>(null);
@@ -63,7 +65,7 @@ const groupStart = (i: number) => i === 0 || hits.value[i - 1].group !== hits.va
 <template>
   <Teleport to="body">
     <Transition name="fade">
-      <div v-if="open" class="fixed inset-0 z-50 flex items-start justify-center bg-black/40 px-4 pt-[12vh]" @click.self="emit('close')">
+      <div v-if="open" class="fixed inset-0 z-50 flex items-start justify-center bg-black/40 px-4 pt-[12vh]" v-on="shut">
         <div class="flex max-h-[70vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-overlay text-overlay-foreground shadow-overlay" role="dialog" aria-label="Поиск по порталу">
           <div class="flex items-center gap-3 border-b border-separator px-4">
             <Search class="size-5 shrink-0 text-muted" />
