@@ -4,7 +4,7 @@
      В адресе: ?stage, ?q, ?open. Пока только просмотр. -->
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { Phone, Mail, Globe, MapPin, UserRound, ShoppingCart, SlidersHorizontal, Pencil } from "@lucide/vue";
+import { Phone, Mail, Globe, MapPin, UserRound, ShoppingCart, SlidersHorizontal, Pencil, Receipt } from "@lucide/vue";
 import PageHead from "../components/PageHead.vue";
 import SearchBox from "../components/SearchBox.vue";
 import SidePanel from "../components/SidePanel.vue";
@@ -13,8 +13,9 @@ import ChatFace from "../components/messenger/ChatFace.vue";
 import CardBlock from "../components/tasks/CardBlock.vue";
 import FieldValue from "../components/crm/FieldValue.vue";
 import ProductRows from "../components/crm/ProductRows.vue";
+import InvoiceList from "../components/crm/InvoiceList.vue";
 import { api, ApiError } from "../lib/api";
-import { hueOf, type Contact, type Field, type FieldValue as Value, type Pipeline, type ProductRow, type Stage } from "../lib/crm";
+import { hueOf, type Contact, type Field, type FieldValue as Value, type Pipeline, type Invoice, type ProductRow, type Stage } from "../lib/crm";
 import { person, nameOf } from "../lib/tasks";
 import { money, plural } from "../lib/format";
 import { navigate, route, setQuery } from "../lib/router";
@@ -26,7 +27,7 @@ interface Lead {
 }
 interface LeadFull extends Lead {
   comments: string | null; fields: Record<string, Value>; webs: Contact[]; address: string | null;
-  contacts: { id: number; name: string; post: string | null; phones: Contact[]; emails: Contact[] }[]; products: ProductRow[];
+  contacts: { id: number; name: string; post: string | null; phones: Contact[]; emails: Contact[] }[]; products: ProductRow[]; invoices: Invoice[];
 }
 
 const fail = (error: unknown) => toast(error instanceof ApiError ? error.first : "Не получилось загрузить", "danger");
@@ -202,6 +203,10 @@ const sub = computed(() => (pipeline.value ? plural(total.value, "лид", "ли
 
         <CardBlock v-if="opened.products.length" :icon="ShoppingCart" title="Товары" :count="opened.products.length">
           <ProductRows :rows="opened.products" />
+        </CardBlock>
+
+        <CardBlock v-if="opened.invoices.length" :icon="Receipt" title="Счета" :count="opened.invoices.length">
+          <InvoiceList :rows="opened.invoices" />
         </CardBlock>
 
         <CardBlock v-if="opened.comments" :icon="Pencil" title="Комментарий">

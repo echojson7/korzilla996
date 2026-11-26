@@ -5,7 +5,7 @@
      их в воронках Битрикса больше сотни. Правка сразу уходит на сервер. -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
-import { Check, ChevronDown, Clock, History, ListChecks, MoreHorizontal, Pencil, Plus, SlidersHorizontal, Trash2, Link2, Flag, RotateCcw, LayoutList, ShoppingCart, Users } from "@lucide/vue";
+import { Check, ChevronDown, Clock, History, ListChecks, MoreHorizontal, Pencil, Plus, SlidersHorizontal, Trash2, Link2, Flag, RotateCcw, LayoutList, ShoppingCart, Users, Receipt } from "@lucide/vue";
 import Popover from "../Popover.vue";
 import HueChip from "../HueChip.vue";
 import NoAccess from "../NoAccess.vue";
@@ -15,6 +15,7 @@ import CardBlock from "../tasks/CardBlock.vue";
 import UserPick from "../tasks/UserPick.vue";
 import FieldValue from "./FieldValue.vue";
 import ProductRows from "./ProductRows.vue";
+import InvoiceList from "./InvoiceList.vue";
 import {
   crm, getDeal, updateDeal, deleteDeal, onDealChange, pipelineById, stageById, fieldByCode, hueOf, CURRENCIES,
   type DealFull, type DealInput, type Field, type FieldValue as Value, type Stage,
@@ -358,6 +359,11 @@ function copyLink() {
     <!-- Товары -->
     <CardBlock v-if="deal.products?.length" :icon="ShoppingCart" title="Товары" :count="deal.products.length">
       <ProductRows :rows="deal.products" />
+    </CardBlock>
+
+    <!-- Счета -->
+    <CardBlock v-if="deal.invoices?.length" :icon="Receipt" title="Счета" :count="deal.invoices.length">
+      <InvoiceList :rows="deal.invoices" />
     </CardBlock>
 
     <!-- Комментарий -->

@@ -236,3 +236,18 @@ Artisan::command('bitrix:lead-settings', function () {
         $this->line('Не перенесены: '.implode('; ', $report['skipped']));
     }
 })->purpose('Перенести статусы и поля лидов из Битрикс24');
+
+/* Счета из Битрикс24: старые и смарт-счета (см. App\Support\Bitrix\ImportInvoices). Сначала bitrix:crm (сделки, лиды). */
+Artisan::command('bitrix:invoices', function () {
+    ini_set('memory_limit', '512M');
+    Illuminate\Support\Facades\DB::disableQueryLog();
+    $started = microtime(true);
+    $labels = ['old' => 'Старые счета', 'new' => 'Новые счета'];
+    $report = (new App\Support\Bitrix\ImportInvoices(App\Support\Bitrix\Client::fromConfig(), function ($key, $done, $total) use ($labels, $started) {
+        $this->line(sprintf('%s: %d из %d (%d с)', $labels[$key], $done, $total, microtime(true) - $started));
+    }))->run();
+    $this->info("Счета: старых {$report['old']}, новых {$report['new']}, уже были {$report['kept']}, строк товаров {$report['rows']}.");
+    if (! empty($report['new_error'])) {
+        $this->warn('Новые счета не перенеслись: '.$report['new_error']);
+    }
+})->purpose('Перенести счета из Битрикс24');

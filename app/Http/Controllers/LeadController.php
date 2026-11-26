@@ -81,6 +81,7 @@ class LeadController extends Controller
                 ->sortBy(fn ($one) => array_search($one->id, $contacts))->values()
                 ->map(fn (CrmContact $one) => ['id' => $one->id, 'name' => $one->name, 'post' => $one->post, 'phones' => $one->phones ?? [], 'emails' => $one->emails ?? []]),
             'products' => ProductRows::of('lead', $lead->id),
+            'invoices' => InvoiceRows::of('lead_id', $lead->id),
             'externalId' => $lead->external_id,
         ]]);
     }
