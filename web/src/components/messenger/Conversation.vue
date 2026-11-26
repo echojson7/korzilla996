@@ -8,6 +8,7 @@ import ChatFace from "./ChatFace.vue";
 import Composer from "./Composer.vue";
 import EmojiPicker from "./EmojiPicker.vue";
 import ChatInfo from "./ChatInfo.vue";
+import SystemLine from "./SystemLine.vue";
 import Popover from "../Popover.vue";
 import { apiUrl } from "../../lib/api";
 import { QUICK, remember } from "../../lib/emoji";
@@ -276,10 +277,8 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
             <span class="h-px flex-1 bg-accent/40" />Новые сообщения<span class="h-px flex-1 bg-accent/40" />
           </div>
 
-          <!-- Системное: по центру, без действий. -->
-          <div v-if="row.message.kind === 'system'" :data-id="row.message.id" class="my-2 flex justify-center px-6">
-            <span class="max-w-full rounded-full bg-surface/85 px-3 py-1 text-center text-xs text-muted shadow-sm backdrop-blur">{{ row.message.body }} · {{ clock(row.message.at) }}</span>
-          </div>
+          <!-- Системное: карточкой события, без действий. -->
+          <SystemLine v-if="row.message.kind === 'system'" :data-id="row.message.id" :message="row.message" />
           <div
             v-else
             :data-id="row.message.id"

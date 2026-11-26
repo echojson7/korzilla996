@@ -638,6 +638,7 @@ class MessengerController extends Controller
             'chatId' => $message->chat_id,
             'userId' => $message->user_id,
             'kind' => $message->kind ?? 'text',
+            'meta' => $message->kind === 'system' ? $message->meta : null,
             'body' => $deleted ? null : $message->body,
             'deleted' => $deleted,
             'replyTo' => ! $deleted && $message->replyTo ? [

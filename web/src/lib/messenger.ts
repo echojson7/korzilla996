@@ -52,6 +52,7 @@ export interface ChatMessage {
   chatId: number;
   userId: number | null;
   kind?: "text" | "system";
+  meta?: { event?: string; users?: number[]; title?: string } | null;
   body: string | null;
   deleted: boolean;
   replyTo: { id: number; userId: number | null; text: string } | null;
