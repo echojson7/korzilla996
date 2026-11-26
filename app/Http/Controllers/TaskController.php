@@ -61,6 +61,9 @@ class TaskController extends Controller
                 'tasks' => $query->whereIn('id', $ids)->get()->map(fn (Task $task) => $this->brief($task)),
             ]]);
         }
+        /* Завершённые давно (в том числе перенесённые из Битрикс24 — их десятки
+           тысяч) в общий список не идут: только открытые и завершённые за 30 дней. */
+        $query->where(fn ($q) => $q->where('status', '!=', 'done')->orWhere('completed_at', '>=', now()->subDays(30)));
         $tasks = $query->orderBy('sort')->orderByDesc('id')->get();
         $running = TaskTime::query()->where('user_id', $me->id)->whereNull('stopped_at')->first();
 

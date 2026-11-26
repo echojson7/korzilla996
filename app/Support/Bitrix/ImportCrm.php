@@ -59,7 +59,7 @@ class ImportCrm
             'emails' => $this->multi($row['EMAIL'] ?? null),
             'webs' => $this->multi($row['WEB'] ?? null),
             'address' => $this->cut(implode(', ', array_filter([$row['ADDRESS'] ?? null, $row['ADDRESS_CITY'] ?? null])), 500) ?: null,
-            'comments' => $this->comments($row['COMMENTS'] ?? null),
+            'comments' => self::comments($row['COMMENTS'] ?? null),
         ] + $this->common($row));
         $this->companies = DB::table('crm_companies')->whereNotNull('external_id')->pluck('id', 'external_id')->map(fn ($id) => (int) $id)->all();
     }
@@ -82,7 +82,7 @@ class ImportCrm
                 'emails' => $this->multi($row['EMAIL'] ?? null),
                 'company_id' => $this->companies[(string) ($row['COMPANY_ID'] ?? '')] ?? null,
                 'birthday' => $this->date($row['BIRTHDATE'] ?? null),
-                'comments' => $this->comments($row['COMMENTS'] ?? null),
+                'comments' => self::comments($row['COMMENTS'] ?? null),
             ] + $this->common($row);
         });
         $this->contacts = DB::table('crm_contacts')->whereNotNull('external_id')->pluck('id', 'external_id')->map(fn ($id) => (int) $id)->all();
@@ -141,7 +141,7 @@ class ImportCrm
                 'company' => $company ? $this->cut((string) ($this->companyTitles[$company] ?? ''), 250) : null,
                 'contact' => $contact ? $this->cut((string) ($this->contactNames[$contact] ?? ''), 250) : null,
                 'close_date' => $this->date($row['CLOSEDATE'] ?? null),
-                'comments' => $this->comments($row['COMMENTS'] ?? null),
+                'comments' => self::comments($row['COMMENTS'] ?? null),
                 'fields' => $values ? json_encode($values, JSON_UNESCAPED_UNICODE) : null,
                 'closed' => ($row['CLOSED'] ?? 'N') === 'Y',
                 'stage_changed_at' => $this->time($row['MOVED_TIME'] ?? null) ?? $common['updated_at'],
@@ -298,7 +298,7 @@ class ImportCrm
     }
 
     /** Комментарий Битрикса (HTML или BB-коды) → простой текст для Markdown. */
-    private function comments(?string $text): ?string
+    public static function comments(?string $text): ?string
     {
         if ($text === null || trim($text) === '') {
             return null;

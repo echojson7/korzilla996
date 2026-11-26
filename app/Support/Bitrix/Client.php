@@ -93,13 +93,14 @@ class Client
      *
      * @return \Generator<int, array> страница записей
      */
-    public function pages(string $method, array $params = [], ?callable $progress = null): \Generator
+    public function pages(string $method, array $params = [], ?callable $progress = null, ?string $key = null): \Generator
     {
         $params += ['order' => ['ID' => 'ASC']];
         $first = $this->call($method, $params + ['start' => 0]);
         $total = (int) ($first['total'] ?? 0);
-        $progress && $progress(count($first['result'] ?? []), $total);
-        yield $first['result'] ?? [];
+        $rows = $key ? ($first['result'][$key] ?? []) : ($first['result'] ?? []);
+        $progress && $progress(count($rows), $total);
+        yield $rows;
         $offsets = range(50, max(50, $total - 1), 50);
         if ($total <= 50) {
             return;
@@ -118,6 +119,7 @@ class Client
             }
             foreach ($chunk as $offset) {
                 $rows = $body['result']['result']['p'.$offset] ?? [];
+                $rows = $key ? ($rows[$key] ?? []) : $rows;
                 $done += count($rows);
                 yield $rows;
             }

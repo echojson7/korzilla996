@@ -206,3 +206,15 @@ Artisan::command('bitrix:crm {--only=* : companies, contacts, deals (по умо
         $this->warn("Сделок без известной воронки (не перенесены): {$report['deals_no_pipeline']}.");
     }
 })->purpose('Перенести компании, контакты и сделки из Битрикс24');
+
+/* Задачи из Битрикс24 по вебхуку (см. App\Support\Bitrix\ImportTasks). Сначала bitrix:users и bitrix:crm. */
+Artisan::command('bitrix:tasks {--no-checklists : без чек-листов}', function () {
+    ini_set('memory_limit', '512M');
+    Illuminate\Support\Facades\DB::disableQueryLog();
+    $started = microtime(true);
+    $labels = ['tasks' => 'Задачи', 'checklists' => 'Чек-листы (задач)'];
+    $report = (new App\Support\Bitrix\ImportTasks(App\Support\Bitrix\Client::fromConfig(), ! $this->option('no-checklists'), function ($key, $done, $total) use ($labels, $started) {
+        $this->line(sprintf('%s: %d из %d (%d с)', $labels[$key], $done, $total, microtime(true) - $started));
+    }))->run();
+    $this->info("Задачи: в Битриксе {$report['total']}, новых {$report['new']}, уже были {$report['kept']}. Участников {$report['members']}, со сделкой {$report['deals']}, подзадач {$report['parents']}, пунктов чек-листов {$report['checklists']}.");
+})->purpose('Перенести задачи из Битрикс24');
