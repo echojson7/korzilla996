@@ -46,7 +46,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
       </a>
     </div>
     <div class="mb-2 h-px w-8 shrink-0 bg-white/15" />
-    <div class="flex min-h-0 w-full flex-1 flex-col items-center gap-2 overflow-x-hidden overflow-y-auto py-1 photo-scroll">
+    <div class="flex min-h-0 w-full flex-1 flex-col items-center gap-2.5 overflow-x-hidden overflow-y-auto py-1.5 photo-scroll">
       <button
         v-for="one in visible"
         :key="one.id"
