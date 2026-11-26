@@ -124,7 +124,7 @@ const nextLabel = (at: number) => (at === 0 ? "сегодня" : at === 1 ? "з�
           <MarkdownField v-model="opened.text" class="-mx-3" placeholder="Описание сделки: щёлкните и пишите. Списки, чек-листы, ссылки и картинки — на панели сверху." min-height="80px" />
         </section>
 
-        <div class="mt-5 grid gap-4 md:grid-cols-2">
+        <div class="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-1">
           <section class="card card--default gap-3 p-4">
             <h3 class="text-sm font-semibold">О сделке</h3>
             <dl class="grid grid-cols-[110px_minmax(0,1fr)] gap-x-3 gap-y-2.5 text-sm">

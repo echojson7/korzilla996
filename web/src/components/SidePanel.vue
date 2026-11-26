@@ -1,7 +1,7 @@
 <!-- Карточка сущности поверх раздела, как слайдер Битрикс24: один
      плавающий блок с отступами и скруглением, слева карточка (уже), справа
      чат этой задачи или сделки (один на сущность, живёт в мессенджере).
-     Закрывает ярлычок справа, Esc или щелчок мимо. -->
+     Закрывает ярлычок слева, Esc или щелчок мимо. -->
 <script setup lang="ts">
 import { defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch, nextTick } from "vue";
 import { X, MessagesSquare } from "@lucide/vue";
@@ -46,7 +46,7 @@ watch(() => [props.open, props.chat?.entity, enabled.value] as const, async ([op
     <Transition name="fade">
       <div v-if="open" class="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]" />
     </Transition>
-    <div v-if="open" class="fixed inset-0 z-50 flex p-2 md:py-3 md:pr-[100px] md:pl-3" @click.self="emit('close')">
+    <div v-if="open" class="fixed inset-0 z-50 flex p-2 md:py-3 md:pr-[68px] md:pl-12" @click.self="emit('close')">
       <Transition name="slide-left" appear>
         <!-- Карточка и чат — один цельный блок: карточка уже, чат шире. -->
         <div class="relative flex min-w-0 overflow-visible" :class="chat ? 'w-full' : 'w-full md:w-[min(760px,100%)]'">
@@ -84,7 +84,7 @@ watch(() => [props.open, props.chat?.entity, enabled.value] as const, async ([op
               </div>
             </section>
           </div>
-          <button type="button" class="panel-tab absolute top-4 -right-9 hidden md:flex" aria-label="Закрыть" title="Закрыть (Esc)" @click="emit('close')"><X class="size-5" /></button>
+          <button type="button" class="panel-tab panel-tab--left absolute top-4 -left-9 hidden md:flex" aria-label="Закрыть" title="Закрыть (Esc)" @click="emit('close')"><X class="size-5" /></button>
         </div>
       </Transition>
     </div>
