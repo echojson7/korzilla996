@@ -232,6 +232,11 @@ export const addTime = (id: number, minutes: number, note: string, date?: string
   upsert(task);
   return task;
 });
+export const updateTime = (entry: number, patch: { minutes?: number; note?: string | null; date?: string | null }) => act(async () => {
+  const task = await api<TaskFull>("PATCH", `task-time/${entry}`, patch);
+  upsert(task);
+  return task;
+});
 export const deleteTime = (entry: number) => api("DELETE", `task-time/${entry}`);
 
 export const addCheck = (id: number, title: string) => api<CheckItem>("POST", `tasks/${id}/checklist`, { title });

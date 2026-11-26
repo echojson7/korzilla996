@@ -7,7 +7,7 @@
 <script setup lang="ts">
 import { computed, nextTick, reactive, ref, watch } from "vue";
 import {
-  Play, Pause, Check, Pencil, RotateCcw, Clock, Timer, Square, CalendarClock, Flame, Briefcase, Hash, X, Plus, Trash2,
+  Play, Pause, Check, Pencil, RotateCcw, Timer, Square, CalendarClock, Flame, Briefcase, Hash, X, Plus, Trash2,
   Paperclip, Download, FileText, ListChecks, GitBranch, Link2, MoreHorizontal, ChevronRight, CircleSlash,
 } from "@lucide/vue";
 import Popover from "../Popover.vue";
@@ -19,7 +19,7 @@ import UserPick from "./UserPick.vue";
 import DeadlinePick from "./DeadlinePick.vue";
 import TaskActivity from "./TaskActivity.vue";
 import {
-  taskStore, person, nameOf, STATUSES, STATUS, PRIORITIES, duration, getTask, createTask, updateTask, setStatus,
+  taskStore, person, nameOf, STATUSES, STATUS, PRIORITIES, getTask, createTask, updateTask, setStatus,
   deleteTask, toggleTimer, addCheck, updateCheck, deleteCheck, addFiles, deleteFile, upsert,
   type TaskFull, type TaskInput, type Status, type Priority, type TaskBrief,
 } from "../../lib/tasks";
@@ -28,7 +28,7 @@ import { chats, threads } from "../../lib/messenger";
 import { apiUrl, ApiError } from "../../lib/api";
 import { href } from "../../lib/router";
 import { toast } from "../../lib/toast";
-import { when, dueLook, parseMinutes, sizeText } from "./when";
+import { when, dueLook, sizeText } from "./when";
 
 const props = defineProps<{ taskId: number | null; preset?: TaskInput }>();
 const emit = defineEmits<{ close: []; open: [id: number]; created: [id: number] }>();
@@ -245,14 +245,6 @@ function addTag() {
 }
 const dropTag = (name: string) => patch({ tags: v.value.tags.filter((one) => one !== name) });
 
-const estimateText = ref("");
-watch(() => v.value.estimate, (next) => (estimateText.value = next ? duration(next * 60) : ""), { immediate: true });
-function saveEstimate() {
-  const minutes = estimateText.value.trim() ? parseMinutes(estimateText.value) : null;
-  if (estimateText.value.trim() && minutes == null) return toast("Например: 2 ч, 1:30 или 45", "danger");
-  if (minutes !== v.value.estimate) patch({ estimate: minutes });
-  estimateText.value = minutes ? duration(minutes * 60) : "";
-}
 
 const pickers = reactive<Record<string, { close: () => void } | null>>({});
 const setPicker = (name: string) => (el: unknown) => (pickers[name] = el as { close: () => void } | null);
@@ -693,19 +685,6 @@ defineExpose({ create });
           <Checkbox :model-value="v.needsReview" :disabled="!canEdit" @update:model-value="(on) => patch({ needs_review: on })"><span class="text-sm">Принять работу после завершения</span></Checkbox>
         </dd>
 
-        <dt>Время</dt>
-        <dd class="flex flex-wrap items-center gap-x-5 gap-y-1">
-          <span class="inline-flex items-center gap-2">
-            <span class="text-muted">план</span>
-            <input v-if="canEdit" v-model="estimateText" class="value-input w-28" placeholder="не задан" @change="saveEstimate" @keydown.enter="($event.target as HTMLInputElement).blur()" />
-            <span v-else>{{ v.estimate ? duration(v.estimate * 60) : "—" }}</span>
-          </span>
-          <span v-if="task" class="inline-flex items-center gap-1.5">
-            <Clock class="size-3.5 text-muted" /><span class="text-muted">затрачено</span>
-            <span :class="v.estimate && spentTotal > v.estimate * 60 ? 'font-medium text-danger' : 'font-medium'">{{ spentTotal ? duration(spentTotal) : "0 мин" }}</span>
-          </span>
-        </dd>
-
         <template v-if="task">
           <dt>Создана</dt>
           <dd class="text-muted">{{ when(task.createdAt) }}<template v-if="task.completedAt"> · завершена {{ when(task.completedAt) }}</template></dd>
@@ -792,7 +771,7 @@ defineExpose({ create });
     </section>
 
     <!-- Комментарии, история, время -->
-    <TaskActivity v-if="task" :task="task" mode="work" @changed="onActivityChanged" />
+    <TaskActivity v-if="task" :task="task" mode="work" :spent="spentTotal" :running="timerHere" :timer-text="timerText" :can-plan="canEdit" @changed="onActivityChanged" @timer="timer" @plan="(minutes) => patch({ estimate: minutes })" />
 
     </template>
 

@@ -407,6 +407,32 @@ class TaskController extends Controller
         return response()->json(['data' => $this->full($task->fresh(), $me)], 201);
     }
 
+    /** Поправить свою запись: сколько, когда, что делали. Идущий таймер не правится. */
+    public function updateTime(Request $request, TaskTime $entry): JsonResponse
+    {
+        $me = $this->me($request);
+        $task = Task::query()->findOrFail($entry->task_id);
+        $this->see($task, $me);
+        abort_unless($entry->user_id === $me->id || $this->isAdmin($me), 403, 'Править можно своё время');
+        abort_if($entry->stopped_at === null, 422, 'Сначала остановите таймер');
+        $data = $request->validate([
+            'minutes' => ['sometimes', 'integer', 'min:1', 'max:14400'],
+            'date' => ['sometimes', 'nullable', 'date'],
+            'note' => ['sometimes', 'nullable', 'string', 'max:250'],
+        ], ['minutes.min' => 'Хотя бы минуту']);
+        $minutes = $data['minutes'] ?? intdiv((int) $entry->seconds, 60);
+        $start = ! empty($data['date']) ? Carbon::parse($data['date']) : $entry->started_at;
+        $entry->update([
+            'started_at' => $start,
+            'stopped_at' => $start->copy()->addMinutes($minutes),
+            'seconds' => array_key_exists('minutes', $data) ? $minutes * 60 : $entry->seconds,
+            'note' => array_key_exists('note', $data) ? ($data['note'] ?: null) : $entry->note,
+        ]);
+        $task->touch();
+
+        return response()->json(['data' => $this->full($task->fresh(), $me)]);
+    }
+
     public function deleteTime(Request $request, TaskTime $entry): Response
     {
         $me = $this->me($request);

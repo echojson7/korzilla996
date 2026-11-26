@@ -57,14 +57,25 @@ export function dueLook(status: string, deadline: string | null): { text: string
 }
 
 /* «1:30», «1 ч 30», «90», «2ч» → минуты. */
+/* «1:30», «1ч 30м», «1 ч 30 мин», «1,5 ч», «90 м», «2h 15m», «1 д» (рабочий
+   день — 8 ч), «45» (минуты), «1.5» (часы). */
 export function parseMinutes(text: string): number | null {
-  const raw = text.trim().toLowerCase().replace(",", ".");
+  const raw = text.trim().toLowerCase().replace(/,/g, ".").replace(/\s+/g, " ");
   if (!raw) return null;
   const colon = raw.match(/^(\d+):(\d{1,2})$/);
-  if (colon) return Number(colon[1]) * 60 + Number(colon[2]);
-  const hm = raw.match(/^(?:(\d+(?:\.\d+)?)\s*ч\w*)?\s*(?:(\d+)\s*м\w*)?$/);
-  if (hm && (hm[1] || hm[2])) return Math.round(Number(hm[1] ?? 0) * 60 + Number(hm[2] ?? 0));
-  const plain = Number(raw);
-  return Number.isFinite(plain) && plain > 0 ? Math.round(plain) : null;
+  if (colon) return Number(colon[1]) * 60 + Number(colon[2]) || null;
+  if (/^\d+$/.test(raw)) return Number(raw) || null;
+  if (/^\d*\.\d+$/.test(raw)) return Math.round(Number(raw) * 60) || null;
+  const UNIT: Record<string, number> = { д: 480, d: 480, ч: 60, h: 60, м: 1, m: 1 };
+  let total = 0;
+  let rest = raw;
+  const part = /^(\d+(?:\.\d+)?)\s*(д|d|ч|h|м|m)[a-zа-яё]*\.?\s*/;
+  while (rest) {
+    const hit = part.exec(rest);
+    if (!hit) return null;
+    total += Number(hit[1]) * UNIT[hit[2]];
+    rest = rest.slice(hit[0].length);
+  }
+  return total > 0 ? Math.round(total) : null;
 }
 export const sizeText = (bytes: number) => (bytes < 1024 ? `${bytes} Б` : bytes < 1048576 ? `${Math.round(bytes / 1024)} КБ` : `${(bytes / 1048576).toFixed(1).replace(".", ",")} МБ`);

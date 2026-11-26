@@ -57,6 +57,10 @@ class TaskTest extends TestCase
         $item = $this->actingAs($vera)->postJson("/api/tasks/{$id}/checklist", ['title' => 'Шапка'])->assertCreated()->json('data');
         $this->patchJson("/api/task-checklist/{$item['id']}", ['done' => true])->assertJsonPath('data.done', true);
         $this->postJson("/api/tasks/{$id}/time", ['minutes' => 90, 'note' => 'вёрстка'])->assertCreated()->assertJsonPath('data.timeSpent', 5400);
+        $entry = $this->postJson("/api/tasks/{$id}/time", ['minutes' => 30])->assertCreated()->json('data.timeItems.0.id');
+        $this->patchJson("/api/task-time/{$entry}", ['minutes' => 45, 'note' => 'правки'])->assertOk()->assertJsonPath('data.timeSpent', 5400 + 2700);
+        $this->actingAs($anna)->patchJson("/api/task-time/{$entry}", ['minutes' => 1])->assertForbidden();
+        $this->actingAs($vera)->deleteJson("/api/task-time/{$entry}")->assertNoContent();
 
         /* Ответственный: таймер переводит в работу, «завершить» с контролем — на контроль. */
         $this->actingAs($boris)->postJson("/api/tasks/{$id}/timer")->assertJsonPath('data.status', 'work');

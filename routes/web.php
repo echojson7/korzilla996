@@ -90,6 +90,7 @@ Route::prefix('api')->group(function () {
         Route::delete('task-comments/{comment}', 'deleteComment');
         Route::post('tasks/{task}/timer', 'timer');
         Route::post('tasks/{task}/time', 'addTime');
+        Route::patch('task-time/{entry}', 'updateTime');
         Route::delete('task-time/{entry}', 'deleteTime');
         Route::post('editor-images', 'uploadImage');
         Route::get('editor-images/{name}', 'image');
