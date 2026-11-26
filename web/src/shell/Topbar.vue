@@ -13,7 +13,7 @@ import { time, shortDate } from "../lib/format";
 import { href } from "../lib/router";
 import { avatarSrc } from "../lib/profile";
 import { people } from "../lib/messenger";
-import { BACKDROPS, backdrop, theme, thumb, type Theme } from "../lib/look";
+import { BACKDROPS, backdrop, messageLayout, theme, thumb, type MessageLayout, type Theme } from "../lib/look";
 
 defineEmits<{ menu: []; search: [] }>();
 
@@ -34,6 +34,10 @@ const THEMES: { id: Theme; label: string; icon: typeof Sun }[] = [
   { id: "light", label: "Светлая", icon: Sun },
   { id: "dark", label: "Тёмная", icon: Moon },
   { id: "system", label: "Как в системе", icon: Monitor },
+];
+const LAYOUTS: { id: MessageLayout; label: string }[] = [
+  { id: "split", label: "Мои справа" },
+  { id: "left", label: "Все слева" },
 ];
 
 async function signOut() {
@@ -86,6 +90,26 @@ async function signOut() {
             @click="theme = one.id"
           >
             <component :is="one.icon" class="size-4" />{{ one.label }}
+          </button>
+        </div>
+        <p class="px-1 pt-4 pb-2 text-sm font-semibold">Сообщения в чатах</p>
+        <div class="grid grid-cols-2 gap-1.5">
+          <button
+            v-for="one in LAYOUTS"
+            :key="one.id"
+            type="button"
+            class="flex flex-col items-center gap-1.5 rounded-xl border px-2 pt-2.5 pb-2 text-xs transition-colors"
+            :class="messageLayout === one.id ? 'border-accent bg-accent-soft text-accent-soft-foreground' : 'border-border hover:bg-default'"
+            :aria-pressed="messageLayout === one.id"
+            @click="messageLayout = one.id"
+          >
+            <!-- Схема ленты: полоски-сообщения, свои — цветом акцента. -->
+            <span class="flex w-16 flex-col gap-1" aria-hidden="true">
+              <span class="flex items-center gap-1"><span class="size-2 rounded-full bg-current opacity-40" /><span class="h-2 w-8 rounded-full bg-current opacity-25" /></span>
+              <span class="flex items-center gap-1" :class="one.id === 'split' ? 'flex-row-reverse' : ''"><span v-if="one.id === 'left'" class="size-2 rounded-full bg-accent" /><span class="h-2 w-9 rounded-full bg-accent/70" /></span>
+              <span class="flex items-center gap-1"><span class="size-2 rounded-full bg-current opacity-40" /><span class="h-2 w-6 rounded-full bg-current opacity-25" /></span>
+            </span>
+            {{ one.label }}
           </button>
         </div>
         <p class="px-1 pt-4 pb-2 text-sm font-semibold">Фон</p>

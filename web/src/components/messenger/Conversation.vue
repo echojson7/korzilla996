@@ -23,6 +23,7 @@ import {
 } from "../../lib/messenger";
 import { toast } from "../../lib/toast";
 import { entityOf, entityTitle } from "../../lib/entities";
+import { messageLayout } from "../../lib/look";
 import type { GifItem } from "../../lib/gifs";
 import { auth } from "../../lib/session";
 
@@ -249,6 +250,11 @@ function openMenu(message: ChatMessage, event: MouseEvent, views = false) {
   }
   active.value = null;
 }
+/* Раскладка ленты из персонализации: свои справа (как в Telegram) или все
+   слева с аватаркой и именем (как в Битрикс24 и Slack). */
+const leftLayout = computed(() => messageLayout.value === "left");
+const onRight = (message: ChatMessage) => !leftLayout.value && message.userId === meId.value;
+const withAuthor = (message: ChatMessage) => leftLayout.value || (message.userId !== meId.value && chat.value?.type === "group");
 const canDelete = (message: ChatMessage) => message.userId === meId.value || !!auth.me?.permissions.includes("*");
 async function copyText(message: ChatMessage) {
   menu.value = null;
@@ -384,7 +390,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
             v-else
             :data-id="row.message.id"
             class="group/msg relative flex gap-2 rounded-xl transition-colors"
-            :class="[row.message.userId === meId ? 'flex-row-reverse' : '', row.head ? 'mt-2.5' : 'mt-0.5']"
+            :class="[onRight(row.message) ? 'flex-row-reverse' : '', row.head ? 'mt-2.5' : 'mt-0.5']"
             @click="tap(row.message, $event)"
             @dblclick="quickReply(row.message, $event)"
             @pointerleave="(event) => event.pointerType === 'mouse' && active === row.message.id && (active = null)"
@@ -392,11 +398,11 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
           >
             <!-- Место под аватар — только у чужих сообщений в группе, как в Telegram:
                  свои прижаты к правому краю, в личном чате чужие — к левому. -->
-            <div v-if="row.message.userId !== meId && chat?.type === 'group'" class="flex w-8 shrink-0 items-end">
-              <a v-if="row.tail && row.message.userId" :href="href('/profile', { id: row.message.userId })" class="rounded-full" :aria-label="`Профиль: ${person(row.message.userId)?.name ?? ''}`" @click.stop><ChatFace :user="person(row.message.userId)" size="sm" /></a>
+            <div v-if="withAuthor(row.message)" class="flex w-8 shrink-0" :class="leftLayout ? 'items-start' : 'items-end'">
+              <a v-if="(leftLayout ? row.head : row.tail) && row.message.userId" :href="href('/profile', { id: row.message.userId })" class="rounded-full" :aria-label="`Профиль: ${person(row.message.userId)?.name ?? ''}`" @click.stop><ChatFace :user="person(row.message.userId)" size="sm" /></a>
             </div>
 
-            <div class="flex max-w-[min(540px,82%)] min-w-0 flex-col" :class="row.message.userId === meId ? 'items-end' : 'items-start'">
+            <div class="flex max-w-[min(540px,82%)] min-w-0 flex-col" :class="onRight(row.message) ? 'items-end' : 'items-start'">
               <div
                 class="relative min-w-0 rounded-2xl px-3 py-1.5 text-[15px] leading-snug shadow-sm"
                 :class="[
@@ -406,7 +412,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
                   row.message.failed ? 'ring-2 ring-danger/50' : '',
                 ]"
               >
-                <p v-if="row.head && row.message.userId !== meId && chat?.type === 'group' && !row.message.deleted" class="text-[13px] font-semibold" :style="{ color: `oklch(0.55 0.14 ${person(row.message.userId)?.hue ?? 220})` }">
+                <p v-if="row.head && withAuthor(row.message) && !row.message.deleted" class="text-[13px] font-semibold" :style="{ color: `oklch(0.55 0.14 ${person(row.message.userId)?.hue ?? 220})` }">
                   {{ person(row.message.userId)?.name ?? "Сотрудник" }}
                 </p>
                 <template v-if="row.message.deleted">Сообщение удалено</template>
@@ -454,7 +460,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
                 </span>
                 <!-- Реакция — кружок в нижнем углу пузыря, только при наведении. -->
                 <template v-if="!row.message.deleted && !row.message.pending">
-                <Popover class="!absolute -bottom-2.5 z-10 transition-opacity" :class="[row.message.userId === meId ? '-left-3' : '-right-3', active === row.message.id ? 'opacity-100' : 'opacity-0 group-hover/msg:opacity-100 has-[[aria-expanded=true]]:opacity-100']" :align="row.message.userId === meId ? 'right' : 'left'" up width="w-auto">
+                <Popover class="!absolute -bottom-2.5 z-10 transition-opacity" :class="[onRight(row.message) ? '-left-3' : '-right-3', active === row.message.id ? 'opacity-100' : 'opacity-0 group-hover/msg:opacity-100 has-[[aria-expanded=true]]:opacity-100']" :align="onRight(row.message) ? 'right' : 'left'" up width="w-auto">
                   <template #trigger="{ toggle, open }">
                     <button type="button" class="msg-side-btn !size-7" aria-label="Поставить реакцию" title="Реакция" :aria-expanded="open" @click="toggle"><Smile class="size-4" /></button>
                   </template>

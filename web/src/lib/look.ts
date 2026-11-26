@@ -25,6 +25,9 @@ export const DEFAULT_BACKDROP = "lake";
 export type Theme = "light" | "dark" | "system";
 export const theme = local<Theme>("theme", "system");
 export const backdrop = local<string>("bg", DEFAULT_BACKDROP);
+/* Лента мессенджера: свои сообщения справа или все слева общим списком. */
+export type MessageLayout = "split" | "left";
+export const messageLayout = local<MessageLayout>("msgLayout", "split");
 
 const dark = matchMedia("(prefers-color-scheme: dark)");
 const isDark = () => theme.value === "dark" || (theme.value === "system" && dark.matches);
