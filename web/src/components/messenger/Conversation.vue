@@ -80,16 +80,32 @@ async function load() {
   focused.value = props.chatId;
   const known = thread.value.loaded;
   loading.value = !known;
+  settling = true;
   try {
     await openThread(props.chatId);
     unreadMark.value = firstUnread.value;
-    toBottom();
-    read();
   } catch {
     failed.value = true;
   } finally {
     loading.value = false;
   }
+  /* Открытый чат сразу стоит на последних сообщениях, без прокрутки
+     через всю ленту: прыжок после того, как лента отрисована. */
+  await nextTick();
+  jumpToBottom();
+  requestAnimationFrame(() => {
+    jumpToBottom();
+    settling = false;
+    read();
+  });
+}
+
+let settling = true;
+function jumpToBottom() {
+  const el = scroller.value;
+  if (!el) return;
+  el.scrollTop = el.scrollHeight;
+  atBottom.value = true;
 }
 
 function read() {
@@ -109,9 +125,10 @@ async function onScroll() {
   }
 }
 
-watch(() => thread.value.messages.length, (now, was) => {
+/* Плавно — только к новому сообщению в уже открытом чате. */
+watch(() => [props.chatId, thread.value.messages.length] as const, ([id, now], [wasId, was]) => {
   const last = thread.value.messages.at(-1);
-  if (!last) return;
+  if (!last || settling || id !== wasId || !was) return;
   if (atBottom.value || (last.userId === meId.value && now > was)) toBottom(true);
   read();
 });
@@ -281,7 +298,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
 
                   <div v-if="row.message.files.some((f) => f.image)" class="my-1 grid gap-1" :class="row.message.files.filter((f) => f.image).length > 1 ? 'grid-cols-2' : ''">
                     <button v-for="file in row.message.files.filter((f) => f.image)" :key="file.id" type="button" class="block max-w-[320px] overflow-hidden rounded-xl bg-black/5" :style="imageBox(file, row.message.files.filter((f) => f.image).length > 1)" @click.stop="viewer = file">
-                      <img :src="apiUrl(file.url)" :alt="file.name" class="size-full max-h-[360px] object-cover" :class="row.message.files.filter((f) => f.image).length > 1 ? 'aspect-square' : ''" loading="lazy" />
+                      <img :src="apiUrl(file.url)" :alt="file.name" class="size-full max-h-[360px] object-cover" :class="row.message.files.filter((f) => f.image).length > 1 ? 'aspect-square' : ''" loading="lazy" @load="atBottom && jumpToBottom()" />
                     </button>
                   </div>
                   <component
