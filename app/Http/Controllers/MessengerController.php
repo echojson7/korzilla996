@@ -169,6 +169,10 @@ class MessengerController extends Controller
                 ['entity' => $data['entity']],
                 ['type' => 'group', 'title' => trim($data['title']), 'created_by' => $me->id],
             );
+            /* Название без имени сущности (открыли до загрузки списка) — дописать. */
+            if (! $chat->wasRecentlyCreated && str_ends_with(trim((string) $chat->title), ':') && ! str_ends_with(trim($data['title']), ':')) {
+                $chat->update(['title' => trim($data['title'])]);
+            }
             $member = ChatMember::query()->firstOrCreate(['chat_id' => $chat->id, 'user_id' => $me->id]);
             if ($member->wasRecentlyCreated && ! $chat->wasRecentlyCreated) {
                 $this->system($chat, $me, 'joined', "{$me->name} присоединяется к обсуждению");

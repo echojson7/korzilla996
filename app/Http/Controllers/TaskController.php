@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Chat;
 use App\Models\Task;
 use App\Models\TaskChecklistItem;
 use App\Models\TaskComment;
@@ -123,7 +124,11 @@ class TaskController extends Controller
                     $this->log($task, $me, $field, $this->asText($old), $this->asText($task->getAttribute($field)));
                 }
             }
+            $titleChanged = $task->isDirty('title');
             $task->save();
+            if ($titleChanged) {
+                Chat::query()->where('entity', 'task:'.$task->id)->update(['title' => Str::limit('Задача: '.$task->title, 120, '')]);
+            }
             if (array_key_exists('status', $data)) {
                 $this->applyStatus($task, $me, $data['status']);
             }

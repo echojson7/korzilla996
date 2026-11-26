@@ -250,11 +250,16 @@ const due = (one: TaskBrief) => dueLook(one.status, one.deadline);
 
     <SidePanel
       :open="isNew || openedId != null"
-      :chat="openedId != null ? { entity: `task:${openedId}`, title: `Задача: ${opened?.title ?? ''}` } : null"
-      :title="isNew ? 'Новая задача' : opened ? `Задача №${opened.id}` : 'Задача'"
-      :sub="isNew ? 'Постановщик — вы' : opened ? STATUS[opened.status].label : ''"
+      side-label="История"
+      :chat="opened ? { entity: `task:${opened.id}`, title: `Задача: ${opened.title}` } : null"
+      :title="isNew ? 'Новая задача' : opened?.title ?? 'Задача'"
+      :sub="isNew ? 'Новая задача · постановщик — вы' : opened ? `Задача №${opened.id} · ${STATUS[opened.status].label}` : ''"
       @close="close"
     >
+      <!-- Название и кнопки статуса карточка ставит сюда сама (Teleport). -->
+      <template #title><div id="task-panel-title" class="min-w-0" /></template>
+      <template #side><div id="task-panel-side" /></template>
+      <template #footer><div id="task-panel-footer" class="flex min-w-0 flex-1 flex-wrap items-center gap-2" /></template>
       <TaskCard
         v-if="isNew || openedId != null"
         :key="isNew ? 'new' : openedId!"

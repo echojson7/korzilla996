@@ -8,7 +8,7 @@
 import { computed, nextTick, reactive, ref, watch } from "vue";
 import {
   Play, Pause, Check, RotateCcw, Clock, Timer, Square, CalendarClock, Flame, Briefcase, Hash, X, Plus, Trash2,
-  Paperclip, Download, FileText, ListChecks, GitBranch, Link2, MoreHorizontal, Eye, ChevronRight, CircleSlash,
+  Paperclip, Download, FileText, ListChecks, GitBranch, Link2, MoreHorizontal, ChevronRight, CircleSlash,
 } from "@lucide/vue";
 import Popover from "../Popover.vue";
 import HueChip from "../HueChip.vue";
@@ -127,7 +127,7 @@ const actions = computed<Action[]>(() => {
   const iAmCreator = t.creatorId === taskStore.me || t.can.delete;
   const finish: Action = { to: "done", label: t.needsReview && !iAmCreator ? "Сдать на контроль" : "Завершить", icon: Check, primary: true };
   switch (t.status) {
-    case "pending": return [{ to: "work", label: "Начать выполнение", icon: Play, primary: true }, { ...finish, primary: false }, { to: "deferred", label: "Отложить", icon: CircleSlash }];
+    case "pending": return [{ to: "work", label: "Начать", icon: Play, primary: true }, { ...finish, primary: false }, { to: "deferred", label: "Отложить", icon: CircleSlash }];
     case "work": return [finish, { to: "pending", label: "Приостановить", icon: Pause }, { to: "deferred", label: "Отложить", icon: CircleSlash }];
     case "review": return iAmCreator
       ? [{ to: "done", label: "Принять работу", icon: Check, primary: true }, { to: "work", label: "Вернуть на доработку", icon: RotateCcw }]
@@ -388,17 +388,17 @@ defineExpose({ create });
     <div class="h-32 animate-pulse rounded-xl bg-default" />
     <div class="h-64 animate-pulse rounded-xl bg-default" />
   </div>
-  <div v-else-if="task || draft" class="flex flex-col gap-5" @keydown.ctrl.enter="draft && create()" @keydown.meta.enter="draft && create()">
-    <!-- Название и действия -->
-    <header class="flex flex-col gap-3">
-      <div class="flex items-start gap-2">
-        <Flame v-if="v.priority === 'high'" class="mt-1.5 size-5 shrink-0 text-danger" aria-label="Высокий приоритет" />
+  <div v-else-if="task || draft" class="-m-3 flex flex-col gap-3" @keydown.ctrl.enter="draft && create()" @keydown.meta.enter="draft && create()">
+    <!-- Название — в шапке панели -->
+    <Teleport defer to="#task-panel-title">
+      <div class="flex items-start gap-1.5">
+        <Flame v-if="v.priority === 'high'" class="mt-1 size-5 shrink-0 text-danger" aria-label="Высокий приоритет" />
         <textarea
           ref="titleInput"
           v-model="titleText"
           rows="1"
-          class="min-w-0 flex-1 resize-none [field-sizing:content] rounded-lg bg-transparent px-1 -mx-1 text-xl font-semibold leading-snug outline-none hover:bg-default/60 focus:bg-surface focus:ring-2 focus:ring-accent/40"
-          :class="{ 'line-through text-muted': v.status === 'done' }"
+          class="-mx-1.5 min-w-0 flex-1 resize-none [field-sizing:content] rounded-lg bg-transparent px-1.5 py-0.5 text-xl leading-snug font-semibold outline-none hover:bg-default/70 focus:bg-background focus:ring-2 focus:ring-accent/40"
+          :class="{ 'text-muted line-through': v.status === 'done' }"
           :readonly="!canEdit"
           placeholder="Что нужно сделать?"
           aria-label="Название задачи"
@@ -406,23 +406,22 @@ defineExpose({ create });
           @keydown.enter.exact.prevent="($event.target as HTMLTextAreaElement).blur()"
           @blur="saveTitle"
         />
-        <Popover v-if="task" :ref="setPicker('more')" width="w-56">
-          <template #trigger="{ toggle }">
-            <button type="button" class="button button--ghost button--sm button--icon-only" aria-label="Ещё" @click="toggle"><MoreHorizontal class="size-4" /></button>
-          </template>
-          <button type="button" class="menu-row" @click="copyLink(); closePicker('more')"><Link2 class="size-4" />Скопировать ссылку</button>
-          <button v-if="task.can.edit" type="button" class="menu-row" @click="closePicker('more'); nextTick(() => ($refs.childInput as HTMLInputElement)?.focus())"><GitBranch class="size-4" />Добавить подзадачу</button>
-          <button v-if="task.can.delete" type="button" class="menu-row text-danger" @click="askDelete = true; closePicker('more')"><Trash2 class="size-4" />Удалить задачу</button>
-        </Popover>
       </div>
-      <p v-if="askDelete" class="flex flex-wrap items-center gap-2 rounded-xl bg-danger-soft px-3 py-2 text-sm text-danger-soft-foreground">
-        Удалить задачу вместе с чек-листом, файлами и комментариями?
-        <span class="ml-auto flex gap-1">
-          <button type="button" class="button button--danger button--sm" @click="remove">Удалить</button>
-          <button type="button" class="button button--ghost button--sm" @click="askDelete = false">Отмена</button>
-        </span>
-      </p>
-      <div v-if="task" class="flex flex-wrap items-center gap-2">
+    </Teleport>
+
+    <!-- Подвал панели: кнопки статуса, таймер, ещё -->
+    <Teleport defer to="#task-panel-footer">
+      <template v-if="draft">
+        <button type="button" class="button button--primary" :disabled="creating" @click="create"><Check class="size-4" />Поставить задачу</button>
+        <button type="button" class="button button--ghost" @click="emit('close')">Отмена</button>
+        <span class="ml-auto hidden text-xs text-muted sm:inline">Ctrl+Enter — поставить</span>
+      </template>
+      <template v-else-if="task && askDelete">
+        <span class="min-w-0 flex-1 text-sm text-danger">Удалить задачу со всеми файлами и историей?</span>
+        <button type="button" class="button button--danger button--sm" @click="remove"><Trash2 class="size-4" />Удалить</button>
+        <button type="button" class="button button--ghost button--sm" @click="askDelete = false">Отмена</button>
+      </template>
+      <template v-else-if="task">
         <button
           v-for="one in actions"
           :key="one.to + one.label"
@@ -435,21 +434,37 @@ defineExpose({ create });
           <component :is="one.icon" class="size-4" />{{ one.label }}
         </button>
         <span v-if="task.status === 'review' && !actions.length" class="text-sm text-muted">Ждёт проверки постановщиком</span>
-        <button v-if="task.can.work && task.status !== 'done'" type="button" class="button button--sm" :class="timerHere ? 'button--danger' : 'button--ghost'" @click="timer">
+        <span class="flex-1" />
+        <button
+          v-if="task.can.work && task.status !== 'done'"
+          type="button"
+          class="button button--sm button--icon-only"
+          :class="timerHere ? 'button--danger w-auto! px-3' : 'button--ghost'"
+          :title="timerHere ? 'Остановить учёт времени' : 'Начать учёт времени'"
+          :aria-label="timerHere ? 'Остановить учёт времени' : 'Начать учёт времени'"
+          @click="timer"
+        >
           <template v-if="timerHere"><Square class="size-3.5" /><span class="tabular-nums">{{ timerText }}</span></template>
-          <template v-else><Timer class="size-4" />Учёт времени</template>
+          <Timer v-else class="size-4" />
         </button>
-      </div>
-    </header>
+        <Popover :ref="setPicker('more')" width="w-60" up>
+          <template #trigger="{ toggle }">
+            <button type="button" class="button button--sm button--ghost button--icon-only" aria-label="Ещё" title="Ещё" @click="toggle"><MoreHorizontal class="size-4" /></button>
+          </template>
+          <button type="button" class="menu-row" @click="copyLink(); closePicker('more')"><Link2 class="size-4" />Скопировать ссылку</button>
+          <button v-if="task.can.edit || task.can.work" type="button" class="menu-row" @click="closePicker('more'); nextTick(() => ($refs.childInput as HTMLInputElement)?.focus())"><GitBranch class="size-4" />Добавить подзадачу</button>
+          <button v-if="task.can.delete" type="button" class="menu-row text-danger" @click="askDelete = true; closePicker('more')"><Trash2 class="size-4" />Удалить задачу</button>
+        </Popover>
+      </template>
+    </Teleport>
 
     <!-- Описание на всю ширину -->
-    <section>
+    <section class="card card--default p-1">
       <MarkdownField
         :model-value="v.description"
         :editable="canEdit"
         :placeholder="canEdit ? 'Описание задачи: щёлкните и пишите. Списки, чек-листы, ссылки и картинки — на панели сверху.' : 'Описания нет'"
-        min-height="96px"
-        class="-mx-3"
+        min-height="120px"
         @update:model-value="(text: string) => draft && (form.description = text)"
         @save="(text: string) => !draft && patch({ description: text || null })"
       />
@@ -501,6 +516,7 @@ defineExpose({ create });
           <span v-else>{{ priorityLabel(v.priority) }}</span>
         </dd>
 
+        <div class="props-gap" aria-hidden="true" />
         <dt>Постановщик</dt>
         <dd><span class="person"><ChatFace :user="person(v.creatorId)" size="xs" />{{ nameOf(v.creatorId) }}</span></dd>
 
@@ -532,6 +548,7 @@ defineExpose({ create });
           </dd>
         </template>
 
+        <div class="props-gap" aria-hidden="true" />
         <dt>Проект</dt>
         <dd>
           <template v-if="canEdit">
@@ -601,6 +618,7 @@ defineExpose({ create });
           </div>
         </dd>
 
+        <div class="props-gap" aria-hidden="true" />
         <dt>Контроль</dt>
         <dd>
           <label class="inline-flex items-center gap-2 text-sm" :class="canEdit ? 'cursor-pointer' : ''">
@@ -708,14 +726,13 @@ defineExpose({ create });
     </section>
 
     <!-- Комментарии, история, время -->
-    <TaskActivity v-if="task" :task="task" @changed="onActivityChanged" />
+    <TaskActivity v-if="task" :task="task" mode="work" @changed="onActivityChanged" />
 
-    <!-- Новая задача -->
-    <footer v-if="draft" class="sticky bottom-0 -mx-6 -mb-6 flex items-center gap-2 border-t border-separator bg-surface px-6 py-3">
-      <button type="button" class="button button--primary" :disabled="creating" @click="create"><Check class="size-4" />Поставить задачу</button>
-      <button type="button" class="button button--ghost" @click="emit('close')">Отмена</button>
-      <span class="ml-auto hidden text-xs text-muted sm:inline"><Eye class="mr-1 inline size-3.5" />Ctrl+Enter — поставить</span>
-    </footer>
+    <!-- История изменений — в правой области панели, переключателем с чатом -->
+    <Teleport v-if="task" defer to="#task-panel-side">
+      <TaskActivity :task="task" mode="history" @changed="onActivityChanged" />
+    </Teleport>
+
   </div>
 </template>
 
@@ -723,26 +740,39 @@ defineExpose({ create });
 /* Свойства: подпись слева, значение справа, строки через черту. */
 .props {
   display: grid;
-  grid-template-columns: minmax(104px, 150px) minmax(0, 1fr);
+  grid-template-columns: minmax(108px, 150px) minmax(0, 1fr);
 }
 .props > dt,
 .props > dd {
   display: flex;
   align-items: center;
-  min-height: 2.75rem;
+  min-height: 2.625rem;
   padding: 0.375rem 1rem;
   font-size: 0.875rem;
   border-top: 1px solid var(--separator);
 }
-.props > dt:first-of-type,
-.props > dt:first-of-type + dd {
-  border-top: 0;
-}
 .props > dt {
+  padding-right: 0.5rem;
   color: var(--muted);
+  font-size: 0.8125rem;
 }
 .props > dd {
   min-width: 0;
+  padding-left: 0.5rem;
+}
+.props > dt:first-of-type,
+.props > dt:first-of-type + dd,
+.props-gap + dt,
+.props-gap + dt + dd {
+  border-top: 0;
+}
+/* Разрыв между группами полей: срок и статус, люди, связи, время. */
+.props-gap {
+  grid-column: 1 / -1;
+  height: 0.5rem;
+  background: var(--background);
+  border-top: 1px solid var(--separator);
+  border-bottom: 1px solid var(--separator);
 }
 .value {
   display: inline-flex;

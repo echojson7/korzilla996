@@ -244,6 +244,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
         </span>
       </button>
       <span v-else class="flex-1" />
+      <slot name="header-extra" />
       <button v-if="chat" type="button" class="button button--ghost button--icon-only" :aria-label="chat.pinned ? 'Открепить' : 'Закрепить'" :title="chat.pinned ? 'Открепить' : 'Закрепить наверху'" @click="togglePin(chat)">
         <PinOff v-if="chat.pinned" class="size-[18px]" /><Pin v-else class="size-[18px]" />
       </button>

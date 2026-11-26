@@ -1,9 +1,10 @@
-<!-- Низ карточки задачи: история изменений и учёт времени вкладками.
-     Обсуждение задачи — в её чате справа от карточки (общий каркас панели),
-     поэтому отдельных комментариев здесь нет; старые, если были, видны. -->
+<!-- Учёт времени (mode="work", низ карточки) и история изменений
+     (mode="history", правая область панели рядом с чатом). Обсуждение
+     задачи — в её чате, поэтому комментарии видны, только если остались
+     от прежней версии. -->
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { Pencil, Trash2, Send, Plus } from "@lucide/vue";
+import { Pencil, Trash2, Send, Plus, Clock } from "@lucide/vue";
 import ChatFace from "../messenger/ChatFace.vue";
 import {
   person, nameOf, taskStore, STATUS, PRIORITIES, duration,
@@ -14,15 +15,14 @@ import { when, parseMinutes, fromLocalInput } from "./when";
 import { toast } from "../../lib/toast";
 import { ApiError } from "../../lib/api";
 
-const props = defineProps<{ task: TaskFull }>();
+const props = defineProps<{ task: TaskFull; mode: "work" | "history" }>();
 const emit = defineEmits<{ changed: [task?: TaskFull] }>();
 
 type Tab = "comments" | "history" | "time";
-const tab = ref<Tab>("history");
+const tab = ref<Tab>(props.mode === "history" ? "history" : "time");
 const tabs = computed(() => [
+  { key: "time" as Tab, label: "Учёт времени", count: props.task.timeItems.length },
   ...(props.task.commentItems.length ? [{ key: "comments" as Tab, label: "Комментарии", count: props.task.commentItems.length }] : []),
-  { key: "history" as Tab, label: "История", count: props.task.historyItems.length },
-  { key: "time" as Tab, label: "Время", count: props.task.timeItems.length },
 ]);
 const fail = (error: unknown) => toast(error instanceof ApiError ? error.first : "Не получилось", "danger");
 
@@ -133,8 +133,9 @@ const totalBy = computed(() => {
 </script>
 
 <template>
-  <section>
-    <div class="toggle-button-group toggle-button-group--horizontal" role="tablist">
+  <section :class="mode === 'work' ? 'card card--default gap-0 p-4' : ''">
+    <h3 v-if="mode === 'work' && tabs.length === 1" class="flex items-center gap-2 text-sm font-semibold"><Clock class="size-4 text-muted" />Учёт времени</h3>
+    <div v-else-if="mode === 'work'" class="toggle-button-group toggle-button-group--horizontal" role="tablist">
       <button
         v-for="one in tabs"
         :key="one.key"
@@ -189,15 +190,20 @@ const totalBy = computed(() => {
     </div>
 
     <!-- История -->
-    <ol v-else-if="tab === 'history'" class="mt-3 flex flex-col">
-      <li v-for="one in task.historyItems" :key="one.id" class="grid grid-cols-[110px_minmax(0,1fr)] gap-3 border-b border-separator py-2 text-sm last:border-0">
-        <span class="text-xs text-muted tabular-nums">{{ when(one.at) }}</span>
-        <span class="min-w-0">
-          <span class="text-muted">{{ nameOf(one.userId) }}:</span>
-          {{ story(one).text }}<template v-if="story(one).to !== undefined">: <span class="text-muted line-through decoration-muted/60">{{ story(one).from }}</span> → <span class="font-medium">{{ story(one).to }}</span></template>
+    <ol v-else-if="tab === 'history'" class="flex flex-col">
+      <li v-for="one in task.historyItems" :key="one.id" class="flex gap-3 border-b border-separator py-3 text-sm last:border-0">
+        <ChatFace :user="person(one.userId)" size="sm" />
+        <span class="min-w-0 flex-1">
+          <span class="flex items-baseline gap-2">
+            <span class="font-semibold">{{ nameOf(one.userId) }}</span>
+            <span class="ml-auto shrink-0 text-xs text-muted tabular-nums">{{ when(one.at) }}</span>
+          </span>
+          <span class="mt-0.5 block">
+            {{ story(one).text }}<template v-if="story(one).to !== undefined">: <span class="text-muted line-through decoration-muted/60">{{ story(one).from }}</span> → <span class="font-medium">{{ story(one).to }}</span></template>
+          </span>
         </span>
       </li>
-      <li v-if="!task.historyItems.length" class="py-3 text-sm text-muted">Изменений нет.</li>
+      <li v-if="!task.historyItems.length" class="py-8 text-center text-sm text-muted">Изменений пока нет.</li>
     </ol>
 
     <!-- Время -->
