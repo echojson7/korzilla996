@@ -8,7 +8,7 @@ import ChatFace from "../components/messenger/ChatFace.vue";
 /* Сам чат и окно «Новый чат» — отдельными кусками: нужны по щелчку. */
 const Conversation = defineAsyncComponent(() => import("../components/messenger/Conversation.vue"));
 const NewChat = defineAsyncComponent(() => import("../components/messenger/NewChat.vue"));
-import { chats, enabled, totalUnread, chatById, startMessenger } from "../lib/messenger";
+import { chats, enabled, totalUnread, chatById, startMessenger, prefetch } from "../lib/messenger";
 import { route, href, setQuery, navigate } from "../lib/router";
 
 const quick = ref<number | null>(null);
@@ -55,6 +55,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
         :aria-current="current === one.id ? 'true' : undefined"
         :title="one.title"
         :aria-label="`${one.title}${one.unread ? `, непрочитанных: ${one.unread}` : ''}`"
+        @pointerenter="prefetch(one.id)"
         @click="open(one.id)"
       >
         <span v-if="current === one.id" class="absolute top-1/2 -left-2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-white" aria-hidden="true" />

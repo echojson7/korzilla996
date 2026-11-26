@@ -3,7 +3,8 @@
 import { computed, ref } from "vue";
 import { Search, SquarePen, Pin } from "@lucide/vue";
 import ChatFace from "./ChatFace.vue";
-import { chats, ready, meId, people, when, startDirect, type ChatItem } from "../../lib/messenger";
+import { Bell } from "@lucide/vue";
+import { chats, ready, meId, people, when, startDirect, typingIn, prefetch, canNotify, askNotify, type ChatItem } from "../../lib/messenger";
 import { toast } from "../../lib/toast";
 
 const props = defineProps<{ selected: number | null }>();
@@ -21,7 +22,11 @@ const strangers = computed(() => {
   const talked = new Set(chats.value.filter((one) => one.type === "direct").map((one) => one.peer));
   return [...people.values()].filter((one) => one.active && one.id !== meId.value && !talked.has(one.id) && one.name.toLowerCase().includes(words)).slice(0, 8);
 });
-const preview = (one: ChatItem) => (one.last ? `${one.last.userId === meId.value ? "Вы: " : ""}${one.last.text}` : "Нет сообщений");
+const preview = (one: ChatItem) => {
+  const typers = typingIn(one.id);
+  if (typers.length) return one.type === "group" ? `${typers[0].name.split(" ")[0]} печатает…` : "печатает…";
+  return one.last ? `${one.last.userId === meId.value && one.last.kind !== "system" ? "Вы: " : ""}${one.last.text}` : "Нет сообщений";
+};
 async function talk(id: number) {
   try {
     const chat = await startDirect(id);
@@ -44,6 +49,9 @@ void props;
       <button type="button" class="button button--primary button--icon-only shrink-0" aria-label="Новый чат" title="Новый чат" @click="emit('create')"><SquarePen class="size-[18px]" /></button>
     </div>
     <div class="min-h-0 flex-1 overflow-y-auto px-2 pb-2 thin-scroll">
+      <button v-if="canNotify === 'default'" type="button" class="mb-2 flex w-full items-center gap-2.5 rounded-xl bg-accent-soft px-3 py-2 text-left text-sm text-accent-soft-foreground" @click="askNotify">
+        <Bell class="size-4 shrink-0" /><span>Включить уведомления о новых сообщениях</span>
+      </button>
       <p v-if="!ready" class="py-10 text-center text-sm text-muted">Загружаем чаты…</p>
       <div v-else-if="!chats.length" class="px-4 py-10 text-center text-sm text-muted">
         <p>Чатов пока нет.</p>
@@ -55,6 +63,7 @@ void props;
         type="button"
         class="flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left transition-colors"
         :class="selected === one.id ? 'bg-accent-soft' : 'hover:bg-default'"
+        @pointerenter="prefetch(one.id)"
         @click="emit('open', one.id)"
       >
         <ChatFace :chat="one" size="lg" />
@@ -65,7 +74,7 @@ void props;
             <span class="shrink-0 text-xs text-muted">{{ when(one.last?.at ?? one.at) }}</span>
           </span>
           <span class="mt-0.5 flex items-center gap-2">
-            <span class="min-w-0 flex-1 truncate text-sm text-muted">{{ preview(one) }}</span>
+            <span class="min-w-0 flex-1 truncate text-sm" :class="typingIn(one.id).length ? 'text-accent' : 'text-muted'">{{ preview(one) }}</span>
             <span v-if="one.unread" class="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-accent px-1.5 text-[11px] font-semibold text-accent-foreground tabular-nums">{{ one.unread > 99 ? "99+" : one.unread }}</span>
           </span>
         </span>

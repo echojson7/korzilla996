@@ -14,7 +14,7 @@ import { QUICK, remember } from "../../lib/emoji";
 import { plural } from "../../lib/format";
 import {
   chatById, threadOf, openThread, loadOlder, sendMessage, editMessage, deleteMessage, toggleReaction, markRead, togglePin, dropFailed,
-  person, meId, focused, clock, dayLabel, fileSize, type ChatMessage, type ChatFile,
+  typingIn, sendTyping, person, meId, focused, clock, dayLabel, fileSize, type ChatMessage, type ChatFile,
 } from "../../lib/messenger";
 import { toast } from "../../lib/toast";
 
@@ -36,9 +36,12 @@ const viewer = ref<ChatFile | null>(null);
 const dropping = ref(false);
 const atBottom = ref(true);
 
+const typers = computed(() => typingIn(props.chatId));
 const sub = computed(() => {
   const one = chat.value;
   if (!one) return "";
+  if (typers.value.length === 1) return one.type === "group" ? `${typers.value[0].name} печатает…` : "печатает…";
+  if (typers.value.length > 1) return `${typers.value.length} человека печатают…`;
   if (one.type === "group") return plural(one.members.length, "участник", "участника", "участников");
   const peer = person(one.peer);
   return [peer?.position, peer?.department].filter(Boolean).join(" · ") || "Личный чат";
@@ -53,14 +56,14 @@ const rows = computed(() => {
     const prev = list[i - 1];
     const next = list[i + 1];
     const day = !prev || new Date(prev.at).toDateString() !== new Date(message.at).toDateString() ? dayLabel(message.at) : null;
-    const near = (a?: ChatMessage, b?: ChatMessage) => !!a && !!b && a.userId === b.userId && !a.deleted && Math.abs(Date.parse(b.at) - Date.parse(a.at)) < 5 * 60_000 && new Date(a.at).toDateString() === new Date(b.at).toDateString();
+    const near = (a?: ChatMessage, b?: ChatMessage) => !!a && !!b && a.userId === b.userId && !a.deleted && a.kind !== "system" && b.kind !== "system" && Math.abs(Date.parse(b.at) - Date.parse(a.at)) < 5 * 60_000 && new Date(a.at).toDateString() === new Date(b.at).toDateString();
     out.push({ message, day, head: !!day || !near(prev, message), tail: !near(message, next) });
   });
   return out;
 });
 const firstUnread = computed(() => {
   const last = chat.value?.lastReadId ?? 0;
-  return thread.value.messages.find((m) => m.id > last && m.userId !== meId.value && !m.pending)?.id ?? null;
+  return thread.value.messages.find((m) => m.id > last && m.userId !== meId.value && !m.pending && m.kind !== "system")?.id ?? null;
 });
 const unreadMark = ref<number | null>(null);
 
@@ -136,6 +139,10 @@ watch(() => [props.chatId, thread.value.messages.length] as const, ([id, now], [
 
 watch(() => props.chatId, load);
 onMounted(load);
+/* Вернулись на вкладку — отметить прочитанным, что видно. */
+const onVisible = () => !document.hidden && read();
+onMounted(() => document.addEventListener("visibilitychange", onVisible));
+onBeforeUnmount(() => document.removeEventListener("visibilitychange", onVisible));
 onBeforeUnmount(() => {
   if (focused.value === props.chatId) focused.value = null;
 });
@@ -233,7 +240,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
         <ChatFace :chat="chat" size="md" />
         <span class="min-w-0">
           <span class="block truncate font-semibold">{{ chat.title }}</span>
-          <span class="block truncate text-xs text-muted">{{ sub }}</span>
+          <span class="block truncate text-xs" :class="typers.length ? 'text-accent' : 'text-muted'">{{ sub }}</span>
         </span>
       </button>
       <span v-else class="flex-1" />
@@ -268,7 +275,12 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
             <span class="h-px flex-1 bg-accent/40" />Новые сообщения<span class="h-px flex-1 bg-accent/40" />
           </div>
 
+          <!-- Системное: по центру, без действий. -->
+          <div v-if="row.message.kind === 'system'" :data-id="row.message.id" class="my-2 flex justify-center px-6">
+            <span class="max-w-full rounded-full bg-surface/85 px-3 py-1 text-center text-xs text-muted shadow-sm backdrop-blur">{{ row.message.body }} · {{ clock(row.message.at) }}</span>
+          </div>
           <div
+            v-else
             :data-id="row.message.id"
             class="group/msg relative flex gap-2 rounded-xl px-1 transition-colors"
             :class="[row.message.userId === meId ? 'flex-row-reverse' : '', row.head ? 'mt-2.5' : 'mt-0.5']"
@@ -375,7 +387,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
         </template>
       </template>
     </div>
-    <Composer class="relative z-10 mx-1.5 mb-1.5" ref="composer" :draft-key="chatId" :reply-to="replyTo" :editing="editing" @send="send" @save="save" @cancel="replyTo = null; editing = null" />
+    <Composer class="relative z-10 mx-1.5 mb-1.5" ref="composer" :draft-key="chatId" :reply-to="replyTo" :editing="editing" @send="send" @typing="sendTyping(chatId)" @save="save" @cancel="replyTo = null; editing = null" />
     </div>
 
     <button v-if="!atBottom" type="button" class="absolute right-5 bottom-24 z-20 flex size-10 items-center justify-center rounded-full bg-overlay shadow-overlay" aria-label="К последним сообщениям" @click="toBottom(true)">

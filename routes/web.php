@@ -21,6 +21,7 @@ Route::prefix('api')->group(function () {
     Route::prefix('messenger')->middleware('auth')->controller(MessengerController::class)->group(function () {
         Route::get('users', 'users');
         Route::get('chats', 'chats');
+        Route::get('sync', 'sync');
         Route::post('chats', 'createChat');
         Route::post('entity-chats', 'entityChat');
         Route::patch('chats/{chat}', 'updateChat');
@@ -28,6 +29,7 @@ Route::prefix('api')->group(function () {
         Route::delete('chats/{chat}/members/{user}', 'removeMember');
         Route::post('chats/{chat}/pin', 'pin');
         Route::post('chats/{chat}/read', 'read');
+        Route::post('chats/{chat}/typing', 'typing');
         Route::get('chats/{chat}/avatar', 'avatar');
         Route::post('chats/{chat}/avatar', 'uploadAvatar');
         Route::delete('chats/{chat}/avatar', 'deleteAvatar');

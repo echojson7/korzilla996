@@ -35,4 +35,13 @@ return [
         ],
     ],
 
+    /* Мессенджер в реальном времени: хаб Mercure во FrankenPHP. Без секрета —
+       только опрос. url — куда публиковать с сервера (если нет mercure_publish),
+       public_url — адрес хаба для браузера. */
+    'mercure' => [
+        'secret' => env('MERCURE_JWT_SECRET'),
+        'url' => env('MERCURE_URL'),
+        'public_url' => env('MERCURE_PUBLIC_URL', '/.well-known/mercure'),
+    ],
+
 ];

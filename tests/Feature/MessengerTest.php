@@ -91,4 +91,35 @@ class MessengerTest extends TestCase
             ->assertJsonCount(2, 'data.members');
         $this->postJson('/api/messenger/entity-chats', ['entity' => 'drop table', 'title' => 'x'])->assertStatus(422);
     }
+
+    public function test_system_messages_and_sync(): void
+    {
+        $anna = $this->user('Анна Иванова');
+        $boris = $this->user('Борис Петров');
+        $vera = $this->user('Вера Сидорова');
+
+        $chat = $this->actingAs($anna)->postJson('/api/messenger/chats', ['type' => 'group', 'title' => 'Продажи', 'user_ids' => [$boris->id]])->json('data');
+        $this->postJson("/api/messenger/chats/{$chat['id']}/members", ['user_ids' => [$vera->id, $boris->id]]);
+
+        $state = $this->actingAs($boris)->getJson('/api/messenger/chats')->assertOk()->json('data');
+        /* Системные сообщения не считаются непрочитанными. */
+        $this->assertSame(0, $state['chats'][0]['unread']);
+        $this->assertSame('Анна Иванова добавляет в чат: Вера Сидорова', $state['chats'][0]['last']['text']);
+
+        /* Ничего не менялось — короткий ответ. */
+        $this->getJson('/api/messenger/sync?v='.$state['v'])->assertExactJson(['data' => ['v' => $state['v']]]);
+
+        $this->actingAs($vera)->deleteJson("/api/messenger/chats/{$chat['id']}/members/{$vera->id}")->assertNoContent();
+        $sync = $this->actingAs($boris)->getJson('/api/messenger/sync?v='.$state['v'].'&chat='.$chat['id'].'&since='.urlencode(now()->subMinute()->toIso8601String()))->assertOk()->json('data');
+        $this->assertNotSame($state['v'], $sync['v']);
+        $this->assertSame('Вера Сидорова выходит из чата', $sync['chats'][0]['last']['text']);
+        $kinds = collect($sync['thread']['messages'])->pluck('kind')->unique()->values()->all();
+        $this->assertSame(['system'], $kinds);
+
+        /* На системное сообщение не ответить реакцией и не удалить. */
+        $systemId = $sync['thread']['messages'][0]['id'];
+        $this->postJson("/api/messenger/messages/{$systemId}/reactions", ['emoji' => '👍'])->assertStatus(422);
+        $this->actingAs($anna)->deleteJson("/api/messenger/messages/{$systemId}")->assertForbidden();
+        $this->postJson("/api/messenger/chats/{$chat['id']}/typing")->assertNoContent();
+    }
 }

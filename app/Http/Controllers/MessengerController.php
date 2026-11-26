@@ -8,6 +8,7 @@ use App\Models\Message;
 use App\Models\MessageFile;
 use App\Models\MessageReaction;
 use App\Models\User;
+use App\Support\Realtime;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -23,8 +24,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Мессенджер портала: личные и групповые чаты, сообщения с файлами,
- * реакции, отметки прочитанного. Обновления приложение забирает опросом:
- * список чатов целиком и изменения открытого чата с момента since.
+ * реакции, отметки прочитанного, системные сообщения («добавляет в чат»).
+ * Каждое изменение — событие участникам (App\Support\Realtime): сразу
+ * через Mercure, если он есть, и меткой для лёгкого опроса sync.
  *
  * Чужой чат отвечает 404, а не 403: так не видно, какие чаты вообще есть.
  */
@@ -52,11 +54,55 @@ class MessengerController extends Controller
     {
         $me = $this->me($request);
 
+        $stamp = Realtime::stamp($me->id);
+
         return response()->json(['data' => [
             'chats' => $this->chatList($me),
             'me' => $me->id,
+            'v' => $stamp,
+            'realtime' => Realtime::subscription($me->id),
             'now' => now()->toIso8601String(),
         ]]);
+    }
+
+    /**
+     * Лёгкий опрос: v — метка с прошлого ответа. Ничего не менялось —
+     * ответ из одной метки. Менялось — список чатов и, если передан
+     * открытый чат (chat, since), его изменения.
+     */
+    public function sync(Request $request): JsonResponse
+    {
+        $me = $this->me($request);
+        $request->validate(['v' => ['nullable', 'integer'], 'chat' => ['nullable', 'integer'], 'since' => ['nullable', 'date']]);
+        $stamp = Realtime::stamp($me->id);
+        if ($request->filled('v') && (int) $request->input('v') === $stamp) {
+            return response()->json(['data' => ['v' => $stamp]]);
+        }
+        $thread = null;
+        if ($request->filled('chat') && $request->filled('since')) {
+            $chat = Chat::query()->find((int) $request->input('chat'));
+            $member = $chat ? ChatMember::query()->where('chat_id', $chat->id)->where('user_id', $me->id)->exists() : false;
+            if ($member) {
+                $thread = ['chatId' => $chat->id] + $this->changes($chat, $me, Carbon::parse($request->input('since')));
+            }
+        }
+
+        return response()->json(['data' => [
+            'v' => $stamp,
+            'chats' => $this->chatList($me),
+            'thread' => $thread,
+            'now' => now()->toIso8601String(),
+        ]]);
+    }
+
+    /** «Печатает…»: только Mercure, без метки и без базы. */
+    public function typing(Request $request, Chat $chat): Response
+    {
+        $me = $this->me($request);
+        $this->membership($chat, $me);
+        Realtime::emit($this->others($chat, $me), 'typing', ['chatId' => $chat->id, 'userId' => $me->id], stamp: false);
+
+        return response()->noContent();
     }
 
     public function createChat(Request $request): JsonResponse
@@ -94,9 +140,13 @@ class MessengerController extends Controller
                 foreach ($ids as $id) {
                     ChatMember::query()->create(['chat_id' => $chat->id, 'user_id' => $id]);
                 }
+                $this->system($chat, $me, 'created', "{$me->name} создаёт чат «{$chat->title}»");
 
                 return $chat;
             });
+        }
+        if ($chat->wasRecentlyCreated) {
+            Realtime::emit($this->memberIds($chat), 'chat', ['chatId' => $chat->id]);
         }
 
         return response()->json(['data' => $this->chatOne($chat, $me)], $chat->wasRecentlyCreated ? 201 : 200);
@@ -119,7 +169,10 @@ class MessengerController extends Controller
                 ['entity' => $data['entity']],
                 ['type' => 'group', 'title' => trim($data['title']), 'created_by' => $me->id],
             );
-            ChatMember::query()->firstOrCreate(['chat_id' => $chat->id, 'user_id' => $me->id]);
+            $member = ChatMember::query()->firstOrCreate(['chat_id' => $chat->id, 'user_id' => $me->id]);
+            if ($member->wasRecentlyCreated && ! $chat->wasRecentlyCreated) {
+                $this->system($chat, $me, 'joined', "{$me->name} присоединяется к обсуждению");
+            }
 
             return $chat;
         });
@@ -134,7 +187,12 @@ class MessengerController extends Controller
         $this->groupOnly($chat);
         $this->canManage($chat, $me);
         $data = $request->validate(['title' => ['required', 'string', 'max:120']], ['title.required' => 'Назовите чат']);
-        $chat->update(['title' => trim($data['title'])]);
+        $title = trim($data['title']);
+        if ($title !== $chat->title) {
+            $chat->update(['title' => $title]);
+            $this->system($chat, $me, 'renamed', "{$me->name} переименовывает чат в «{$title}»", ['title' => $title]);
+            Realtime::emit($this->memberIds($chat), 'chat', ['chatId' => $chat->id]);
+        }
 
         return response()->json(['data' => $this->chatOne($chat, $me)]);
     }
@@ -148,8 +206,16 @@ class MessengerController extends Controller
             'user_ids' => ['required', 'array', 'min:1', 'max:200'],
             'user_ids.*' => ['integer', Rule::exists('users', 'id')],
         ]);
+        $added = [];
         foreach (array_unique($data['user_ids']) as $id) {
-            ChatMember::query()->firstOrCreate(['chat_id' => $chat->id, 'user_id' => (int) $id]);
+            if (ChatMember::query()->firstOrCreate(['chat_id' => $chat->id, 'user_id' => (int) $id])->wasRecentlyCreated) {
+                $added[] = (int) $id;
+            }
+        }
+        if ($added) {
+            $names = User::query()->whereIn('id', $added)->orderBy('name')->pluck('name')->implode(', ');
+            $this->system($chat, $me, 'added', "{$me->name} добавляет в чат: {$names}", ['users' => $added]);
+            Realtime::emit($this->memberIds($chat), 'chat', ['chatId' => $chat->id]);
         }
 
         return response()->json(['data' => $this->chatOne($chat, $me)]);
@@ -164,10 +230,19 @@ class MessengerController extends Controller
         if ($user->id !== $me->id) {
             $this->canManage($chat, $me);
         }
+        $before = $this->memberIds($chat);
+        if (! in_array($user->id, $before, true)) {
+            return response()->noContent();
+        }
         ChatMember::query()->where('chat_id', $chat->id)->where('user_id', $user->id)->delete();
         if (! $chat->members()->exists()) {
             $this->dropChat($chat);
+        } elseif ($user->id === $me->id) {
+            $this->system($chat, $me, 'left', "{$me->name} выходит из чата", ['users' => [$me->id]]);
+        } else {
+            $this->system($chat, $me, 'removed', "{$me->name} исключает из чата: {$user->name}", ['users' => [$user->id]]);
         }
+        Realtime::emit($before, 'chat', ['chatId' => $chat->id]);
 
         return response()->noContent();
     }
@@ -177,6 +252,7 @@ class MessengerController extends Controller
         $me = $this->me($request);
         $member = $this->membership($chat, $me);
         $member->update(['is_pinned' => $request->boolean('pinned', ! $member->is_pinned)]);
+        Realtime::emit([$me->id], 'chat', ['chatId' => $chat->id]);
 
         return response()->json(['data' => $this->chatOne($chat, $me)]);
     }
@@ -190,6 +266,7 @@ class MessengerController extends Controller
         $id = min((int) $data['id'], $last);
         if ($id > $member->last_read_id) {
             $member->update(['last_read_id' => $id]);
+            Realtime::emit($this->memberIds($chat), 'read', ['chatId' => $chat->id, 'userId' => $me->id, 'id' => $id]);
         }
 
         return response()->noContent();
@@ -209,6 +286,8 @@ class MessengerController extends Controller
         if ($old) {
             Storage::disk('local')->delete($old);
         }
+        $this->system($chat, $me, 'cover', "{$me->name} меняет обложку чата");
+        Realtime::emit($this->memberIds($chat), 'chat', ['chatId' => $chat->id]);
 
         return response()->json(['data' => $this->chatOne($chat, $me)]);
     }
@@ -221,6 +300,8 @@ class MessengerController extends Controller
         if ($chat->avatar) {
             Storage::disk('local')->delete($chat->avatar);
             $chat->update(['avatar' => null]);
+            $this->system($chat, $me, 'cover', "{$me->name} убирает обложку чата");
+            Realtime::emit($this->memberIds($chat), 'chat', ['chatId' => $chat->id]);
         }
 
         return response()->json(['data' => $this->chatOne($chat, $me)]);
@@ -248,20 +329,17 @@ class MessengerController extends Controller
         $me = $this->me($request);
         $this->membership($chat, $me);
         $request->validate(['before' => ['nullable', 'integer'], 'since' => ['nullable', 'date']]);
+        if ($request->filled('since')) {
+            return response()->json(['data' => $this->changes($chat, $me, Carbon::parse($request->input('since')))]);
+        }
 
         $query = $chat->messages()->with(['files', 'reactions', 'replyTo']);
-        if ($request->filled('since')) {
-            $since = Carbon::parse($request->input('since'));
-            $rows = $query->withTrashed()->where('updated_at', '>=', $since)->orderBy('id')->limit(500)->get();
-            $more = false;
-        } else {
-            if ($request->filled('before')) {
-                $query->where('id', '<', (int) $request->input('before'));
-            }
-            $rows = $query->orderByDesc('id')->limit(self::PAGE + 1)->get();
-            $more = $rows->count() > self::PAGE;
-            $rows = $rows->take(self::PAGE)->reverse()->values();
+        if ($request->filled('before')) {
+            $query->where('id', '<', (int) $request->input('before'));
         }
+        $rows = $query->orderByDesc('id')->limit(self::PAGE + 1)->get();
+        $more = $rows->count() > self::PAGE;
+        $rows = $rows->take(self::PAGE)->reverse()->values();
 
         return response()->json(['data' => [
             'messages' => $rows->map(fn (Message $message) => $this->message($message)),
@@ -278,6 +356,7 @@ class MessengerController extends Controller
         $request->validate([
             'body' => ['nullable', 'string', 'max:10000'],
             'reply_to_id' => ['nullable', 'integer'],
+            'client_id' => ['nullable', 'string', 'max:64'],
             'files' => ['array', 'max:'.self::FILES],
             'files.*' => ['file', 'max:'.self::FILE_KB],
         ], [
@@ -292,7 +371,7 @@ class MessengerController extends Controller
             throw ValidationException::withMessages(['body' => 'Пустое сообщение']);
         }
         $replyTo = $request->filled('reply_to_id')
-            ? $chat->messages()->whereKey((int) $request->input('reply_to_id'))->value('id')
+            ? $chat->messages()->where('kind', 'text')->whereKey((int) $request->input('reply_to_id'))->value('id')
             : null;
 
         $message = DB::transaction(function () use ($chat, $me, $body, $files, $replyTo, $member) {
@@ -316,14 +395,17 @@ class MessengerController extends Controller
             return $message;
         });
 
-        return response()->json(['data' => $this->message($message->load(['files', 'reactions', 'replyTo']))], 201);
+        $payload = $this->message($message->load(['files', 'reactions', 'replyTo']));
+        Realtime::emit($this->memberIds($chat), 'message', ['chatId' => $chat->id, 'message' => $payload, 'clientId' => $request->input('client_id'), 'new' => true]);
+
+        return response()->json(['data' => $payload], 201);
     }
 
     public function edit(Request $request, Message $message): JsonResponse
     {
         $me = $this->me($request);
         $this->membership($message->chat, $me);
-        abort_unless($message->user_id === $me->id, 403, 'Править можно только свои сообщения');
+        abort_unless($message->user_id === $me->id && $message->kind === 'text', 403, 'Править можно только свои сообщения');
         $data = $request->validate(['body' => ['nullable', 'string', 'max:10000']]);
         $body = trim((string) ($data['body'] ?? ''));
         if ($body === '' && ! $message->files()->exists()) {
@@ -333,14 +415,14 @@ class MessengerController extends Controller
             $message->update(['body' => $body === '' ? null : $body, 'edited_at' => now()]);
         }
 
-        return response()->json(['data' => $this->message($message->load(['files', 'reactions', 'replyTo']))]);
+        return response()->json(['data' => $this->announce($message)]);
     }
 
     public function destroy(Request $request, Message $message): Response
     {
         $me = $this->me($request);
         $this->membership($message->chat, $me);
-        abort_unless($message->user_id === $me->id || $me->permissions() === ['*'], 403, 'Удалять можно только свои сообщения');
+        abort_unless($message->kind === 'text' && ($message->user_id === $me->id || $me->permissions() === ['*']), 403, 'Удалять можно только свои сообщения');
         DB::transaction(function () use ($message) {
             foreach ($message->files as $file) {
                 Storage::disk('local')->delete($file->path);
@@ -349,6 +431,7 @@ class MessengerController extends Controller
             $message->reactions()->delete();
             $message->delete();
         });
+        $this->announce($message);
 
         return response()->noContent();
     }
@@ -358,6 +441,7 @@ class MessengerController extends Controller
     {
         $me = $this->me($request);
         $this->membership($message->chat, $me);
+        abort_unless($message->kind === 'text', 422, 'На системное сообщение реакцию не поставить');
         $data = $request->validate(['emoji' => ['required', 'string', 'max:32', 'not_regex:/[\x00-\x7F]/']], [
             'emoji.not_regex' => 'Реакция — один эмодзи',
         ]);
@@ -369,7 +453,7 @@ class MessengerController extends Controller
         }
         $message->touch();
 
-        return response()->json(['data' => $this->message($message->load(['files', 'reactions', 'replyTo']))]);
+        return response()->json(['data' => $this->announce($message)]);
     }
 
     public function file(Request $request, MessageFile $file): StreamedResponse
@@ -405,6 +489,53 @@ class MessengerController extends Controller
         abort_unless($member, 404);
 
         return $member;
+    }
+
+    /** @return int[] */
+    private function memberIds(Chat $chat): array
+    {
+        return ChatMember::query()->where('chat_id', $chat->id)->pluck('user_id')->map(fn ($id) => (int) $id)->all();
+    }
+
+    /** @return int[] */
+    private function others(Chat $chat, User $me): array
+    {
+        return array_values(array_filter($this->memberIds($chat), fn ($id) => $id !== $me->id));
+    }
+
+    /** Системное сообщение в ленту: событие уйдёт участникам сразу. */
+    private function system(Chat $chat, User $actor, string $event, string $text, array $meta = []): Message
+    {
+        $message = $chat->messages()->create(['user_id' => $actor->id, 'kind' => 'system', 'body' => $text, 'meta' => ['event' => $event] + $meta]);
+        $chat->update(['last_message_at' => $message->created_at]);
+        $payload = $this->message($message->load(['files', 'reactions', 'replyTo']));
+        Realtime::emit($this->memberIds($chat), 'message', ['chatId' => $chat->id, 'message' => $payload, 'new' => true]);
+
+        return $message;
+    }
+
+    /** Сообщение изменилось (правка, реакция, удаление) — разослать новое. */
+    private function announce(Message $message): array
+    {
+        $fresh = Message::withTrashed()->with(['files', 'reactions', 'replyTo'])->find($message->id);
+        $payload = $this->message($fresh);
+        Realtime::emit($this->memberIds($fresh->chat), 'message', ['chatId' => $fresh->chat_id, 'message' => $payload]);
+
+        return $payload;
+    }
+
+    /** Всё, что поменялось в чате с момента since. */
+    private function changes(Chat $chat, User $me, Carbon $since): array
+    {
+        $rows = $chat->messages()->withTrashed()->with(['files', 'reactions', 'replyTo'])
+            ->where('updated_at', '>=', $since)->orderBy('id')->limit(500)->get();
+
+        return [
+            'messages' => $rows->map(fn (Message $message) => $this->message($message)),
+            'hasMore' => false,
+            'readUpTo' => $this->readUpTo($chat, $me),
+            'now' => now()->toIso8601String(),
+        ];
     }
 
     private function groupOnly(Chat $chat): void
@@ -453,7 +584,7 @@ class MessengerController extends Controller
             ->join('chat_members as cm', fn ($join) => $join->on('cm.chat_id', '=', 'm.chat_id')->where('cm.user_id', '=', $me->id))
             ->whereIn('m.chat_id', $ids)->whereColumn('m.id', '>', 'cm.last_read_id')
             ->where(fn ($q) => $q->where('m.user_id', '!=', $me->id)->orWhereNull('m.user_id'))
-            ->whereNull('m.deleted_at')
+            ->whereNull('m.deleted_at')->where('m.kind', 'text')
             ->groupBy('m.chat_id')->selectRaw('m.chat_id, count(*) as n')->pluck('n', 'chat_id');
 
         return $chats->map(function (Chat $chat) use ($me, $mine, $members, $users, $last, $unread) {
@@ -481,6 +612,7 @@ class MessengerController extends Controller
                 'last' => $message ? [
                     'id' => $message->id,
                     'userId' => $message->user_id,
+                    'kind' => $message->kind,
                     'text' => self::preview($message),
                     'at' => $message->created_at?->toIso8601String(),
                 ] : null,
@@ -501,6 +633,7 @@ class MessengerController extends Controller
             'id' => $message->id,
             'chatId' => $message->chat_id,
             'userId' => $message->user_id,
+            'kind' => $message->kind ?? 'text',
             'body' => $deleted ? null : $message->body,
             'deleted' => $deleted,
             'replyTo' => ! $deleted && $message->replyTo ? [

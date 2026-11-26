@@ -6,6 +6,7 @@ import Sidebar from "./Sidebar.vue";
 import Topbar from "./Topbar.vue";
 import Palette from "./Palette.vue";
 import ChatRail from "./ChatRail.vue";
+import { totalUnread } from "../lib/messenger";
 import Toasts from "../components/Toasts.vue";
 import { route } from "../lib/router";
 import { views, pageOf, warmUp } from "../pages";
@@ -16,8 +17,9 @@ const mobileOpen = ref(false);
 const searching = ref(false);
 
 const view = computed(() => views.get(pageOf(route.value.path).path));
-watch(() => route.value.path, () => {
-  document.title = `${pageOf(route.value.path).title} — Korzilla 996`;
+/* Непрочитанные — числом в заголовке вкладки, как в Telegram Web. */
+watch(() => [route.value.path, totalUnread.value] as const, ([path, unread]) => {
+  document.title = `${unread ? `(${unread > 99 ? "99+" : unread}) ` : ""}${pageOf(path).title} — Korzilla 996`;
 }, { immediate: true });
 
 const onKey = (event: KeyboardEvent) => {

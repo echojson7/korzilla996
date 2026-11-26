@@ -10,7 +10,7 @@ import { person, fileSize, type ChatMessage } from "../../lib/messenger";
 import { toast } from "../../lib/toast";
 
 const props = defineProps<{ replyTo: ChatMessage | null; editing: ChatMessage | null; draftKey: number }>();
-const emit = defineEmits<{ send: [body: string, files: File[]]; save: [body: string]; cancel: [] }>();
+const emit = defineEmits<{ send: [body: string, files: File[]]; save: [body: string]; cancel: []; typing: [] }>();
 
 const MAX_FILES = 10;
 const MAX_SIZE = 50 * 1024 * 1024;
@@ -29,7 +29,11 @@ function grow() {
   el.style.height = "auto";
   el.style.height = `${Math.min(Math.max(el.scrollHeight, 60), 220)}px`;
 }
-watch(text, () => nextTick(grow));
+watch(text, (next, prev) => {
+  nextTick(grow);
+  /* «Печатает…» — только когда человек сам набирает, не при смене чата. */
+  if (next && next.length > (prev?.length ?? 0) && !props.editing && document.activeElement === box.value) emit("typing");
+});
 
 /* Черновик у каждого чата свой. */
 watch(() => props.draftKey, (next, prev) => {
