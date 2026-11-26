@@ -212,9 +212,9 @@ const totalBy = computed(() => {
         <span v-for="[id, seconds] in totalBy" :key="id"><span class="text-muted">{{ nameOf(id) }}:</span> {{ duration(seconds) }}</span>
       </p>
       <form v-if="task.can.work" class="mb-3 flex flex-wrap items-center gap-2" @submit.prevent="logTime">
-        <input v-model="spent" class="input h-8 py-0 w-28 text-sm" placeholder="1:30 или 45" aria-label="Сколько времени" />
-        <input v-model="day" type="datetime-local" class="input h-8 py-0 text-sm" aria-label="Когда (по умолчанию — только что)" />
-        <input v-model="note" class="input h-8 py-0 min-w-0 flex-1 text-sm" placeholder="Что делали (необязательно)" maxlength="250" />
+        <input v-model="spent" class="input h-9 py-0 w-28 text-sm" placeholder="1:30 или 45" aria-label="Сколько времени" />
+        <input v-model="day" type="datetime-local" class="input h-9 py-0 text-sm" aria-label="Когда (по умолчанию — только что)" />
+        <input v-model="note" class="input h-9 py-0 min-w-0 flex-1 text-sm" placeholder="Что делали (необязательно)" maxlength="250" />
         <button type="submit" class="button button--secondary button--sm"><Plus class="size-4" />Добавить время</button>
       </form>
       <ul class="flex flex-col">

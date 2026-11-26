@@ -20,7 +20,7 @@ const QUICK = [
   <div class="flex flex-col gap-1 p-1">
     <button v-for="one in QUICK" :key="one.kind" type="button" class="rounded-lg px-2.5 py-1.5 text-left text-sm hover:bg-default" @click="emit('pick', quickDeadline(one.kind))">{{ one.label }}</button>
     <div class="my-1 h-px bg-separator" />
-    <input v-model="exact" type="datetime-local" class="input h-8 py-0 text-sm" aria-label="Точный срок" @keydown.enter="emit('pick', fromLocalInput(exact))" />
+    <input v-model="exact" type="datetime-local" class="input h-9 py-0 text-sm" aria-label="Точный срок" @keydown.enter="emit('pick', fromLocalInput(exact))" />
     <div class="mt-1 flex gap-1">
       <button type="button" class="button button--primary button--sm flex-1" :disabled="!exact" @click="emit('pick', fromLocalInput(exact))">Готово</button>
       <button v-if="modelValue" type="button" class="button button--ghost button--sm" @click="emit('pick', null)">Без срока</button>

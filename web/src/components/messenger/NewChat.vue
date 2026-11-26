@@ -44,9 +44,8 @@ const group = () => {
 
 <template>
   <Modal :open="open" title="Новый чат" @close="emit('close')">
-    <div class="mb-3 grid grid-cols-2 gap-1 rounded-xl bg-surface-secondary p-1 text-sm font-medium">
-      <button type="button" class="rounded-lg py-1.5" :class="mode === 'direct' ? 'bg-surface shadow-sm' : 'text-muted'" @click="mode = 'direct'">Личный</button>
-      <button type="button" class="rounded-lg py-1.5" :class="mode === 'group' ? 'bg-surface shadow-sm' : 'text-muted'" @click="mode = 'group'">Групповой</button>
+    <div class="toggle-button-group toggle-button-group--horizontal mb-3 grid w-full grid-cols-2" role="radiogroup" aria-label="Вид чата">
+      <button v-for="one in ([['direct', 'Личный'], ['group', 'Групповой']] as const)" :key="one[0]" type="button" role="radio" class="toggle-button justify-center" :aria-checked="mode === one[0]" :data-selected="mode === one[0] ? 'true' : undefined" @click="mode = one[0]">{{ one[1] }}</button>
     </div>
     <PeoplePicker v-if="mode === 'direct'" single @pick="direct" />
     <template v-else>
