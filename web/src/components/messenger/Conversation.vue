@@ -475,6 +475,9 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
     </div>
 
     <div class="chat-wall relative flex min-h-0 flex-1 flex-col" :class="chat?.changelog ? 'chat-wall--changelog' : chat?.general ? 'chat-wall--general' : ''">
+    <!-- Лента и кнопка «вниз» в одной обёртке: кнопка стоит над полем ввода
+         при любой его высоте (ответ, правка, файлы, длинный текст). -->
+    <div class="relative flex min-h-0 flex-1 flex-col">
     <div ref="scroller" class="relative min-h-0 flex-1 overflow-y-auto px-3 pt-3 pb-1 sm:px-4 lg:px-5 thin-scroll" @scroll.passive="onScroll" @click.self="active = null">
       <p v-if="loading" class="py-16 text-center text-sm text-muted">Загружаем сообщения…</p>
       <div v-else-if="failed" class="py-16 text-center text-sm text-muted">
@@ -550,6 +553,11 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
         </Transition>
       </div>
     </div>
+      <button v-if="!atBottom" type="button" class="absolute right-4 bottom-3 z-20 flex size-10 items-center justify-center rounded-full bg-overlay shadow-overlay" aria-label="К последним сообщениям" @click="toBottom(true)">
+      <ChevronDown class="size-5" />
+      <span v-if="chat?.unread" class="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1 text-[11px] font-semibold text-accent-foreground">{{ chat.unread }}</span>
+    </button>
+    </div>
     <!-- В списке закреплённых вместо поля ввода — возврат к ленте. -->
     <div v-if="pinsOnly" class="relative z-10 mx-1.5 mb-1.5 flex justify-center rounded-2xl bg-surface/85 p-2 shadow-sm backdrop-blur">
       <button type="button" class="button button--ghost button--sm" @click="showPins(false)"><ArrowLeft class="size-4" />Назад к чату</button>
@@ -558,10 +566,6 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
     <Composer v-else class="relative z-10 mx-1.5 mb-1.5" ref="composer" :draft-key="chatId" :reply-to="replyTo" :editing="editing" @send="send" @gif="sendGifHere" @typing="sendTyping(chatId)" @save="save" @cancel="replyTo = null; editing = null" />
     </div>
 
-    <button v-if="!atBottom" type="button" class="absolute right-5 bottom-24 z-20 flex size-10 items-center justify-center rounded-full bg-overlay shadow-overlay" aria-label="К последним сообщениям" @click="toBottom(true)">
-      <ChevronDown class="size-5" />
-      <span v-if="chat?.unread" class="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1 text-[11px] font-semibold text-accent-foreground">{{ chat.unread }}</span>
-    </button>
 
 
     <div v-if="dropping" class="pointer-events-none absolute inset-2 z-30 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-accent bg-accent-soft/90 text-accent-soft-foreground">
