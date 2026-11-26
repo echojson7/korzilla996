@@ -48,9 +48,6 @@ function reload() {
       aria-describedby="update-text"
     >
       <div class="card w-full max-w-sm bg-surface p-6 text-center shadow-xl">
-        <div class="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-accent-soft text-accent">
-          <RefreshCw class="size-6" />
-        </div>
         <h2 id="update-title" class="text-lg font-semibold">Портал обновлён</h2>
         <p id="update-text" class="mt-1 text-sm text-muted">Вышла новая версия. Обновите страницу, чтобы продолжить работу. Через {{ WAIT }} секунд она обновится сама.</p>
         <button ref="button" type="button" class="button button--primary mt-5 w-full" :disabled="busy" @click="reload">
