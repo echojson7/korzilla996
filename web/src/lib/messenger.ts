@@ -2,7 +2,8 @@
    каждые несколько секунд (счётчики в меню и колонка справа), открытый
    чат — чаще и только изменениями с прошлого раза (since). */
 
-import { computed, reactive, ref, shallowRef } from "vue";
+import { computed, reactive, ref, shallowRef, watch } from "vue";
+import { on, startRealtime, live as rtLive } from "./realtime";
 import { api, upload, ApiError } from "./api";
 import { auth } from "./session";
 import { toast } from "./toast";
@@ -158,7 +159,6 @@ export async function loadChats() {
   meId.value = state.me;
   stamp = state.v;
   await applyChats(state.chats);
-  connect(state.realtime);
 }
 let reloadTimer = 0;
 function reloadSoon() {
@@ -166,45 +166,14 @@ function reloadSoon() {
   reloadTimer = window.setTimeout(() => loadChats().catch(() => undefined), 120);
 }
 
-/* ---------- Живые события (Mercure, SSE) ---------- */
+/* ---------- Живые события: общий канал портала (lib/realtime.ts) ---------- */
 
-export const live = ref(false);
-let source: EventSource | null = null;
-let sourceTopic = "";
-let retryAt = 0;
-
-function connect(realtime: Realtime | null) {
-  if (!realtime || typeof EventSource === "undefined") return;
-  if (source && sourceTopic === realtime.topic && source.readyState !== EventSource.CLOSED) return;
-  if (Date.now() < retryAt) return;
-  source?.close();
-  const url = new URL(realtime.hub, location.href);
-  url.searchParams.append("topic", realtime.topic);
-  url.searchParams.set("authorization", realtime.token);
-  sourceTopic = realtime.topic;
-  source = new EventSource(url.toString());
-  source.onopen = () => {
-    const was = live.value;
-    live.value = true;
-    /* Переподключились — добрать пропущенное. */
-    if (was === false && loadedOnce) sync().catch(() => undefined);
-  };
-  source.onerror = () => {
-    live.value = false;
-    /* Токен истёк или хаб недоступен — снова через минуту, с новым токеном. */
-    if (source?.readyState === EventSource.CLOSED) {
-      source = null;
-      retryAt = Date.now() + 60_000;
-    }
-  };
-  source.onmessage = (event) => {
-    try {
-      handle(JSON.parse(event.data));
-    } catch {
-      /* чужой формат — пропускаем */
-    }
-  };
-}
+/* Соединение Mercure одно на вкладку и общее для всех разделов. */
+export const live = rtLive;
+/* Переподключились — добрать пропущенное в чатах (журнал портала их не хранит). */
+watch(rtLive, (on, was) => {
+  if (on && !was && loadedOnce) sync().catch(() => undefined);
+});
 
 type LiveEvent =
   | { type: "message"; chatId: number; message: ChatMessage; clientId?: string | null; new?: boolean }
@@ -214,8 +183,9 @@ type LiveEvent =
 
 const OWN = new Set(["message", "chat", "read", "typing"]);
 function handle(event: LiveEvent) {
-  /* В общей теме идут и события других разделов (task…) — не наши. */
-  if (!OWN.has(event.type)) return;
+  /* В общей теме идут и события других разделов (task…) — не наши;
+     без chatId — сводка догрузки, её покрывает опрос sync. */
+  if (!OWN.has(event.type) || typeof event.chatId !== "number") return;
   const chat = chatById(event.chatId);
   if (event.type === "typing") return setTyping(event.chatId, event.userId);
   if (event.type === "chat" || !chat) return reloadSoon();
@@ -289,6 +259,9 @@ export function startMessenger() {
   if (started || !enabled.value) return;
   started = true;
   restoreSnapshot();
+  for (const type of OWN) on(type, (event) => handle(event as unknown as LiveEvent));
+  on("reset", reloadSoon);
+  startRealtime();
   Promise.all([loadPeople(), loadChats()]).then(prefetchTop).catch(() => undefined);
   /* С живыми событиями опрос — раз в 30 с на всякий случай, без них — раз
      в 1,5 с (пустой ответ — одна метка из кэша). Скрытая вкладка — реже. */
@@ -305,8 +278,6 @@ export function startMessenger() {
 }
 export function stopMessenger() {
   clearTimeout(timer);
-  source?.close();
-  source = null;
   started = false;
 }
 
