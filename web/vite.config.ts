@@ -3,7 +3,7 @@ import vue from "@vitejs/plugin-vue";
 import tailwindcss from "@tailwindcss/vite";
 
 /* Портал собирается в public/portal: на стенде его отдаёт Caddy как обычные
-   файлы из подпапки /996/portal/, поэтому все адреса относительные.
+   файлы из /portal/; адреса относительные, чтобы работать и из подпапки.
    Vue отдельным куском: он общий для всех разделов и долго лежит в кэше. */
 export default defineConfig({
   base: "./",

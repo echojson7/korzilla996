@@ -40,18 +40,18 @@ npm run dev      # http://localhost:5173/, API проксируется на :80
 npm run build    # сборка в public/portal — коммитить вместе с исходниками
 ```
 
-На стенде портал раздаётся из подпапки `/996/` стенда korzillaX: папка
-`~/korzilla996`, ссылка `~/korzillax/public/996 → ~/korzilla996/public`.
-API идёт через `/996/index.php/api/…`: Caddy отдаёт подпапке только
-существующие файлы, а остальное уводит в Laravel стенда.
+На стенде (vdska) у портала свой сервер, отдельно от korzillaX:
+http://185.9.25.61:8996/. Код — `~/korzilla996`, окружение — `~/korzilla996-env`
+(свой frankenphp, `Caddyfile` на :8996, логи, `k996-staff.secret`), служба
+`systemctl --user … korzilla996-web`. База — SQLite в `database/database.sqlite`.
+Консоль: `~/korzilla996-env/bin/php artisan …`.
 
 Учётки — только из консоли: `staff:create`, `staff:password`, `staff:disable`.
-Роли: `owner`, `admin`, `staff`. Сессия своя (кука `k996_session`, путь `/996`),
-с админкой korzillaX не пересекается.
+Роли: `owner`, `admin`, `staff`. Сессия своя (кука `k996_session`, путь `/`).
 
 ## Дальше
 
-1. Права по ролям; переезд с SQLite на MySQL, когда на стенде будет своя база.
+1. Права по ролям; переезд с SQLite на свою MySQL, когда понадобится.
 2. Сотрудники и отделы из базы.
 3. CRM: сделки, воронки и стадии (импорт из Битрикс24, 14 воронок).
 4. Задачи.

@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
- * Портал раздаётся из подпапки стенда (/996/), поэтому адреса считаются
+ * Портал может лежать и в подпапке, поэтому адреса считаются
  * от базового пути запроса, а не от корня хоста.
  */
 Route::get('/', fn (Request $request) => redirect()->to($request->getSchemeAndHttpHost().$request->getBasePath().'/portal/index.html'));

@@ -1,5 +1,5 @@
-/* Сервер портала — Laravel рядом со сборкой: /996/portal/ → /996/index.php/api.
-   Без index.php в адресе Caddy стенда увёл бы запрос в чужой Laravel.
+/* Сервер портала — Laravel рядом со сборкой: /portal/ → /index.php/api.
+   Адрес относительный, поэтому портал работает и из подпапки.
    Ответы { data }, ошибки формы — 422 { message, errors }. */
 
 export const BASE = new URL("../index.php/api", location.href).pathname;
