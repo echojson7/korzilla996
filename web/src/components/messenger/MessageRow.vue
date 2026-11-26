@@ -156,7 +156,7 @@ const emit = defineEmits<{
             <div class="flex items-center gap-0.5">
               <button v-for="emoji in QUICK.slice(0, 7)" :key="emoji" type="button" class="flex size-9 items-center justify-center rounded-full text-[22px] leading-none transition hover:scale-125 hover:bg-default" :aria-label="`Реакция ${emoji}`" @click="close(); emit('react', emoji)">{{ emoji }}</button>
               <span class="mx-1 h-6 w-px bg-separator" aria-hidden="true" />
-              <Popover :align="right ? 'right' : 'left'" up width="w-auto">
+              <Popover align="right" up width="w-auto">
                 <template #trigger="{ toggle: more, open: full }">
                   <button type="button" class="flex size-9 items-center justify-center rounded-full text-muted transition hover:bg-default hover:text-foreground" :class="full ? 'bg-default text-foreground' : ''" aria-label="Все реакции" title="Все реакции" :aria-expanded="full" @click="more"><SmilePlus class="size-5" /></button>
                 </template>
