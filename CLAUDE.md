@@ -41,6 +41,15 @@
   (поставить один раз: `sh deploy/install-hooks.sh`). Поменял `routes/` или
   `config/` и проверяешь без коммита — сначала `php artisan optimize:clear`,
   иначе работают старые маршруты. Тесты кэш не читают (`phpunit.xml`).
+- Отделы — справочник `departments`, у сотрудника `users.department_id`.
+  В API и формах отдел по-прежнему названием: `$user->department` читает
+  имя и при записи находит отдел по ключу (нижний регистр, пробелы
+  схлопнуты) или заводит (`App\Models\Department::idFor`). В списках
+  сотрудников — `with(['roleRecord', 'departmentRecord'])`, иначе N+1.
+- Планировщик: `Schedule` в `routes/console.php`, на стенде его раз в минуту
+  запускает таймер `korzilla996-schedule` (юниты в `deploy/systemd/`, копии
+  в `~/.config/systemd/user`). Всё «по времени» (чистка журналов,
+  напоминания) — туда, тяжёлое — пачками, чтобы не держать запись в SQLite.
 - SQLite в режиме WAL: рядом с `database.sqlite` лежат `-wal` и `-shm`.
   Копию базы снимать не `cp`, а `VACUUM INTO`: `~/korzilla996-env/bin/php -r
   '(new PDO("sqlite:database/database.sqlite"))->exec("VACUUM INTO \"/путь/копия.sqlite\"");'`.
