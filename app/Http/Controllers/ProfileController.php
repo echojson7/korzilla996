@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Middleware\CheckSignIn;
 use App\Models\User;
 use App\Support\Access;
 use App\Support\Avatars;
@@ -9,7 +10,6 @@ use App\Support\Realtime;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -146,9 +146,8 @@ class ProfileController extends Controller
         }
 
         $me->forceFill(['password' => $data['password'], 'remember_token' => Str::random(60)])->save();
-        if (config('session.driver') === 'database') {
-            DB::table(config('session.table', 'sessions'))->where('user_id', $me->id)->where('id', '!=', $request->session()->getId())->delete();
-        }
+        /* Остальные входы выйдут сами: отпечаток пароля в их сессиях не сойдётся. */
+        $request->session()->put(CheckSignIn::KEY, CheckSignIn::stamp($me));
         $request->session()->regenerate();
 
         return response()->noContent();

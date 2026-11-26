@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\CheckSignIn;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -14,6 +15,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         /* Входа отдельной страницей нет: гость уходит на портал, там форма. */
         $middleware->redirectGuestsTo(fn (Request $request) => $request->getBasePath().'/portal/index.html');
+        /* Выход на других устройствах при смене пароля и выключении учётки. */
+        $middleware->web(append: [CheckSignIn::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

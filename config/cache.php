@@ -15,7 +15,9 @@ return [
     |
     */
 
-    'default' => env('CACHE_STORE', 'database'),
+    /* На стенде — APCu: память процесса FrankenPHP, общая для всех воркеров,
+       без записи в SQLite. Нет расширения apcu — файловый кэш. */
+    'default' => ($store = env('CACHE_STORE', 'database')) === 'apc' && ! extension_loaded('apcu') ? 'file' : $store,
 
     /*
     |--------------------------------------------------------------------------
@@ -33,6 +35,10 @@ return [
     */
 
     'stores' => [
+
+        'apc' => [
+            'driver' => 'apc',
+        ],
 
         'array' => [
             'driver' => 'array',

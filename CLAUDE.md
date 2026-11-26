@@ -50,6 +50,12 @@
   запускает таймер `korzilla996-schedule` (юниты в `deploy/systemd/`, копии
   в `~/.config/systemd/user`). Всё «по времени» (чистка журналов,
   напоминания) — туда, тяжёлое — пачками, чтобы не держать запись в SQLite.
+- Кэш — APCu (`CACHE_STORE=apc`, память FrankenPHP, при перезапуске пустеет:
+  в кэше только то, что можно пересчитать), сессии — файлы
+  (`SESSION_DRIVER=file`). Таблицы `cache` и `sessions` не используются:
+  «выйти на других устройствах» — `App\Http\Middleware\CheckSignIn`
+  (отпечаток пароля в сессии + выключенная учётка), строки из `sessions`
+  не удалять. В CLI APCu свой и обычно выключен — консоль кэш веба не видит.
 - SQLite в режиме WAL: рядом с `database.sqlite` лежат `-wal` и `-shm`.
   Копию базы снимать не `cp`, а `VACUUM INTO`: `~/korzilla996-env/bin/php -r
   '(new PDO("sqlite:database/database.sqlite"))->exec("VACUUM INTO \"/путь/копия.sqlite\"");'`.

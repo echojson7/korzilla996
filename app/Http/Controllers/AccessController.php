@@ -199,13 +199,14 @@ class AccessController extends Controller
         }
     }
 
-    /** Закрыть все входы сотрудника: сессии и «запомнить меня». */
+    /**
+     * Закрыть все входы сотрудника: «запомнить меня» — здесь, открытые
+     * сессии выходят сами (App\Http\Middleware\CheckSignIn: учётка
+     * выключена или пароль сменился).
+     */
     private function signOut(User $user): void
     {
         $user->forceFill(['remember_token' => Str::random(60)])->save();
-        if (config('session.driver') === 'database') {
-            DB::table(config('session.table', 'sessions'))->where('user_id', $user->id)->delete();
-        }
     }
 
     /**
