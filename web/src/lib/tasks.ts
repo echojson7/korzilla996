@@ -110,8 +110,13 @@ export const staffList = computed(() => [...people.values()].filter((one) => one
 /* ---------- Загрузка ---------- */
 
 export async function loadTasks() {
+  const since = seq;
   const state = await api<{ tasks: TaskBrief[]; me: number; timer: typeof taskStore.timer; projects: string[]; tags: string[] }>("GET", "tasks");
-  taskStore.list = state.tasks;
+  /* Пока шёл запрос, что-то поменяли у себя (перетащили, правят) — эти
+     задачи берём свои: в ответе они ещё старые, иначе карточка прыгнет
+     назад, а потом снова вперёд. */
+  const mine = new Map(taskStore.list.filter((one) => !fresh(one.id, since)).map((one) => [one.id, one]));
+  taskStore.list = mine.size ? state.tasks.map((one) => mine.get(one.id) ?? one) : state.tasks;
   taskStore.me = state.me;
   taskStore.timer = state.timer;
   taskStore.projects = state.projects;
@@ -151,12 +156,14 @@ async function flush() {
   pending.clear();
   for (let at = 0; at < ids.length; at += 200) {
     const chunk = ids.slice(at, at + 200);
+    const since = seq;
     try {
       const { tasks } = await api<{ tasks: TaskBrief[] }>("GET", `tasks?ids=${chunk.join(",")}`);
       const got = new Map(tasks.map((one) => [one.id, one]));
-      for (const one of tasks) upsert(one);
+      /* Своё изменение после начала запроса — ответ про эту задачу устарел. */
+      for (const one of tasks) if (fresh(one.id, since)) upsert(one, true);
       /* Не вернулась — удалили или меня убрали из участников. */
-      const gone = new Set(chunk.filter((id) => !got.has(id)));
+      const gone = new Set(chunk.filter((id) => !got.has(id) && fresh(id, since)));
       if (gone.size) taskStore.list = taskStore.list.filter((one) => !gone.has(one.id));
     } catch {
       for (const id of chunk) pending.add(id);
@@ -164,6 +171,32 @@ async function flush() {
     }
   }
 }
+/* Свои правки по задачам: пока запрос в пути, задача «держится» — ответы
+   опроса и real-time, начатые раньше, её не трогают. seq растёт при каждом
+   своём изменении; fresh(id, since) — с момента since задачу у себя не меняли. */
+let seq = 0;
+const holding = new Map<number, number>();
+const changedAt = new Map<number, number>();
+function hold(id: number) {
+  holding.set(id, (holding.get(id) ?? 0) + 1);
+  changedAt.set(id, ++seq);
+}
+function release(id: number) {
+  const left = (holding.get(id) ?? 1) - 1;
+  if (left > 0) holding.set(id, left);
+  else holding.delete(id);
+  changedAt.set(id, ++seq);
+}
+const fresh = (id: number, since: number) => !holding.has(id) && (changedAt.get(id) ?? 0) <= since;
+async function holdWhile<T>(id: number, run: () => Promise<T>): Promise<T> {
+  hold(id);
+  try {
+    return await run();
+  } finally {
+    release(id);
+  }
+}
+
 /* Пока идёт своё действие — опрос не перетирает оптимистичный список. */
 let busy = 0;
 async function act<T>(run: () => Promise<T>): Promise<T> {
@@ -176,13 +209,19 @@ async function act<T>(run: () => Promise<T>): Promise<T> {
 }
 
 /* Обновить строку списка по ответу сервера. */
-export function upsert(one: TaskBrief) {
+export function upsert(one: TaskBrief, remote = false) {
   const at = taskStore.list.findIndex((task) => task.id === one.id);
   /* Пришло старше того, что уже есть, — ответы перепутались, пропускаем. */
   if (at >= 0 && (taskStore.list[at].version ?? 0) > (one.version ?? 0)) return;
   const brief = { ...one } as TaskBrief & Partial<TaskFull>;
   for (const key of ["description", "checklistItems", "fileItems", "commentItems", "timeItems", "historyItems", "childItems", "parent", "can"] as const) delete brief[key];
-  if (at >= 0) taskStore.list[at] = brief;
+  /* Чужой перенос: место в списке по sort, как отдаёт сервер (порядок
+     в колонках — порядок массива). Свой перенос карточка уже сделала сама. */
+  if (remote && at >= 0 && taskStore.list[at].sort !== brief.sort) {
+    taskStore.list.splice(at, 1);
+    const to = taskStore.list.findIndex((task) => task.sort > brief.sort || (task.sort === brief.sort && task.id < brief.id));
+    taskStore.list.splice(to < 0 ? taskStore.list.length : to, 0, brief);
+  } else if (at >= 0) taskStore.list[at] = brief;
   else taskStore.list.unshift(brief);
   for (const child of (one as TaskFull).childItems ?? []) {
     const i = taskStore.list.findIndex((task) => task.id === child.id);
@@ -201,21 +240,21 @@ export const createTask = (input: TaskInput) => act(async () => {
   upsert(task);
   return task;
 });
-export const updateTask = (id: number, input: TaskInput) => act(async () => {
+export const updateTask = (id: number, input: TaskInput) => holdWhile(id, () => act(async () => {
   const task = await api<TaskFull>("PATCH", `tasks/${id}`, input);
   upsert(task);
   return task;
-});
-export const setStatus = (id: number, status: Status) => act(async () => {
+}));
+export const setStatus = (id: number, status: Status) => holdWhile(id, () => act(async () => {
   const task = await api<TaskFull>("POST", `tasks/${id}/status`, { status });
   upsert(task);
   return task;
-});
-export const moveTask = (id: number, status: Status | null, before: number | null) => act(async () => {
+}));
+export const moveTask = (id: number, status: Status | null, before: number | null) => holdWhile(id, () => act(async () => {
   const task = await api<TaskBrief>("POST", `tasks/${id}/move`, { status, before });
   upsert(task);
   return task;
-});
+}));
 export const deleteTask = (id: number) => act(async () => {
   await api("DELETE", `tasks/${id}`);
   taskStore.list = taskStore.list.filter((one) => one.id !== id);
