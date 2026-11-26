@@ -46,7 +46,7 @@ const name = (id: number) => person(id)?.name ?? "Сотрудник";
 <template>
   <!-- Как в Telegram: компактная полупрозрачная пилюля по центру ленты. -->
   <div class="my-2.5 flex justify-center px-4">
-    <p class="max-w-[min(520px,88%)] rounded-[14px] bg-black/22 px-3 py-[5px] text-center text-[13.5px] leading-[18px] font-medium text-white [text-shadow:0_1px_1px_rgb(0_0_0/0.12)] backdrop-blur-sm dark:bg-white/10" :title="clock(message.at)">
+    <p class="max-w-[min(520px,88%)] rounded-[14px] bg-black/12 px-3 py-[5px] text-center text-[13.5px] leading-[18px] font-medium text-white [text-shadow:0_1px_2px_rgb(0_0_0/0.35)] backdrop-blur-[2px] dark:bg-white/8" :title="clock(message.at)">
       <template v-if="parts">
         <template v-for="(part, i) in parts" :key="i">
           <a v-if="'user' in part" :href="href('/staff', { open: part.user })" class="font-semibold underline decoration-white/50 underline-offset-2 transition-colors hover:decoration-white" :title="`Профиль: ${name(part.user)}`" @click.stop>{{ name(part.user) }}</a>

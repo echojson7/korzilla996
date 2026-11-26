@@ -517,7 +517,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
              следующего автора, как в Telegram. Имя — у первого сообщения. -->
         <template v-for="group in series" :key="group.key">
           <div v-if="group.day" class="sticky top-0 z-10 flex justify-center py-2">
-            <span class="rounded-full bg-surface/90 px-3 py-1 text-xs font-medium text-muted shadow-sm backdrop-blur">{{ group.day }}</span>
+            <span class="rounded-full bg-surface/55 px-3 py-1 text-xs font-medium text-foreground/75 shadow-sm backdrop-blur-[2px]">{{ group.day }}</span>
           </div>
           <div v-if="group.unread" class="my-2 flex items-center gap-3 text-xs font-medium text-accent wall-unread">
             <span class="h-px flex-1 bg-accent/40" />Новые сообщения<span class="h-px flex-1 bg-accent/40" />
