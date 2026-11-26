@@ -94,6 +94,13 @@ const canWork = computed(() => draft.value || !!task.value?.can.work);
 
 /* Одна точка правки: черновик меняется на месте, задача — на сервере. */
 const saving = ref(false);
+/* Один человек — одна роль: добавили наблюдателем того, кто был
+   соисполнителем, — из соисполнителей он уходит, и наоборот. */
+function setRole(role: "accomplices" | "auditors", ids: number[]) {
+  const other = role === "accomplices" ? "auditors" : "accomplices";
+  const rest = v.value[other].filter((id) => !ids.includes(id));
+  patch(rest.length === v.value[other].length ? { [role]: ids } : { [role]: ids, [other]: rest });
+}
 async function patch(input: TaskInput) {
   if (draft.value) return Object.assign(form, input);
   if (!task.value) return;
@@ -584,7 +591,7 @@ defineExpose({ create });
               <template #trigger="{ toggle }">
                 <button type="button" class="add-btn" :aria-label="role === 'accomplices' ? 'Добавить соисполнителя' : 'Добавить наблюдателя'" @click="toggle"><Plus class="size-4" />{{ v[role].length ? "" : "Добавить" }}</button>
               </template>
-              <UserPick :model-value="v[role]" @update:model-value="(ids) => patch({ [role]: ids })" />
+              <UserPick :model-value="v[role]" @update:model-value="(ids) => setRole(role, ids)" />
             </Popover>
             <span v-else-if="!v[role].length" class="text-muted">—</span>
           </dd>

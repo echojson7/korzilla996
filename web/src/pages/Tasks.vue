@@ -17,7 +17,7 @@ import ChatFace from "../components/messenger/ChatFace.vue";
 import TaskCard from "../components/tasks/TaskCard.vue";
 import { dueLook } from "../components/tasks/when";
 import {
-  taskStore, tasksEnabled, startTasks, STATUSES, STATUS, PERIODS, periodOf, deadlineFor, isOpenTask, isOverdueTask,
+  taskStore, tasksEnabled, startTasks, loadTasks, STATUSES, STATUS, PERIODS, periodOf, deadlineFor, isOpenTask, isOverdueTask,
   person, nameOf, createTask, moveTask, updateTask, overdueAll, duration, type TaskBrief, type Status, type Period, type TaskInput,
 } from "../lib/tasks";
 import { deals } from "../lib/data";
@@ -29,7 +29,11 @@ import { local } from "../lib/prefs";
 import { toast } from "../lib/toast";
 import { ApiError } from "../lib/api";
 
-onMounted(startTasks);
+/* Открыли раздел — сразу свежий список, не ждём опроса. */
+onMounted(() => {
+  startTasks();
+  if (taskStore.loaded) loadTasks().catch(() => undefined);
+});
 watch(tasksEnabled, (on) => on && startTasks());
 
 type View = "board" | "deadline" | "table";
@@ -47,6 +51,7 @@ const VIEWS = [
 
 const me = () => taskStore.me;
 const TABS = {
+  mine: { label: "Мои", test: (one: TaskBrief) => [one.creatorId, one.responsibleId, ...one.accomplices, ...one.auditors].includes(me()) },
   doing: { label: "Делаю", test: (one: TaskBrief) => one.responsibleId === me() },
   helping: { label: "Помогаю", test: (one: TaskBrief) => one.accomplices.includes(me()) },
   given: { label: "Поручил", test: (one: TaskBrief) => one.creatorId === me() && one.responsibleId !== me() },
@@ -57,8 +62,7 @@ const TABS = {
 type Tab = keyof typeof TABS;
 const tab = computed<Tab>(() => {
   const raw = route.value.query.get("tab");
-  if (raw === "mine") return "doing";
-  return raw && raw in TABS ? (raw as Tab) : "doing";
+  return raw && raw in TABS ? (raw as Tab) : "mine";
 });
 const text = computed({ get: () => route.value.query.get("q") ?? "", set: (q) => setQuery({ q }) });
 
@@ -164,7 +168,7 @@ const due = (one: TaskBrief) => dueLook(one.status, one.deadline);
         <button type="button" class="button button--primary" :disabled="!tasksEnabled" @click="newTask"><Plus class="size-4" />Задача</button>
       </template>
       <template #toolbar>
-        <Segmented label="Задачи" :items="tabs" :model-value="tab" @update:model-value="(key) => setQuery({ tab: key === 'doing' ? null : key })" />
+        <Segmented label="Задачи" :items="tabs" :model-value="tab" @update:model-value="(key) => setQuery({ tab: key === 'mine' ? null : key })" />
         <SearchBox v-model="text" placeholder="Задача, сотрудник, сделка, проект или #тег" class="w-full min-w-0 sm:w-auto sm:flex-1" />
         <div class="toggle-button-group toggle-button-group--horizontal" role="radiogroup" aria-label="Вид">
           <button

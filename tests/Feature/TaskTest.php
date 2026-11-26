@@ -47,6 +47,7 @@ class TaskTest extends TestCase
         $this->actingAs($outsider)->getJson("/api/tasks/{$id}")->assertNotFound();
         $this->getJson('/api/tasks')->assertJsonCount(0, 'data.tasks');
         $this->actingAs($eve)->getJson('/api/tasks')->assertJsonCount(1, 'data.tasks');
+        $this->actingAs($vera)->getJson('/api/tasks')->assertJsonCount(1, 'data.tasks')->assertJsonPath('data.tasks.0.accomplices', [$vera->id]);
         /* Наблюдатель только комментирует. */
         $this->postJson("/api/tasks/{$id}/status", ['status' => 'work'])->assertForbidden();
         $this->postJson("/api/tasks/{$id}/comments", ['body' => 'Слежу'])->assertCreated();
