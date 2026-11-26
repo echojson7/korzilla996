@@ -16,9 +16,9 @@ const look = computed(() => {
 </script>
 
 <template>
-  <span class="relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full font-semibold select-none" :class="[SIZE[size], look.image ? '' : 'hue-soft']" :style="{ '--hue': look.hue }" :title="look.title" role="img" :aria-label="look.title">
-    <img v-if="look.image" :src="look.image" alt="" class="size-full object-cover" loading="lazy" />
+  <span class="relative inline-flex aspect-square shrink-0 items-center justify-center rounded-full font-semibold select-none" :class="[SIZE[size], look.image ? '' : 'hue-soft']" :style="{ '--hue': look.hue }" :title="look.title" role="img" :aria-label="look.title">
+    <img v-if="look.image" :src="look.image" alt="" class="block size-full rounded-full object-cover" loading="lazy" />
     <template v-else>{{ look.initials }}</template>
-    <span v-if="look.group && !look.image && (size === 'md' || size === 'lg')" class="absolute right-0 bottom-0 flex size-4 items-center justify-center rounded-full bg-surface text-muted shadow-sm"><Users class="size-2.5" /></span>
+    <span v-if="look.group && !look.image && (size === 'md' || size === 'lg')" class="absolute -right-0.5 -bottom-0.5 flex size-4 items-center justify-center rounded-full bg-surface text-muted shadow-sm ring-1 ring-black/5"><Users class="size-2.5" /></span>
   </span>
 </template>

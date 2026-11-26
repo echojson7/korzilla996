@@ -39,27 +39,30 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
 
 <template>
   <aside v-if="enabled" class="glass on-photo hidden w-[56px] shrink-0 flex-col items-center md:flex" aria-label="Чаты">
-    <a :href="href('/messenger')" class="relative mt-2 flex size-10 items-center justify-center rounded-2xl transition-colors" :class="onMessenger ? 'bg-white/25' : 'hover:bg-white/15'" title="Мессенджер" aria-label="Мессенджер">
-      <MessagesSquare class="size-5" />
-      <span v-if="totalUnread" class="absolute -top-0.5 -right-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1 text-[11px] font-semibold text-danger-foreground [text-shadow:none] tabular-nums">{{ totalUnread > 99 ? "99+" : totalUnread }}</span>
-    </a>
-    <div class="my-2 h-px w-8 bg-white/20" />
-    <div class="flex min-h-0 w-full flex-1 flex-col items-center gap-2 overflow-y-auto py-1 photo-scroll">
+    <div class="flex h-14 w-full shrink-0 items-center justify-center">
+      <a :href="href('/messenger')" class="relative flex size-10 items-center justify-center rounded-xl transition-colors" :class="onMessenger ? 'bg-white/22 shadow-sm' : 'hover:bg-white/12'" title="Мессенджер" aria-label="Мессенджер">
+        <MessagesSquare class="size-[18px]" />
+        <span v-if="totalUnread" class="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-semibold text-danger-foreground [text-shadow:none] tabular-nums">{{ totalUnread > 99 ? "99+" : totalUnread }}</span>
+      </a>
+    </div>
+    <div class="mb-2 h-px w-8 shrink-0 bg-white/15" />
+    <div class="flex min-h-0 w-full flex-1 flex-col items-center gap-2 overflow-x-hidden overflow-y-auto py-1 photo-scroll">
       <button
         v-for="one in visible"
         :key="one.id"
         type="button"
-        class="relative shrink-0 rounded-full ring-offset-2 ring-offset-transparent transition hover:scale-105"
-        :class="current === one.id ? 'ring-2 ring-white' : ''"
+        class="group relative flex size-10 shrink-0 items-center justify-center rounded-full"
+        :aria-current="current === one.id ? 'true' : undefined"
         :title="one.title"
         :aria-label="`${one.title}${one.unread ? `, непрочитанных: ${one.unread}` : ''}`"
         @click="open(one.id)"
       >
-        <ChatFace :chat="one" size="md" class="[text-shadow:none] shadow-md" />
-        <span v-if="one.unread" class="absolute -top-0.5 -right-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-danger px-1 text-[10px] font-semibold text-danger-foreground ring-2 ring-black/20 [text-shadow:none] tabular-nums">{{ one.unread > 99 ? "99+" : one.unread }}</span>
+        <span v-if="current === one.id" class="absolute top-1/2 -left-2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-white" aria-hidden="true" />
+        <ChatFace :chat="one" size="md" class="[text-shadow:none] transition-[opacity,box-shadow]" :class="current === one.id ? 'shadow-[0_0_0_2px_rgb(255_255_255/0.9)]' : 'opacity-90 group-hover:opacity-100'" />
+        <span v-if="one.unread" class="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-semibold text-danger-foreground [text-shadow:none] tabular-nums">{{ one.unread > 99 ? "99+" : one.unread }}</span>
       </button>
     </div>
-    <button type="button" class="mb-2 mt-1 flex size-10 shrink-0 items-center justify-center rounded-full border border-dashed border-white/50 hover:bg-white/15" title="Новый чат" aria-label="Новый чат" @click="creating = true"><Plus class="size-5" /></button>
+    <button type="button" class="mt-1 mb-2 flex size-10 shrink-0 items-center justify-center rounded-full border border-dashed border-white/40 text-white/80 transition-colors hover:border-white/70 hover:bg-white/12 hover:text-white" title="Новый чат" aria-label="Новый чат" @click="creating = true"><Plus class="size-[18px]" /></button>
   </aside>
 
   <Teleport to="body">
