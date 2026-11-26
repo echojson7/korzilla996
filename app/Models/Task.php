@@ -24,6 +24,17 @@ class Task extends Model
         'deadline', 'start_at', 'needs_review', 'estimate', 'project', 'deal_id', 'sort', 'completed_at',
     ];
 
+    /* Задача сделки завершена — триггеры «задача завершена» (App\Support\Robots). */
+    protected static function booted(): void
+    {
+        static::updated(function (self $task) {
+            if ($task->deal_id && $task->status === 'done' && $task->wasChanged('status')) {
+                $user = auth()->user();
+                \App\Support\Robots\Automation::taskCompleted($task, $user instanceof User ? $user : null);
+            }
+        });
+    }
+
     protected function casts(): array
     {
         return [

@@ -12,6 +12,7 @@ use App\Http\Controllers\GifController;
 use App\Http\Controllers\MessengerController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RealtimeController;
+use App\Http\Controllers\RobotController;
 use App\Http\Controllers\TaskController;
 use App\Http\Middleware\BroadcastTaskChanges;
 use Illuminate\Http\Request;
@@ -122,7 +123,21 @@ Route::prefix('api')->group(function () {
         Route::patch('crm/deals/{deal}', [DealController::class, 'update']);
         Route::post('crm/deals/{deal}/move', [DealController::class, 'move']);
         Route::delete('crm/deals/{deal}', [DealController::class, 'destroy']);
+
+        /* Роботы и триггеры стадий (App\Support\Robots). */
+        Route::get('crm/robots', [RobotController::class, 'index']);
+        Route::post('crm/robots', [RobotController::class, 'store']);
+        Route::post('crm/robots/order', [RobotController::class, 'order']);
+        Route::get('crm/robot-runs', [RobotController::class, 'runs']);
+        Route::patch('crm/robots/{robot}', [RobotController::class, 'update'])->whereNumber('robot');
+        Route::delete('crm/robots/{robot}', [RobotController::class, 'destroy'])->whereNumber('robot');
+        Route::post('crm/triggers', [RobotController::class, 'storeTrigger']);
+        Route::patch('crm/triggers/{trigger}', [RobotController::class, 'updateTrigger']);
+        Route::delete('crm/triggers/{trigger}', [RobotController::class, 'destroyTrigger']);
     });
+
+    /* Внешний вебхук триггера: без входа, по ключу. */
+    Route::match(['get', 'post'], 'crm/hook/{token}', [RobotController::class, 'hook'])->where('token', '[A-Za-z0-9]{20,64}')->middleware('throttle:120,1');
 
     /* Задачи: только для вошедших. */
     Route::middleware(['auth', BroadcastTaskChanges::class])->controller(TaskController::class)->group(function () {

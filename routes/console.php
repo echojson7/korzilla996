@@ -68,6 +68,20 @@ Artisan::command('realtime:prune', function () {
 
 Schedule::command('realtime:prune')->hourly()->withoutOverlapping();
 
+/* Отложенные роботы CRM (App\Support\Robots\Automation): созревшие — пачкой. */
+Artisan::command('crm:robots {--limit=200}', function () {
+    $n = \App\Support\Robots\Automation::runDue((int) $this->option('limit'));
+    if ($n) {
+        $this->info('Выполнено роботов: '.$n);
+    }
+})->purpose('Выполнить отложенных роботов CRM, срок которых пришёл');
+
+Schedule::command('crm:robots')->everyMinute()->withoutOverlapping(10);
+
+/* Журнал запусков роботов — 90 дней. */
+Schedule::call(fn () => \App\Models\CrmRobotRun::query()->whereNotIn('status', ['pending', 'running'])->where('updated_at', '<', now()->subDays(90))->delete())
+    ->name('crm:robot-runs-prune')->daily()->withoutOverlapping();
+
 /*
  * Запись в канал «Changelog» мессенджера: Markdown из файла (или «-» —
  * со стандартного ввода). Автор — сам портал, без сотрудника.

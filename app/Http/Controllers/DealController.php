@@ -16,6 +16,7 @@ use App\Support\CrmSearch;
 use App\Support\CrmFields;
 use App\Support\DealAccess;
 use App\Support\Realtime;
+use App\Support\Robots\Automation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -152,6 +153,7 @@ class DealController extends Controller
             return $deal;
         });
         $this->broadcast([$deal->id => $deal->ownerIds()]);
+        Automation::stageEntered($deal, $me);
 
         return response()->json(['data' => $this->full($deal->fresh(), $me)], 201);
     }
@@ -163,17 +165,26 @@ class DealController extends Controller
         $this->canEdit($deal, $me);
         $data = $this->validated($request, false);
         $before = $deal->ownerIds();
+        $stageBefore = (int) $deal->stage_id;
+        $changed = [];
 
-        DB::transaction(function () use ($deal, $data, $me) {
+        DB::transaction(function () use ($deal, $data, $me, &$changed) {
             foreach (collect($data)->only(self::CORE)->all() as $field => $value) {
                 $old = $this->asText($field, $deal->getAttribute($field));
                 $deal->setAttribute($field, $value);
                 if ($deal->isDirty($field)) {
                     $this->log($deal, $me, $field, $old, $this->asText($field, $deal->getAttribute($field)));
+                    $changed[] = $field;
                 }
             }
             if (array_key_exists('fields', $data)) {
+                $was = $deal->fields ?? [];
                 $deal->fields = $this->fieldValues($deal->fields ?? [], $data['fields'] ?? [], false, $deal, $me);
+                foreach (array_unique(array_merge(array_keys($was), array_keys($deal->fields ?? []))) as $code) {
+                    if (($was[$code] ?? null) !== (($deal->fields ?? [])[$code] ?? null)) {
+                        $changed[] = $code;
+                    }
+                }
             }
             $this->link($deal, $me, $data);
             if (isset($data['pipeline_id']) || isset($data['stage_id'])) {
@@ -191,6 +202,7 @@ class DealController extends Controller
             }
         });
         $this->broadcast([$deal->id => array_merge($before, $deal->ownerIds())]);
+        $this->automate($deal, $me, $stageBefore, $changed);
 
         return response()->json(['data' => $this->full($deal->fresh(), $me)]);
     }
@@ -205,6 +217,7 @@ class DealController extends Controller
             'stage_id' => ['nullable', 'integer'],
             'before' => ['nullable', 'integer'],
         ]);
+        $stageBefore = (int) $deal->stage_id;
         DB::transaction(function () use ($deal, $me, $data) {
             $before = isset($data['before']) ? CrmDeal::query()->find($data['before']) : null;
             if ($before && $before->id !== $deal->id) {
@@ -226,6 +239,7 @@ class DealController extends Controller
             $deal->save();
         });
         $this->broadcast([$deal->id => $deal->ownerIds()]);
+        $this->automate($deal, $me, $stageBefore, []);
 
         return response()->json(['data' => $this->brief($deal->fresh())]);
     }
@@ -358,6 +372,16 @@ class DealController extends Controller
         $deal->stage_id = $stage->id;
         $deal->closed = $stage->isClosed();
         $deal->stage_changed_at = now();
+    }
+
+    /** Роботы новой стадии и триггеры «поле изменилось». */
+    private function automate(CrmDeal $deal, User $me, int $stageBefore, array $changed): void
+    {
+        if ((int) $deal->stage_id !== $stageBefore) {
+            Automation::stageEntered($deal, $me);
+        } elseif ($changed) {
+            Automation::dealChanged($deal, $changed, $me);
+        }
     }
 
     private function renumber(): void

@@ -18,6 +18,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectGuestsTo(fn (Request $request) => $request->getBasePath().'/portal/index.html');
         /* Выход на других устройствах при смене пароля и выключении учётки. */
         $middleware->web(append: [CheckSignIn::class]);
+        /* Внешний вебхук триггера CRM приходит без сессии и токена формы. */
+        $middleware->preventRequestForgery(except: ['api/crm/hook/*']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
