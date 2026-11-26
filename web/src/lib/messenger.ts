@@ -19,6 +19,11 @@ export interface ChatUser {
   department: string | null;
   active: boolean;
   hue: number;
+  /* «avatars/5/m3x1k2» — размер дописывает avatarSrc(). */
+  avatar?: string | null;
+  status?: { emoji: string | null; text: string | null; until: string | null } | null;
+  /* «03-15» — без года. */
+  birthday?: string | null;
 }
 export interface ChatItem {
   id: number;
@@ -269,6 +274,12 @@ export function startMessenger() {
   restoreSnapshot();
   for (const type of OWN) on(type, (event) => handle(event as unknown as LiveEvent));
   on("reset", reloadSoon);
+  /* Сотрудник поменял профиль (аватар, статус…): освежить список людей. */
+  let peopleTimer = 0;
+  on("user", () => {
+    clearTimeout(peopleTimer);
+    peopleTimer = window.setTimeout(() => void loadPeople().catch(() => undefined), 300);
+  });
   startRealtime();
   Promise.all([loadPeople(), loadChats()]).then(prefetchTop).catch(() => undefined);
   /* С живыми событиями опрос — раз в 30 с на всякий случай, без них — раз

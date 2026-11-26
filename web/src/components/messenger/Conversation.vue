@@ -5,6 +5,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { ArrowLeft, Info, Pin, PinOff, X, Reply, Smile, MoreHorizontal, Forward, Check, CheckCheck, Clock, AlertCircle, Download, FileText, ChevronDown, Upload } from "@lucide/vue";
 import ChatFace from "./ChatFace.vue";
+import { href } from "../../lib/router";
 import Composer from "./Composer.vue";
 import EmojiPicker from "./EmojiPicker.vue";
 import ChatInfo from "./ChatInfo.vue";
@@ -385,7 +386,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
             <!-- Место под аватар — только у чужих сообщений в группе, как в Telegram:
                  свои прижаты к правому краю, в личном чате чужие — к левому. -->
             <div v-if="row.message.userId !== meId && chat?.type === 'group'" class="flex w-8 shrink-0 items-end">
-              <ChatFace v-if="row.tail" :user="person(row.message.userId)" size="sm" />
+              <a v-if="row.tail && row.message.userId" :href="href('/profile', { id: row.message.userId })" class="rounded-full" :aria-label="`Профиль: ${person(row.message.userId)?.name ?? ''}`" @click.stop><ChatFace :user="person(row.message.userId)" size="sm" /></a>
             </div>
 
             <div class="flex max-w-[min(540px,82%)] min-w-0 flex-col" :class="row.message.userId === meId ? 'items-end' : 'items-start'">

@@ -13,6 +13,9 @@
 @import "@heroui/styles/components/chip.css" layer(components);
 @import "@heroui/styles/components/input.css" layer(components);
 @import "@heroui/styles/components/textarea.css" layer(components);
+@import "@heroui/styles/components/textfield.css" layer(components);
+@import "@heroui/styles/components/description.css" layer(components);
+@import "@heroui/styles/components/field-error.css" layer(components);
 @import "@heroui/styles/components/search-field.css" layer(components);
 @import "@heroui/styles/components/kbd.css" layer(components);
 @import "@heroui/styles/components/link.css" layer(components);
@@ -182,6 +185,15 @@ body {
 .hue-soft {
   background: oklch(0.92 0.055 var(--hue));
   color: oklch(0.42 0.13 var(--hue));
+}
+/* Заглушка аватара с буквами: приглушённый тон потемнее, белые буквы. */
+.hue-face {
+  background: oklch(0.6 0.075 var(--hue));
+  color: white;
+}
+.dark .hue-face {
+  background: oklch(0.5 0.065 var(--hue));
+  color: oklch(0.97 0.01 var(--hue));
 }
 .dark .hue-soft {
   background: oklch(0.34 0.07 var(--hue));

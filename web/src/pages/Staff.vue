@@ -1,17 +1,17 @@
 <!-- Сотрудники: настоящие учётки портала (staff:create), без выключенных.
      Отделы вкладками — из поля «отдел» учёток, карточки или таблица, поиск
-     по имени, должности и почте. Щелчок открывает карточку справа. -->
+     по имени, должности и почте. Щелчок открывает профиль. -->
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
-import { Mail, LayoutGrid, Table2, Crown, MessageSquare } from "@lucide/vue";
+import { LayoutGrid, Table2, Crown, MessageSquare } from "@lucide/vue";
 import PageHead from "../components/PageHead.vue";
 import Segmented from "../components/Segmented.vue";
 import SearchBox from "../components/SearchBox.vue";
-import SidePanel from "../components/SidePanel.vue";
 import DataTable from "../components/DataTable.vue";
 import ChatFace from "../components/messenger/ChatFace.vue";
 import { people, meId, enabled, loadPeople, startDirect, type ChatUser } from "../lib/messenger";
 import { plural } from "../lib/format";
+import { daysToBirthday } from "../lib/profile";
 import { route, setQuery, navigate } from "../lib/router";
 import { local } from "../lib/prefs";
 import { toast } from "../lib/toast";
@@ -63,8 +63,10 @@ const TABLE: Column<ChatUser>[] = [
   { key: "role", label: "Доступ", sort: (one) => roleOf(one) },
 ];
 
-const opened = computed(() => staff.value.find((one) => String(one.id) === route.value.query.get("open")) ?? null);
-const open = (one: ChatUser) => setQuery({ open: one.id });
+/* Старые ссылки «?open=5» ведут в профиль. */
+const asked = route.value.query.get("open");
+if (asked) navigate("/profile", { id: asked }, { replace: true });
+const open = (one: ChatUser) => navigate("/profile", { id: one.id });
 const isMail = (value?: string) => !!value && value.includes("@");
 
 async function write(one: ChatUser) {
@@ -92,16 +94,20 @@ async function write(one: ChatUser) {
 
     <div class="min-h-0 flex-1 overflow-y-auto px-3 pb-4 md:px-5 photo-scroll">
       <div v-if="view === 'cards'" class="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-3">
-        <button v-for="one in visible" :key="one.id" type="button" class="sheet flex flex-col items-center rounded-2xl p-5 text-center shadow-surface transition hover:-translate-y-0.5 hover:shadow-md" @click="open(one)">
-          <ChatFace :user="one" size="lg" />
-          <p class="mt-3 flex items-center gap-1 font-semibold">{{ one.name }}<Crown v-if="one.role === 'owner'" class="size-3.5 text-warning" aria-label="Владелец" /></p>
-          <p v-if="one.position" class="text-sm text-muted">{{ one.position }}</p>
-          <p class="mt-0.5 text-xs text-muted">{{ deptOf(one) }}</p>
-          <span class="mt-3 flex flex-wrap justify-center gap-1.5">
-            <span class="chip chip--sm chip--soft" :class="one.role === 'staff' ? 'chip--default' : 'chip--accent'"><span class="chip__label">{{ roleOf(one) }}</span></span>
+        <div v-for="one in visible" :key="one.id" class="sheet group relative flex flex-col items-center rounded-2xl p-5 text-center shadow-surface transition hover:-translate-y-0.5 hover:shadow-md">
+          <button type="button" class="absolute inset-0 rounded-2xl" :aria-label="`Профиль: ${one.name}`" @click="open(one)" />
+          <ChatFace :user="one" size="xl" class="pointer-events-none" />
+          <p class="pointer-events-none mt-3 flex items-center gap-1 font-semibold">{{ one.name }}<Crown v-if="one.role === 'owner'" class="size-3.5 text-warning" aria-label="Владелец" /></p>
+          <p v-if="one.position" class="pointer-events-none text-sm text-muted">{{ one.position }}</p>
+          <p class="pointer-events-none mt-0.5 text-xs text-muted">{{ deptOf(one) }}</p>
+          <span class="pointer-events-none mt-3 flex flex-wrap justify-center gap-1.5">
+            <span v-if="one.status" class="chip chip--sm chip--soft chip--accent"><span class="chip__label">{{ one.status.emoji }} {{ one.status.text }}</span></span>
+            <span v-else class="chip chip--sm chip--soft" :class="one.role === 'staff' ? 'chip--default' : 'chip--accent'"><span class="chip__label">{{ roleOf(one) }}</span></span>
             <span v-if="one.id === meId" class="chip chip--sm chip--soft chip--success"><span class="chip__label">Это вы</span></span>
+            <span v-else-if="daysToBirthday(one.birthday) === 0" class="chip chip--sm chip--soft chip--success"><span class="chip__label">🎂 День рождения</span></span>
           </span>
-        </button>
+          <button v-if="one.id !== meId" type="button" class="button button--ghost button--sm button--icon-only absolute top-2 right-2 opacity-0 transition group-hover:opacity-100 focus:opacity-100" :aria-label="`Написать: ${one.name}`" title="Написать" @click="write(one)"><MessageSquare class="size-4" /></button>
+        </div>
       </div>
       <DataTable v-else :columns="TABLE" :rows="visible" :key-of="(one) => String(one.id)" label="Сотрудники" class="sheet" @open="open">
         <template #name="{ row }">
@@ -117,18 +123,5 @@ async function write(one: ChatUser) {
       <p v-if="!loading && !visible.length" class="on-photo py-16 text-center">{{ failed ? "Не получилось загрузить сотрудников" : !enabled ? "Сотрудники видны после входа" : "Никого не нашлось" }}</p>
     </div>
 
-    <SidePanel :open="!!opened" :title="opened?.name ?? ''" :sub="opened ? [opened.position, deptOf(opened)].filter(Boolean).join(' · ') : ''" @close="setQuery({ open: null })">
-      <template v-if="opened">
-        <div class="flex items-center gap-4">
-          <ChatFace :user="opened" size="lg" />
-          <div class="text-sm">
-            <a v-if="isMail(opened.email)" :href="`mailto:${opened.email}`" class="link flex items-center gap-2"><Mail class="size-4" />{{ opened.email }}</a>
-            <p v-else class="text-muted">Логин: {{ opened.email }}</p>
-            <p class="mt-1 text-muted">Доступ: {{ roleOf(opened) }}</p>
-          </div>
-        </div>
-        <button v-if="opened.id !== meId" type="button" class="button button--primary button--sm mt-5" @click="write(opened)"><MessageSquare class="size-4" />Написать</button>
-      </template>
-    </SidePanel>
   </div>
 </template>

@@ -79,7 +79,10 @@ class AuthController extends Controller
 
         return [
             'admin' => $user ? [
+                'id' => $user->id,
                 'name' => $user->name,
+                'avatar' => \App\Support\Avatars::url($user),
+                'hue' => $user->hue(),
                 'initials' => $user->initials(),
                 'email' => $user->email,
                 'role' => $user->role,

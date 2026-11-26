@@ -15,7 +15,7 @@ const emit = defineEmits<{ toggle: []; closeMobile: [] }>();
 
 const groups = computed(() => {
   const out: { name: string; items: typeof PAGES }[] = [];
-  for (const one of PAGES) {
+  for (const one of PAGES.filter((page) => !page.hidden)) {
     const last = out[out.length - 1];
     if (last && last.name === one.group) last.items.push(one);
     else out.push({ name: one.group, items: [one] });

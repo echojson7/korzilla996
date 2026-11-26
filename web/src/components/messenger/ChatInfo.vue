@@ -5,6 +5,7 @@ import { computed, ref, watch } from "vue";
 import { Camera, LogOut, Trash2, UserPlus, Crown, X, Pencil } from "@lucide/vue";
 import Modal from "./Modal.vue";
 import ChatFace from "./ChatFace.vue";
+import { href } from "../../lib/router";
 import PeoplePicker from "./PeoplePicker.vue";
 import { person, meId, renameChat, addMembers, removeMember, setCover, type ChatItem } from "../../lib/messenger";
 import { auth } from "../../lib/session";
@@ -85,6 +86,8 @@ function onCover(event: Event) {
           <button v-if="group && manager" type="button" class="button button--ghost button--sm button--icon-only" aria-label="Переименовать" @click="renaming = true"><Pencil class="size-3.5" /></button>
         </p>
         <p v-if="!group && peer" class="text-sm text-muted">{{ [peer.position, peer.department].filter(Boolean).join(" · ") || "Сотрудник" }}</p>
+        <p v-if="!group && peer?.status" class="mt-1 text-sm">{{ peer.status.emoji }} {{ peer.status.text }}</p>
+        <a v-if="!group && peer" :href="href('/profile', { id: peer.id })" class="button button--secondary button--sm mt-3" @click="emit('close')">Открыть профиль</a>
         <p v-else-if="group" class="text-sm text-muted">Участников: {{ chat.members.length }}</p>
       </div>
 
@@ -99,7 +102,7 @@ function onCover(event: Event) {
         <template v-else>
           <button type="button" class="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-sm font-medium text-accent hover:bg-default" @click="adding = true"><UserPlus class="size-5" />Добавить участников</button>
           <div v-for="one in members" :key="one!.id" class="group flex items-center gap-3 rounded-xl px-2 py-1.5 hover:bg-default">
-            <ChatFace :user="one" size="sm" />
+            <a :href="href('/profile', { id: one!.id })" class="rounded-full" :aria-label="`Профиль: ${one!.name}`" @click="emit('close')"><ChatFace :user="one" size="sm" /></a>
             <span class="min-w-0 flex-1">
               <span class="flex items-center gap-1 truncate text-sm font-medium">{{ one!.name }}<span v-if="one!.id === meId" class="text-muted">(вы)</span><Crown v-if="one!.id === chat.createdBy" class="size-3.5 text-warning" aria-label="Создатель чата" /></span>
               <span v-if="one!.position" class="block truncate text-xs text-muted">{{ one!.position }}</span>

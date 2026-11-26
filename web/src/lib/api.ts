@@ -61,6 +61,9 @@ export function upload<T>(path: string, form: FormData, onProgress?: (part: numb
 export const apiUrl = (path: string) => `${BASE}/${path}`;
 
 export interface Me {
+  id?: number;
+  avatar?: string | null;
+  hue?: number;
   name: string;
   initials: string;
   email: string;

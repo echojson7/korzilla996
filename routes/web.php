@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GifController;
 use App\Http\Controllers\MessengerController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RealtimeController;
 use App\Http\Controllers\TaskController;
 use App\Http\Middleware\BroadcastTaskChanges;
@@ -23,6 +24,16 @@ Route::prefix('api')->group(function () {
 
     /* Общий канал обновлений (real-time), см. App\Support\Realtime. */
     Route::get('realtime', [RealtimeController::class, 'sync'])->middleware('auth');
+
+    /* Профили сотрудников и аватары. */
+    Route::middleware('auth')->controller(ProfileController::class)->group(function () {
+        Route::get('profiles/{user}', 'show');
+        Route::patch('profiles/{user}', 'update');
+        Route::post('profiles/{user}/avatar', 'uploadAvatar');
+        Route::delete('profiles/{user}/avatar', 'deleteAvatar');
+        Route::get('avatars/{user}/{version}/{size}', 'avatar')->where(['version' => '[a-z0-9]+', 'size' => '[0-9]+']);
+        Route::post('profile/password', 'password');
+    });
 
     /* Мессенджер: только для вошедших. */
     Route::prefix('messenger')->middleware('auth')->controller(MessengerController::class)->group(function () {

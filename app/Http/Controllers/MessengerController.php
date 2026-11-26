@@ -744,17 +744,7 @@ class MessengerController extends Controller
 
     private function person(User $user): array
     {
-        return [
-            'id' => $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'role' => $user->role,
-            'initials' => $user->initials(),
-            'position' => $user->position,
-            'department' => $user->department,
-            'active' => (bool) $user->is_active,
-            'hue' => self::hue($user->id),
-        ];
+        return $user->card();
     }
 
     private static function preview(Message $message): string

@@ -1,8 +1,8 @@
 <!-- Шапка поверх фото: поиск по порталу (Ctrl+K), часы, вид, уведомления,
      профиль. -->
 <script setup lang="ts">
-import { onBeforeUnmount, ref } from "vue";
-import { Menu, Search, Bell, Palette, LogOut, Sun, Moon, Monitor, Check } from "@lucide/vue";
+import { computed, onBeforeUnmount, ref } from "vue";
+import { Menu, Search, Bell, Palette, LogOut, Sun, Moon, Monitor, Check, UserRound, Settings } from "@lucide/vue";
 import Popover from "../components/Popover.vue";
 import Face from "../components/Face.vue";
 import { auth } from "../lib/session";
@@ -10,6 +10,9 @@ import { logout } from "../lib/api";
 import { toast } from "../lib/toast";
 import { FEED, WHO, TODAY, day } from "../lib/data";
 import { time, shortDate } from "../lib/format";
+import { href } from "../lib/router";
+import { avatarSrc } from "../lib/profile";
+import { people } from "../lib/messenger";
 import { BACKDROPS, backdrop, theme, thumb, type Theme } from "../lib/look";
 
 defineEmits<{ menu: []; search: [] }>();
@@ -17,6 +20,11 @@ defineEmits<{ menu: []; search: [] }>();
 const now = ref(new Date());
 const timer = setInterval(() => (now.value = new Date()), 15_000);
 onBeforeUnmount(() => clearInterval(timer));
+
+/* Свой аватар: из списка людей (обновляется на лету), иначе — из входа. */
+const myAvatar = computed(() => (auth.me?.id ? people.get(auth.me.id)?.avatar : undefined) ?? auth.me?.avatar);
+const meAvatar = computed(() => avatarSrc(myAvatar.value, 28));
+const meAvatarBig = computed(() => avatarSrc(myAvatar.value, 40));
 
 const seen = ref(false);
 const when = (date: Date) => (date >= TODAY ? time(date) : date >= day(-1) ? `вчера, ${time(date)}` : `${shortDate(date)}, ${time(date)}`);
@@ -128,21 +136,37 @@ async function signOut() {
     <Popover width="w-64">
       <template #trigger="{ toggle }">
         <button type="button" class="glass-light flex h-9 items-center gap-2 rounded-xl pr-2.5 pl-1" aria-label="Профиль" @click="toggle">
-          <span class="flex size-7 items-center justify-center rounded-lg bg-white/90 text-xs font-bold text-black [text-shadow:none]">{{ auth.me?.initials }}</span>
+          <img v-if="meAvatar" :src="meAvatar" alt="" class="size-7 rounded-full object-cover ring-1 ring-white/50" />
+          <span v-else class="flex size-7 items-center justify-center rounded-full bg-white/90 text-xs font-bold text-black [text-shadow:none]">{{ auth.me?.initials }}</span>
           <span class="hidden max-w-[160px] truncate text-sm font-medium md:inline">{{ auth.me?.name }}</span>
         </button>
       </template>
-      <div class="[text-shadow:none]">
-        <div class="px-3 pt-2 pb-2">
-          <p class="truncate font-semibold">{{ auth.me?.name }}</p>
-          <p class="truncate text-xs text-muted">{{ auth.me?.position || auth.me?.roleLabel }} · {{ auth.me?.email }}</p>
-        </div>
+      <template #default="{ close }">
+      <div class="[text-shadow:none]" @click="($event.target as HTMLElement).closest('a') && close()">
+        <a :href="href('/profile')" class="flex items-center gap-3 rounded-xl px-3 pt-2 pb-2 hover:bg-default">
+          <img v-if="meAvatarBig" :src="meAvatarBig" alt="" class="size-10 shrink-0 rounded-full object-cover" />
+          <span v-else class="hue-face flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold" :style="{ '--hue': auth.me?.hue ?? 220 }">{{ auth.me?.initials }}</span>
+          <span class="min-w-0">
+            <span class="block truncate font-semibold">{{ auth.me?.name }}</span>
+            <span class="block truncate text-xs text-muted">{{ auth.me?.position || auth.me?.roleLabel }} · {{ auth.me?.email }}</span>
+          </span>
+        </a>
+        <div class="separator separator--horizontal my-1" />
+        <a :href="href('/profile')" class="menu-item w-full">
+          <UserRound class="size-4" />
+          <span>Мой профиль</span>
+        </a>
+        <a :href="href('/profile', { edit: 1 })" class="menu-item w-full">
+          <Settings class="size-4" />
+          <span>Настройки профиля</span>
+        </a>
         <div class="separator separator--horizontal my-1" />
         <button type="button" class="menu-item w-full" @click="signOut">
           <LogOut class="size-4" />
           <span>Выйти</span>
         </button>
       </div>
+      </template>
     </Popover>
   </header>
 </template>
