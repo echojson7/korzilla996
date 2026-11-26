@@ -1,0 +1,8 @@
+[Unit]
+Description=Korzilla 996: планировщик Laravel (schedule:run)
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/kirya1337/korzilla996
+ExecStart=/home/kirya1337/korzilla996-env/bin/php artisan schedule:run --no-interaction
+Nice=10

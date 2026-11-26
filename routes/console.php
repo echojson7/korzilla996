@@ -2,7 +2,9 @@
 
 use App\Models\Role;
 use App\Models\User;
+use App\Support\Realtime;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Str;
 
 /*
@@ -54,3 +56,14 @@ Artisan::command('staff:disable {email}', function () {
     $user?->update(['is_active' => false]);
     $this->info($user ? 'Учётка выключена.' : 'Такой учётки нет.');
 })->purpose('Выключить учётку сотрудника');
+
+/*
+ * Планировщик. На стенде его раз в минуту запускает таймер systemd --user
+ * korzilla996-schedule (deploy/systemd/), команда — artisan schedule:run.
+ * Сюда же дальше — напоминания о сроках задач, дни рождения и прочее «по времени».
+ */
+Artisan::command('realtime:prune', function () {
+    $this->info('Убрано событий: '.Realtime::prune());
+})->purpose('Убрать журнал real-time старше трёх суток');
+
+Schedule::command('realtime:prune')->hourly()->withoutOverlapping();

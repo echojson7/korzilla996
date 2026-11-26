@@ -1,0 +1,10 @@
+[Unit]
+Description=Korzilla 996: планировщик раз в минуту
+
+[Timer]
+OnCalendar=*-*-* *:*:00
+AccuracySec=5s
+Persistent=false
+
+[Install]
+WantedBy=timers.target

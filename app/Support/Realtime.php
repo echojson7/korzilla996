@@ -197,13 +197,29 @@ class Realtime
         });
     }
 
-    private static function prune(): void
+    /**
+     * Убрать журнал старше трёх суток. Пачками по 1000 строк: каждая пачка —
+     * своя короткая запись, и запросы портала не ждут, пока сотрётся всё.
+     * Зовёт планировщик (realtime:prune раз в час) и, на случай если он не
+     * запущен, изредка changed(). Возвращает, сколько строк убрано.
+     */
+    public static function prune(int $batch = 1000): int
     {
-        $edge = DB::table('realtime_events')->where('created_at', '<', now()->subHours(self::KEEP_HOURS))->max('id');
-        if ($edge) {
-            DB::table('realtime_events')->where('id', '<=', $edge)->delete();
-            Cache::forever('realtime:floor', (int) $edge);
+        $edge = (int) DB::table('realtime_events')->where('created_at', '<', now()->subHours(self::KEEP_HOURS))->max('id');
+        if (! $edge) {
+            return 0;
         }
+        /* Сначала граница: кто отстал за неё, тот грузит всё заново, а не ждёт стёртых событий. */
+        Cache::forever('realtime:floor', max($edge, (int) Cache::get('realtime:floor', 0)));
+        $total = 0;
+        do {
+            $ids = DB::table('realtime_events')->where('id', '<=', $edge)->orderBy('id')->limit($batch)->pluck('id');
+            if ($ids->isNotEmpty()) {
+                $total += DB::table('realtime_events')->whereIn('id', $ids)->delete();
+            }
+        } while ($ids->count() === $batch);
+
+        return $total;
     }
 
     private static function lastKey(int $userId): string
