@@ -33,10 +33,10 @@ const narrow = computed(() => props.collapsed && !props.mobileOpen);
   </Transition>
   <nav
     class="glass on-photo fixed inset-y-0 left-0 z-40 flex flex-col transition-[width,transform] duration-200 lg:static lg:z-auto lg:translate-x-0"
-    :class="[narrow ? 'w-[68px] min-w-[68px] max-w-[68px]' : 'w-[224px] min-w-[224px] max-w-[224px]', mobileOpen ? 'translate-x-0' : '-translate-x-full']"
+    :class="[narrow ? 'w-[56px] min-w-[56px] max-w-[56px]' : 'w-[200px] min-w-[200px] max-w-[200px]', mobileOpen ? 'translate-x-0' : '-translate-x-full']"
     aria-label="Разделы портала"
   >
-    <div class="flex h-14 shrink-0 items-center gap-2.5" :class="narrow ? 'justify-center px-0' : 'px-4'">
+    <div class="flex h-14 shrink-0 items-center gap-2.5" :class="narrow ? 'justify-center px-0' : 'px-3.5'">
       <Brand v-if="narrow" compact />
       <span v-else class="min-w-0 flex-1 truncate text-[19px]"><Brand /></span>
       <button v-if="mobileOpen" type="button" class="flex size-8 items-center justify-center rounded-lg hover:bg-white/15 lg:hidden" aria-label="Закрыть меню" @click="emit('closeMobile')">
@@ -44,7 +44,7 @@ const narrow = computed(() => props.collapsed && !props.mobileOpen);
       </button>
     </div>
 
-    <div class="min-h-0 flex-1 overflow-y-auto px-2.5 pb-2 photo-scroll">
+    <div class="min-h-0 flex-1 overflow-y-auto px-2 pb-2 photo-scroll">
       <div v-for="group in groups" :key="group.name" class="mt-3 first:mt-1">
         <p v-if="group.name && !narrow" class="px-3 pb-1 text-[11px] font-semibold tracking-wider text-white/55 uppercase">{{ group.name }}</p>
         <div v-else-if="group.name" class="mx-auto mb-2 h-px w-8 bg-white/15" />
@@ -73,8 +73,8 @@ const narrow = computed(() => props.collapsed && !props.mobileOpen);
 
     <button
       type="button"
-      class="my-2.5 hidden h-9 items-center rounded-xl text-sm text-white/70 hover:bg-white/12 hover:text-white lg:flex"
-      :class="collapsed ? 'mx-auto w-10 justify-center' : 'mx-2.5 gap-3 px-3'"
+      class="my-2 hidden h-9 items-center rounded-xl text-sm text-white/70 hover:bg-white/12 hover:text-white lg:flex"
+      :class="collapsed ? 'mx-auto w-10 justify-center' : 'mx-2 gap-3 px-3'"
       :aria-label="collapsed ? 'Развернуть меню' : 'Свернуть меню'"
       @click="emit('toggle')"
     >

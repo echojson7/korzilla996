@@ -38,9 +38,9 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
 </script>
 
 <template>
-  <aside v-if="enabled" class="glass on-photo hidden w-[68px] shrink-0 flex-col items-center md:flex" aria-label="Чаты">
-    <a :href="href('/messenger')" class="relative mt-2.5 flex size-11 items-center justify-center rounded-2xl transition-colors" :class="onMessenger ? 'bg-white/25' : 'hover:bg-white/15'" title="Мессенджер" aria-label="Мессенджер">
-      <MessagesSquare class="size-[22px]" />
+  <aside v-if="enabled" class="glass on-photo hidden w-[56px] shrink-0 flex-col items-center md:flex" aria-label="Чаты">
+    <a :href="href('/messenger')" class="relative mt-2 flex size-10 items-center justify-center rounded-2xl transition-colors" :class="onMessenger ? 'bg-white/25' : 'hover:bg-white/15'" title="Мессенджер" aria-label="Мессенджер">
+      <MessagesSquare class="size-5" />
       <span v-if="totalUnread" class="absolute -top-0.5 -right-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1 text-[11px] font-semibold text-danger-foreground [text-shadow:none] tabular-nums">{{ totalUnread > 99 ? "99+" : totalUnread }}</span>
     </a>
     <div class="my-2 h-px w-8 bg-white/20" />
@@ -55,19 +55,19 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
         :aria-label="`${one.title}${one.unread ? `, непрочитанных: ${one.unread}` : ''}`"
         @click="open(one.id)"
       >
-        <ChatFace :chat="one" size="lg" class="[text-shadow:none] shadow-md" />
+        <ChatFace :chat="one" size="md" class="[text-shadow:none] shadow-md" />
         <span v-if="one.unread" class="absolute -top-0.5 -right-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-danger px-1 text-[10px] font-semibold text-danger-foreground ring-2 ring-black/20 [text-shadow:none] tabular-nums">{{ one.unread > 99 ? "99+" : one.unread }}</span>
       </button>
     </div>
-    <button type="button" class="mb-2.5 mt-1 flex size-11 shrink-0 items-center justify-center rounded-full border border-dashed border-white/50 hover:bg-white/15" title="Новый чат" aria-label="Новый чат" @click="creating = true"><Plus class="size-5" /></button>
+    <button type="button" class="mb-2 mt-1 flex size-10 shrink-0 items-center justify-center rounded-full border border-dashed border-white/50 hover:bg-white/15" title="Новый чат" aria-label="Новый чат" @click="creating = true"><Plus class="size-5" /></button>
   </aside>
 
   <Teleport to="body">
     <Transition name="fade">
-      <div v-if="panelChat" class="fixed inset-0 z-40 bg-black/25 md:right-[68px]" @click="quick = null" />
+      <div v-if="panelChat" class="fixed inset-0 z-40 bg-black/25 md:right-[56px]" @click="quick = null" />
     </Transition>
     <Transition name="slide">
-      <div v-if="panelChat" class="fixed inset-y-0 right-0 z-50 flex w-full flex-col shadow-2xl md:right-[68px] md:w-[min(640px,calc(100vw-68px))]">
+      <div v-if="panelChat" class="fixed inset-y-0 right-0 z-50 flex w-full flex-col shadow-2xl md:right-[56px] md:w-[min(640px,calc(100vw-56px))]">
         <Conversation :chat-id="panelChat" panel class="min-h-0 flex-1" @close="quick = null" />
         <button type="button" class="border-t border-separator bg-surface py-2 text-center text-xs text-muted hover:text-foreground" @click="expand">Открыть в мессенджере</button>
       </div>
