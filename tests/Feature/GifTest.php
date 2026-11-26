@@ -107,4 +107,11 @@ class GifTest extends TestCase
         $this->actingAs($anna)->deleteJson('/api/gifs/favorites', ['key' => 'klipy:gif:cat-1'])->assertNoContent();
         $this->getJson('/api/gifs/favorites')->assertJsonCount(0, 'data');
     }
+
+    public function test_invalid_klipy_key_is_reported(): void
+    {
+        config(['services.gifs.klipy_key' => 'bad']);
+        Http::fake(['api.klipy.com/*' => Http::response(['result' => false, 'errors' => ['message' => ['The provided API key is invalid.']]], 404)]);
+        $this->actingAs($this->user('Анна Иванова'))->getJson('/api/gifs')->assertStatus(503)->assertJsonPath('code', 'bad-key');
+    }
 }

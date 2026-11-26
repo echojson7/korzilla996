@@ -206,7 +206,8 @@ class Gifs
         } catch (\Throwable) {
             throw new RuntimeException('down');
         }
-        if (in_array($response->status(), [401, 403], true)) {
+        /* KLIPY на неверный ключ отвечает 404 с текстом «API key is invalid». */
+        if (in_array($response->status(), [401, 403], true) || ($response->status() === 404 && str_contains(Str::lower($response->body()), 'api key'))) {
             throw new RuntimeException('bad-key');
         }
         if ($response->status() === 429) {
