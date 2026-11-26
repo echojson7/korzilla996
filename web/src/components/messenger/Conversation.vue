@@ -96,6 +96,19 @@ const rows = computed(() => {
   });
   return out;
 });
+/* Серии для ленты: новая — у нового автора, дня, системного сообщения и
+   у отметки «Новые сообщения». */
+const series = computed(() => {
+  const out: { key: number; day: string | null; unread: boolean; system: boolean; rows: typeof rows.value }[] = [];
+  for (const row of rows.value) {
+    const unread = !!unreadMark.value && row.message.id === unreadMark.value;
+    const system = row.message.kind === "system";
+    const last = out[out.length - 1];
+    if (!last || row.head || unread || system || last.system) out.push({ key: row.message.id, day: row.day, unread, system, rows: [{ ...row, head: true }] });
+    else last.rows.push(row);
+  }
+  return out;
+});
 const firstUnread = computed(() => {
   const last = chat.value?.lastReadId ?? 0;
   return thread.value.messages.find((m) => m.id > last && m.userId !== meId.value && !m.pending && m.kind !== "system")?.id ?? null;
@@ -376,32 +389,34 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
           <p>Напишите первым 👋</p>
         </div>
 
-        <template v-for="row in rows" :key="row.message.id">
-          <div v-if="row.day" class="sticky top-0 z-10 flex justify-center py-2">
-            <span class="rounded-full bg-surface/90 px-3 py-1 text-xs font-medium text-muted shadow-sm backdrop-blur">{{ row.day }}</span>
+        <!-- Серия — подряд идущие сообщения одного автора. Аватар у серии один:
+             внизу, «прилипает» к низу экрана и едет вместе с серией до
+             следующего автора, как в Telegram. Имя — у первого сообщения. -->
+        <template v-for="group in series" :key="group.key">
+          <div v-if="group.day" class="sticky top-0 z-10 flex justify-center py-2">
+            <span class="rounded-full bg-surface/90 px-3 py-1 text-xs font-medium text-muted shadow-sm backdrop-blur">{{ group.day }}</span>
           </div>
-          <div v-if="unreadMark && row.message.id === unreadMark" class="my-2 flex items-center gap-3 text-xs font-medium text-accent">
+          <div v-if="group.unread" class="my-2 flex items-center gap-3 text-xs font-medium text-accent">
             <span class="h-px flex-1 bg-accent/40" />Новые сообщения<span class="h-px flex-1 bg-accent/40" />
           </div>
-
           <!-- Системное: карточкой события, без действий. -->
-          <SystemLine v-if="row.message.kind === 'system'" :data-id="row.message.id" :message="row.message" />
+          <SystemLine v-if="group.system" :data-id="group.rows[0].message.id" :message="group.rows[0].message" />
+          <div v-else class="mt-2.5 flex gap-2" :class="onRight(group.rows[0].message) ? 'flex-row-reverse' : ''">
+            <div v-if="withAuthor(group.rows[0].message)" class="flex w-8 shrink-0 flex-col justify-end">
+              <a v-if="group.rows[0].message.userId" :href="href('/profile', { id: group.rows[0].message.userId })" class="sticky bottom-1 rounded-full" :aria-label="`Профиль: ${person(group.rows[0].message.userId)?.name ?? ''}`" @click.stop><ChatFace :user="person(group.rows[0].message.userId)" size="sm" /></a>
+            </div>
+            <div class="min-w-0 flex-1">
           <div
-            v-else
+            v-for="row in group.rows"
+            :key="row.message.id"
             :data-id="row.message.id"
             class="group/msg relative flex gap-2 rounded-xl transition-colors"
-            :class="[onRight(row.message) ? 'flex-row-reverse' : '', row.head ? 'mt-2.5' : 'mt-0.5']"
+            :class="[onRight(row.message) ? 'flex-row-reverse' : '', row.head ? '' : 'mt-0.5']"
             @click="tap(row.message, $event)"
             @dblclick="quickReply(row.message, $event)"
             @pointerleave="(event) => event.pointerType === 'mouse' && active === row.message.id && (active = null)"
             @contextmenu="!row.message.deleted && !row.message.pending && openMenu(row.message, $event)"
           >
-            <!-- Место под аватар — только у чужих сообщений в группе, как в Telegram:
-                 свои прижаты к правому краю, в личном чате чужие — к левому. -->
-            <div v-if="withAuthor(row.message)" class="flex w-8 shrink-0" :class="leftLayout ? 'items-start' : 'items-end'">
-              <a v-if="(leftLayout ? row.head : row.tail) && row.message.userId" :href="href('/profile', { id: row.message.userId })" class="rounded-full" :aria-label="`Профиль: ${person(row.message.userId)?.name ?? ''}`" @click.stop><ChatFace :user="person(row.message.userId)" size="sm" /></a>
-            </div>
-
             <div class="flex max-w-[min(540px,82%)] min-w-0 flex-col" :class="onRight(row.message) ? 'items-end' : 'items-start'">
               <div
                 class="relative min-w-0 rounded-2xl px-3 py-1.5 text-[15px] leading-snug shadow-sm"
@@ -520,6 +535,8 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
                 title="Действия"
                 @click="openMenu(row.message, $event)"
               ><MoreHorizontal class="size-[18px]" /></button>
+            </div>
+          </div>
             </div>
           </div>
         </template>
