@@ -515,3 +515,4 @@ body {
 .md-card { transition: box-shadow 150ms; }
 .md-card:focus-within { box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent) 45%, transparent); }
 .md-card .ProseMirror, .md-card .ProseMirror:focus, .md-card .ProseMirror:focus-visible { outline: none; }
+.md-fill .tiptap, .md-fill .ProseMirror { min-height: 100%; }

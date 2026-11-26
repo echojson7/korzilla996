@@ -21,12 +21,15 @@ import { upload, apiUrl } from "../../lib/api";
 import { auth } from "../../lib/session";
 import { toast } from "../../lib/toast";
 
-const props = withDefaults(defineProps<{ modelValue?: string | null; editable?: boolean; placeholder?: string; minHeight?: string }>(), {
+/* fill — режим «на всю область»: панель видна всегда, поле растянуто,
+   фокус сразу; Ctrl+Enter — submit, Esc — cancel. */
+const props = withDefaults(defineProps<{ modelValue?: string | null; editable?: boolean; placeholder?: string; minHeight?: string; fill?: boolean }>(), {
   editable: true,
+  fill: false,
   placeholder: "Описание…",
   minHeight: "120px",
 });
-const emit = defineEmits<{ "update:modelValue": [string]; save: [string] }>();
+const emit = defineEmits<{ "update:modelValue": [string]; save: [string]; submit: []; cancel: [] }>();
 
 let last = props.modelValue ?? "";
 let timer = 0;
@@ -58,6 +61,9 @@ const editor = useEditor({
   onUpdate: () => {
     clearTimeout(timer);
     timer = window.setTimeout(() => emit("update:modelValue", markdown()), 250);
+  },
+  onCreate: ({ editor: made }) => {
+    if (props.fill) made.commands.focus("end");
   },
   onFocus: () => (focused.value = true),
   onBlur: () => {
@@ -165,8 +171,14 @@ const TOOLS: Tool[] = [
 </script>
 
 <template>
-  <div class="md-box">
-    <div v-if="editable && editor" class="md-toolbar sticky top-0 z-10 flex flex-wrap items-center gap-0.5 px-2 py-1" :class="focused || linking ? 'visible' : 'invisible h-0 overflow-hidden py-0'">
+  <div
+    class="md-box"
+    :class="{ 'md-fill flex h-full min-h-0 flex-col': fill }"
+    @keydown.ctrl.enter.prevent="fill && (commit(), emit('submit'))"
+    @keydown.meta.enter.prevent="fill && (commit(), emit('submit'))"
+    @keydown.esc="fill && !linking && emit('cancel')"
+  >
+    <div v-if="editable && editor" class="md-toolbar z-10 flex shrink-0 flex-wrap items-center gap-0.5 px-2 py-1" :class="fill ? 'px-4 py-1.5' : focused || linking ? 'visible' : 'invisible h-0 overflow-hidden py-0'">
       <template v-for="tool in TOOLS" :key="tool.label">
         <span v-if="tool.gap" class="mx-1 h-4 w-px bg-separator" />
         <button
@@ -188,6 +200,11 @@ const TOOLS: Tool[] = [
       <button type="submit" class="button button--primary button--sm button--icon-only" aria-label="Готово"><Check class="size-4" /></button>
       <button type="button" class="button button--ghost button--sm button--icon-only" aria-label="Отмена" @click="linking = false"><X class="size-4" /></button>
     </form>
-    <EditorContent :editor="editor" class="px-4 py-3" :style="{ minHeight: editable ? minHeight : undefined }" @click="editable && !focused && editor?.commands.focus()" />
+    <EditorContent
+      :editor="editor"
+      :class="fill ? 'min-h-0 flex-1 cursor-text overflow-y-auto px-6 py-5 thin-scroll' : 'px-4 py-3'"
+      :style="{ minHeight: editable && !fill ? minHeight : undefined }"
+      @click="editable && !focused && editor?.commands.focus('end')"
+    />
   </div>
 </template>

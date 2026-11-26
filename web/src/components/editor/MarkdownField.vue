@@ -3,8 +3,8 @@
 <script setup lang="ts">
 import { defineAsyncComponent, h } from "vue";
 
-const props = defineProps<{ modelValue?: string | null; editable?: boolean; placeholder?: string; minHeight?: string }>();
-const emit = defineEmits<{ "update:modelValue": [string]; save: [string] }>();
+const props = withDefaults(defineProps<{ modelValue?: string | null; editable?: boolean; placeholder?: string; minHeight?: string; fill?: boolean }>(), { editable: true, fill: false });
+const emit = defineEmits<{ "update:modelValue": [string]; save: [string]; submit: []; cancel: [] }>();
 
 const Editor = defineAsyncComponent({
   loader: () => import("./MarkdownEditor.vue"),
@@ -16,9 +16,12 @@ const Editor = defineAsyncComponent({
 <template>
   <Editor
     :model-value="modelValue"
-    :editable="editable !== false"
+    :editable="editable"
     :placeholder="placeholder"
     :min-height="minHeight"
+    :fill="fill"
+    @submit="emit('submit')"
+    @cancel="emit('cancel')"
     @update:model-value="(value: string) => emit('update:modelValue', value)"
     @save="(value: string) => emit('save', value)"
   />

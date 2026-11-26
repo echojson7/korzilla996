@@ -21,7 +21,7 @@ const sideMode = ref<"chat" | "side">("chat");
 watch(() => props.chat?.entity, () => (sideMode.value = "chat"));
 
 const onKey = (event: KeyboardEvent) => {
-  if (props.open && event.key === "Escape" && !(event.target as HTMLElement | null)?.closest?.("textarea, input")) emit("close");
+  if (props.open && event.key === "Escape" && !(event.target as HTMLElement | null)?.closest?.("textarea, input, [contenteditable=true]")) emit("close");
 };
 onMounted(() => document.addEventListener("keydown", onKey));
 onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
@@ -73,7 +73,7 @@ watch(() => [props.open, props.chat?.entity, enabled.value] as const, async ([op
                   <X class="size-5" />
                 </button>
               </header>
-              <div class="min-h-0 flex-1 overflow-y-auto p-6 thin-scroll"><slot /></div>
+              <div class="relative min-h-0 flex-1 overflow-y-auto p-6 thin-scroll"><slot /></div>
               <footer v-if="$slots.footer" class="flex items-center gap-2 border-t border-separator bg-surface px-6 py-3"><slot name="footer" /></footer>
             </aside>
 

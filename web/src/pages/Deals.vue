@@ -3,8 +3,8 @@
      открывает сделку справа, там же стадия меняется щелчком по полосе.
      Воронка, поиск и открытая сделка — в адресе (?funnel, ?q, ?open). -->
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import { Plus, Clock, CircleAlert } from "@lucide/vue";
+import { computed, ref, watch } from "vue";
+import { Plus, Clock, CircleAlert, Pencil, Check } from "@lucide/vue";
 import PageHead from "../components/PageHead.vue";
 import Board from "../components/Board.vue";
 import Segmented from "../components/Segmented.vue";
@@ -57,6 +57,19 @@ function add(stage: string, title: string) {
 const opened = computed(() => deals.find((one) => String(one.id) === route.value.query.get("open")) ?? null);
 const open = (deal: Deal) => setQuery({ open: deal.id });
 const close = () => setQuery({ open: null });
+
+/* Описание правится на всю область карточки — по кнопке «Изменить». */
+const descEditing = ref(false);
+const descDraft = ref("");
+watch(() => opened.value?.id, () => (descEditing.value = false));
+function editDesc() {
+  descDraft.value = opened.value?.text ?? "";
+  descEditing.value = true;
+}
+function saveDesc() {
+  if (opened.value) opened.value.text = descDraft.value.trim();
+  descEditing.value = false;
+}
 const dealTasks = computed(() => (opened.value ? taskStore.list.filter((one) => one.dealId === opened.value!.id) : []));
 
 const nextLabel = (at: number) => (at === 0 ? "сегодня" : at === 1 ? "завтра" : at < 0 ? "просрочено" : `через ${plural(at, "день", "дня", "дней")}`);
@@ -105,7 +118,17 @@ const nextLabel = (at: number) => (at === 0 ? "сегодня" : at === 1 ? "з�
     </div>
 
     <SidePanel :open="!!opened" :chat="opened ? { entity: `deal:${opened.id}`, title: `Сделка: ${opened.title}` } : null" :title="opened?.title ?? ''" :sub="opened ? `Сделка №${opened.id} · ${opened.company}` : ''" @close="close">
-      <template v-if="opened">
+      <div v-if="opened && descEditing" class="absolute inset-0 bg-surface">
+        <MarkdownField
+          fill
+          :model-value="descDraft"
+          placeholder="Опишите сделку. Списки, чек-листы, ссылки и картинки — на панели сверху."
+          @update:model-value="(text: string) => (descDraft = text)"
+          @submit="saveDesc"
+          @cancel="descEditing = false"
+        />
+      </div>
+      <template v-else-if="opened">
         <!-- Полоса стадий: щелчок переводит сделку, как в Битрикс24 -->
         <div class="flex gap-1">
           <button
@@ -120,8 +143,13 @@ const nextLabel = (at: number) => (at === 0 ? "сегодня" : at === 1 ? "з�
           >{{ stage.label }}</button>
         </div>
 
-        <section class="md-card card card--default mt-5 overflow-hidden p-0">
-          <MarkdownField v-model="opened.text" placeholder="Описание сделки: щёлкните и пишите. Списки, чек-листы, ссылки и картинки — на панели сверху." min-height="80px" />
+        <section class="card card--default mt-5 gap-0 p-0">
+          <header class="flex h-11 items-center gap-2 px-4">
+            <h3 class="min-w-0 flex-1 text-sm font-semibold">Описание</h3>
+            <button type="button" class="button button--ghost button--sm -mr-2" @click="editDesc"><Pencil class="size-3.5" />{{ opened.text ? "Изменить" : "Добавить" }}</button>
+          </header>
+          <div v-if="opened.text" class="-mt-2 pb-1" @dblclick="editDesc"><MarkdownField :model-value="opened.text" :editable="false" /></div>
+          <p v-else class="-mt-1 px-4 pb-4 text-sm text-muted">Описания нет.</p>
         </section>
 
         <div class="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-1">
@@ -165,6 +193,11 @@ const nextLabel = (at: number) => (at === 0 ? "сегодня" : at === 1 ? "з�
           <h3 class="text-sm font-semibold">Бизнес-процесс</h3>
           <p class="text-sm text-muted">Сделку ведёт шаблон «Весь процесс (запускается автоматически)» из Битрикс24. Он заработает вместе с движком процессов.</p>
         </section>
+      </template>
+      <template v-if="opened && descEditing" #footer>
+        <button type="button" class="button button--primary button--sm" @click="saveDesc"><Check class="size-4" />Сохранить</button>
+        <button type="button" class="button button--ghost button--sm" @click="descEditing = false">Отмена</button>
+        <span class="ml-auto hidden text-xs text-muted sm:inline">Ctrl+Enter — сохранить, Esc — отмена</span>
       </template>
     </SidePanel>
   </div>

@@ -7,7 +7,7 @@
 <script setup lang="ts">
 import { computed, nextTick, reactive, ref, watch } from "vue";
 import {
-  Play, Pause, Check, RotateCcw, Clock, Timer, Square, CalendarClock, Flame, Briefcase, Hash, X, Plus, Trash2,
+  Play, Pause, Check, Pencil, RotateCcw, Clock, Timer, Square, CalendarClock, Flame, Briefcase, Hash, X, Plus, Trash2,
   Paperclip, Download, FileText, ListChecks, GitBranch, Link2, MoreHorizontal, ChevronRight, CircleSlash,
 } from "@lucide/vue";
 import Popover from "../Popover.vue";
@@ -117,6 +117,21 @@ function saveTitle() {
   if (!next) return (titleText.value = v.value.title);
   if (next !== v.value.title) patch({ title: next });
 }
+
+/* ---------- Описание ---------- */
+
+const descEditing = ref(false);
+const descDraft = ref("");
+function editDesc() {
+  descDraft.value = v.value.description ?? "";
+  descEditing.value = true;
+}
+async function saveDesc() {
+  const text = descDraft.value.trim();
+  if (text !== (v.value.description ?? "")) await patch({ description: text || null });
+  descEditing.value = false;
+}
+const cancelDesc = () => (descEditing.value = false);
 
 /* ---------- Статус и кнопки ---------- */
 
@@ -388,7 +403,12 @@ defineExpose({ create });
     <div class="h-32 animate-pulse rounded-xl bg-default" />
     <div class="h-64 animate-pulse rounded-xl bg-default" />
   </div>
-  <div v-else-if="task || draft" class="-m-3 flex flex-col gap-3" @keydown.ctrl.enter="draft && create()" @keydown.meta.enter="draft && create()">
+  <div
+    v-else-if="task || draft"
+    :class="descEditing ? 'absolute inset-0 bg-surface' : '-m-3 flex flex-col gap-3'"
+    @keydown.ctrl.enter="draft && !descEditing && create()"
+    @keydown.meta.enter="draft && !descEditing && create()"
+  >
     <!-- Название — в шапке панели -->
     <Teleport defer to="#task-panel-title">
       <div class="flex items-start gap-1.5">
@@ -411,7 +431,12 @@ defineExpose({ create });
 
     <!-- Подвал панели: кнопки статуса, таймер, ещё -->
     <Teleport defer to="#task-panel-footer">
-      <template v-if="draft">
+      <template v-if="descEditing">
+        <button type="button" class="button button--primary button--sm" :disabled="saving" @click="saveDesc"><Check class="size-4" />Сохранить</button>
+        <button type="button" class="button button--ghost button--sm" @click="cancelDesc">Отмена</button>
+        <span class="ml-auto hidden text-xs text-muted sm:inline">Ctrl+Enter — сохранить, Esc — отмена</span>
+      </template>
+      <template v-else-if="draft">
         <button type="button" class="button button--primary" :disabled="creating" @click="create"><Check class="size-4" />Поставить задачу</button>
         <button type="button" class="button button--ghost" @click="emit('close')">Отмена</button>
         <span class="ml-auto hidden text-xs text-muted sm:inline">Ctrl+Enter — поставить</span>
@@ -458,16 +483,26 @@ defineExpose({ create });
       </template>
     </Teleport>
 
-    <!-- Описание на всю ширину -->
-    <section class="md-card card card--default overflow-hidden p-0">
-      <MarkdownField
-        :model-value="v.description"
-        :editable="canEdit"
-        :placeholder="canEdit ? 'Описание задачи: щёлкните и пишите. Списки, чек-листы, ссылки и картинки — на панели сверху.' : 'Описания нет'"
-        min-height="120px"
-        @update:model-value="(text: string) => draft && (form.description = text)"
-        @save="(text: string) => !draft && patch({ description: text || null })"
-      />
+    <!-- Описание: правка на всю область карточки, по кнопке «Изменить» -->
+    <MarkdownField
+      v-if="descEditing"
+      fill
+      :model-value="descDraft"
+      :placeholder="'Опишите задачу. Списки, чек-листы, ссылки и картинки — на панели сверху.'"
+      @update:model-value="(text: string) => (descDraft = text)"
+      @submit="saveDesc"
+      @cancel="cancelDesc"
+    />
+    <template v-else>
+    <section class="card card--default gap-0 p-0">
+      <header class="flex h-11 items-center gap-2 px-4">
+        <h3 class="min-w-0 flex-1 text-sm font-semibold">Описание</h3>
+        <button v-if="canEdit" type="button" class="button button--ghost button--sm -mr-2" @click="editDesc"><Pencil class="size-3.5" />{{ v.description ? "Изменить" : "Добавить" }}</button>
+      </header>
+      <div v-if="v.description" class="-mt-2 pb-1" @dblclick="canEdit && editDesc()">
+        <MarkdownField :model-value="v.description" :editable="false" />
+      </div>
+      <p v-else class="-mt-1 px-4 pb-4 text-sm text-muted">Описания нет.</p>
     </section>
 
     <!-- Свойства: поле слева, значение справа -->
@@ -727,6 +762,8 @@ defineExpose({ create });
 
     <!-- Комментарии, история, время -->
     <TaskActivity v-if="task" :task="task" mode="work" @changed="onActivityChanged" />
+
+    </template>
 
     <!-- История изменений — в правой области панели, переключателем с чатом -->
     <Teleport v-if="task" defer to="#task-panel-side">
