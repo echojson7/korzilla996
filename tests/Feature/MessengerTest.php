@@ -218,6 +218,36 @@ class MessengerTest extends TestCase
         $this->postJson("/api/messenger/chats/{$log['id']}/messages", ['body' => '## Новое'])->assertCreated();
     }
 
+    public function test_pin_messages(): void
+    {
+        $make = fn (string $name, string $role) => User::query()->create(['name' => $name, 'email' => mb_strtolower(str_replace(' ', '.', $name)).'@p.ru', 'password' => 'secret-pass-123', 'is_active' => true, 'role' => $role]);
+        $owner = $make('Олег Главный', 'owner');
+        $staff = $make('Света Обычная', 'staff');
+        $chat = $this->actingAs($staff)->postJson('/api/messenger/chats', ['type' => 'direct', 'user_id' => $owner->id])->json('data.id');
+        $first = $this->postJson("/api/messenger/chats/{$chat}/messages", ['body' => 'Первое'])->json('data.id');
+        $second = $this->postJson("/api/messenger/chats/{$chat}/messages", ['body' => 'Второе'])->json('data.id');
+
+        /* В личном чате закрепляют оба; закреплённых может быть несколько, новые первыми. */
+        $this->postJson("/api/messenger/messages/{$first}/pin")->assertOk()->assertJsonPath('data.id', $first);
+        $this->actingAs($owner)->postJson("/api/messenger/messages/{$second}/pin")->assertOk();
+        $page = $this->getJson("/api/messenger/chats/{$chat}/messages")->assertOk();
+        $this->assertSame([$second, $first], collect($page->json('data.pins'))->pluck('id')->all());
+        $this->assertSame(2, collect($page->json('data.messages'))->where('kind', 'system')->where('meta.event', 'pinned')->count());
+
+        /* Повторно — открепить; удалённое уходит из закреплённых. */
+        $this->postJson("/api/messenger/messages/{$second}/pin")->assertOk()->assertJsonPath('data.pinnedAt', null);
+        $this->actingAs($staff)->deleteJson("/api/messenger/messages/{$first}")->assertNoContent();
+        $this->getJson("/api/messenger/chats/{$chat}/messages")->assertJsonCount(0, 'data.pins');
+
+        /* Общий чат: обычный сотрудник не закрепляет, владелец — да. */
+        $general = collect($this->getJson('/api/messenger/chats')->json('data.chats'))->firstWhere('general', true);
+        $this->assertFalse($general['canPin']);
+        $this->actingAs($owner);
+        $post = $this->postJson("/api/messenger/chats/{$general['id']}/messages", ['body' => 'Важное'])->json('data.id');
+        $this->actingAs($staff)->postJson("/api/messenger/messages/{$post}/pin")->assertForbidden();
+        $this->actingAs($owner)->postJson("/api/messenger/messages/{$post}/pin")->assertOk();
+    }
+
     public function test_greet_all_backfills_direct_chats_once(): void
     {
         $make = fn (string $name) => User::withoutEvents(fn () => User::query()->create(['name' => $name, 'email' => mb_strtolower(str_replace(' ', '.', $name)).'@b.ru', 'password' => 'secret-pass-123', 'is_active' => true]));

@@ -11,11 +11,11 @@ class Message extends Model
 {
     use SoftDeletes;
 
-    protected $fillable = ['chat_id', 'user_id', 'kind', 'body', 'meta', 'reply_to_id', 'edited_at'];
+    protected $fillable = ['chat_id', 'user_id', 'kind', 'body', 'meta', 'reply_to_id', 'edited_at', 'pinned_at', 'pinned_by'];
 
     protected function casts(): array
     {
-        return ['edited_at' => 'datetime', 'meta' => 'array'];
+        return ['edited_at' => 'datetime', 'pinned_at' => 'datetime', 'meta' => 'array'];
     }
 
     public function chat(): BelongsTo

@@ -37,6 +37,8 @@ export interface ChatItem {
   changelog?: boolean;
   /* Писать нельзя: общий чат, а у роли нет права. */
   readonly?: boolean;
+  /* Можно закреплять сообщения (в общем чате — модераторам, в Changelog — публикующим). */
+  canPin?: boolean;
   title: string;
   initials: string;
   hue: number;
@@ -80,6 +82,8 @@ export interface ChatMessage {
   files: ChatFile[];
   reactions: { emoji: string; users: number[] }[];
   editedAt: string | null;
+  /* Закреплено в чате: когда. */
+  pinnedAt?: string | null;
   at: string;
   /* Своё, ещё не дошедшее до сервера. */
   pending?: boolean;
@@ -94,6 +98,8 @@ interface Thread {
   loadingOlder: boolean;
   since: string;
   readUpTo: number;
+  /* Закреплённые сообщения, новые первыми. */
+  pins: ChatMessage[];
 }
 
 export const people = reactive(new Map<number, ChatUser>());
@@ -388,7 +394,7 @@ function notify(chat: ChatItem, text: string, userId: number | null) {
   }
 }
 
-const previewOf = (message: ChatMessage) =>
+export const previewOf = (message: ChatMessage) =>
   message.deleted ? "Сообщение удалено" : message.gif ? (message.gif.type === "sticker" ? "Стикер" : "GIF") : message.body?.replace(/\s+/g, " ").trim() || (message.files.length && message.files.every((f) => f.image) ? "🖼 Картинка" : `📎 ${message.files[0]?.name ?? "Файл"}`);
 
 /* ---------- Сообщения ---------- */
@@ -396,7 +402,7 @@ const previewOf = (message: ChatMessage) =>
 function thread(id: number): Thread {
   let one = threads.get(id);
   if (!one) {
-    threads.set(id, { messages: [], hasMore: false, loaded: false, loadingOlder: false, since: "", readUpTo: 0 });
+    threads.set(id, { messages: [], hasMore: false, loaded: false, loadingOlder: false, since: "", readUpTo: 0, pins: [] });
     one = threads.get(id)!;
   }
   return one;
@@ -408,10 +414,24 @@ interface Page {
   hasMore: boolean;
   readUpTo: number;
   now: string;
+  pins?: ChatMessage[];
+}
+
+/* Список закреплённых держим по самим сообщениям: пришло с pinnedAt — в
+   список, без — из списка. Так его обновляет любой путь (real-time, опрос). */
+function syncPins(one: Thread, row: ChatMessage) {
+  const at = one.pins.findIndex((m) => m.id === row.id);
+  const pinned = !!row.pinnedAt && !row.deleted;
+  if (at >= 0 && !pinned) one.pins.splice(at, 1);
+  else if (pinned) {
+    if (at >= 0) one.pins.splice(at, 1, row);
+    else one.pins = [row, ...one.pins].sort((a, b) => String(b.pinnedAt).localeCompare(String(a.pinnedAt)));
+  }
 }
 
 function merge(one: Thread, rows: ChatMessage[]) {
   for (const row of rows) {
+    if (!row.pending) syncPins(one, row);
     const at = one.messages.findIndex((m) => m.id === row.id);
     if (at >= 0) one.messages.splice(at, 1, row);
     else {
@@ -430,6 +450,7 @@ export async function openThread(id: number): Promise<void> {
   one.messages = page.messages;
   one.hasMore = page.hasMore;
   one.readUpTo = page.readUpTo;
+  one.pins = page.pins ?? [];
   one.since = page.now;
   one.loaded = true;
 }
@@ -642,6 +663,16 @@ export async function removeMember(chatId: number, userId: number) {
     threads.delete(chatId);
   } else await loadChats();
 }
+/* Закрепить сообщение в чате или открепить. */
+export async function togglePinMessage(message: ChatMessage) {
+  try {
+    replace(await api<ChatMessage>("POST", `messenger/messages/${message.id}/pin`));
+    toast(message.pinnedAt ? "Сообщение откреплено" : "Сообщение закреплено", "success");
+  } catch (error) {
+    toast(error instanceof ApiError ? error.first : "Не получилось закрепить", "danger");
+  }
+}
+
 export async function togglePin(chat: ChatItem) {
   return upsert(await api<ChatItem>("POST", `messenger/chats/${chat.id}/pin`, { pinned: !chat.pinned }));
 }

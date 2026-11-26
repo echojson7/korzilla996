@@ -18,7 +18,7 @@ import { apiUrl } from "../../lib/api";
 import { remember } from "../../lib/emoji";
 import { plural } from "../../lib/format";
 import {
-  chatById, threadOf, openThread, loadOlder, sendMessage, sendGif, editMessage, deleteMessage, toggleReaction, markRead, togglePin, dropFailed,
+  chatById, threadOf, openThread, loadOlder, sendMessage, sendGif, editMessage, deleteMessage, toggleReaction, markRead, togglePin, togglePinMessage, previewOf, dropFailed,
   typingIn, sendTyping, person, meId, focused, dayLabel, fileSize, type ChatMessage, type ChatFile, type ChatUser,
 } from "../../lib/messenger";
 import { toast } from "../../lib/toast";
@@ -303,7 +303,7 @@ async function copyText(message: ChatMessage) {
     toast("Не получилось скопировать", "danger");
   }
 }
-function menuAction(name: "reply" | "copy" | "forward" | "edit" | "remove") {
+function menuAction(name: "reply" | "copy" | "forward" | "edit" | "remove" | "pin") {
   const message = menu.value?.message;
   menu.value = null;
   if (!message) return;
@@ -311,6 +311,7 @@ function menuAction(name: "reply" | "copy" | "forward" | "edit" | "remove") {
   else if (name === "copy") copyText(message);
   else if (name === "forward") forwarding.value = message;
   else if (name === "edit") startEdit(message);
+  else if (name === "pin") togglePinMessage(message);
   else deleteMessage(message);
 }
 function forwarded(ids: number[]) {
@@ -318,7 +319,28 @@ function forwarded(ids: number[]) {
   toast(ids.length === 1 ? "Сообщение переслано" : `Переслано в ${ids.length} чата`, "success");
 }
 
+/* Закреплённые, как в Telegram: плашка под шапкой показывает одно,
+   щелчок ведёт к нему и переключает на следующее (более старое). */
+const pinIndex = ref(0);
+watch(() => props.chatId, () => (pinIndex.value = 0));
+const pins = computed(() => thread.value.pins);
+const pinShown = computed(() => pins.value[Math.min(pinIndex.value, pins.value.length - 1)] ?? null);
+function pinText(message: ChatMessage) {
+  const who = message.userId ? person(message.userId)?.name : "Korzilla 996";
+  return { who, text: previewOf(message).replace(/[#*_`>]+/g, "").trim() };
+}
+async function openPin() {
+  const message = pinShown.value;
+  if (!message) return;
+  pinIndex.value = (Math.min(pinIndex.value, pins.value.length - 1) + 1) % pins.value.length;
+  await jump(message.id);
+}
+
 async function jump(id: number) {
+  /* Сообщение старше загруженного — догружаем ленту, пока не найдём. */
+  for (let i = 0; i < 20 && !thread.value.messages.some((m) => m.id === id) && thread.value.hasMore; i++) {
+    await loadOlder(props.chatId).catch(() => undefined);
+  }
   const at = thread.value.messages.findIndex((m) => m.id === id);
   if (at >= 0 && at < start.value) {
     shown.value = thread.value.messages.length - at + 10;
@@ -380,6 +402,20 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
       <button v-if="chat" type="button" class="button button--ghost button--icon-only" aria-label="О чате" title="О чате" @click="infoOpen = true"><Info class="size-[18px]" /></button>
       <button v-if="panel && !closeTab" type="button" class="button button--ghost button--icon-only" aria-label="Закрыть" @click="emit('close')"><X class="size-5" /></button>
     </header>
+
+    <!-- Закреплённые сообщения: полоски слева — сколько их и какое сейчас. -->
+    <div v-if="pinShown" class="flex h-[52px] shrink-0 items-center gap-2 border-b border-separator bg-surface pr-2 pl-3 md:pl-4">
+      <button type="button" class="flex min-w-0 flex-1 items-center gap-3 self-stretch text-left" :title="pins.length > 1 ? 'К сообщению; следующий щелчок — к предыдущему закреплённому' : 'К сообщению'" @click="openPin">
+        <span class="flex h-9 w-[3px] shrink-0 flex-col gap-[2px]" aria-hidden="true">
+          <span v-for="(one, i) in pins.slice(0, 4)" :key="one.id" class="min-h-0 flex-1 rounded-full" :class="Math.min(pinIndex, pins.length - 1) % 4 === i ? 'bg-accent' : 'bg-accent/25'" />
+        </span>
+        <span class="min-w-0">
+          <span class="block text-[13px] leading-4 font-semibold text-accent">Закреплённое сообщение{{ pins.length > 1 ? ` ${Math.min(pinIndex, pins.length - 1) + 1} из ${pins.length}` : "" }}</span>
+          <span class="block truncate text-[13px] leading-5"><span v-if="pinText(pinShown).who" class="text-muted">{{ pinText(pinShown).who }}: </span>{{ pinText(pinShown).text }}</span>
+        </span>
+      </button>
+      <button v-if="chat?.canPin" type="button" class="button button--ghost button--sm button--icon-only shrink-0" aria-label="Открепить" title="Открепить" @click="togglePinMessage(pinShown)"><PinOff class="size-4" /></button>
+    </div>
 
     <div class="chat-wall relative flex min-h-0 flex-1 flex-col" :class="chat?.changelog ? 'chat-wall--changelog' : chat?.general ? 'chat-wall--general' : ''">
     <div ref="scroller" class="relative min-h-0 flex-1 overflow-y-auto px-3 pt-3 pb-1 sm:px-4 lg:px-5 thin-scroll" @scroll.passive="onScroll" @click.self="active = null">
@@ -481,6 +517,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
       :can-delete="canDelete(menu.message)"
       :seen="menu.message.userId === meId ? seenCount(menu.message) : 0"
       :start-views="!!menu.views"
+      :can-pin="!!chat?.canPin && menu.message.kind !== 'system' && !menu.message.deleted"
       @close="menu = null"
       @react="(emoji) => { const m = menu!.message; menu = null; react(m, emoji); }"
       @reply="menuAction('reply')"
@@ -488,6 +525,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
       @forward="menuAction('forward')"
       @edit="menuAction('edit')"
       @remove="menuAction('remove')"
+      @pin="menuAction('pin')"
     />
     <ForwardDialog :message="forwarding" @close="forwarding = null" @done="forwarded" />
     <ChatInfo :open="infoOpen" :chat="chat" @close="infoOpen = false" @left="panel ? emit('close') : emit('back')" />

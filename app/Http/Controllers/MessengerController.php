@@ -39,6 +39,9 @@ class MessengerController extends Controller
 {
     private const PAGE = 50;
 
+    /** Сколько сообщений можно закрепить в одном чате. */
+    private const PINS = 20;
+
     /** Файл до 50 МБ, до 10 штук в сообщении. */
     private const FILE_KB = 51200;
 
@@ -377,6 +380,7 @@ class MessengerController extends Controller
             'messages' => $rows->map(fn (Message $message) => $this->message($message)),
             'hasMore' => $more,
             'readUpTo' => $this->readUpTo($chat, $me),
+            'pins' => $this->pins($chat),
             'now' => now()->toIso8601String(),
         ]]);
     }
@@ -480,6 +484,7 @@ class MessengerController extends Controller
             }
             $message->files()->delete();
             $message->reactions()->delete();
+            $message->forceFill(['pinned_at' => null, 'pinned_by' => null])->save();
             $message->delete();
         });
         $this->announce($message);
@@ -523,6 +528,28 @@ class MessengerController extends Controller
         }
 
         return response()->json(['data' => ['count' => $targets->count()]]);
+    }
+
+    /**
+     * Закрепить сообщение или открепить, если уже закреплено. Закреплённых
+     * может быть несколько, как в Telegram; в ленту — системная строка.
+     */
+    public function pinMessage(Request $request, Message $message): JsonResponse
+    {
+        $me = $this->me($request);
+        $chat = $message->chat;
+        $this->membership($chat, $me);
+        abort_unless($message->kind === 'text', 422, 'Системное сообщение не закрепить');
+        $this->canPin($chat, $me);
+        $pin = ! $message->pinned_at;
+        abort_if($pin && $chat->messages()->whereNotNull('pinned_at')->count() >= self::PINS, 422, 'Закрепить можно не больше '.self::PINS.' сообщений');
+        $message->forceFill(['pinned_at' => $pin ? now() : null, 'pinned_by' => $pin ? $me->id : null])->save();
+        $payload = $this->announce($message);
+        if ($pin) {
+            $this->system($chat, $me, 'pinned', "{$me->name} закрепляет сообщение", ['message' => $message->id]);
+        }
+
+        return response()->json(['data' => $payload]);
     }
 
     /** Поставить реакцию или снять, если она уже стоит. */
@@ -644,6 +671,34 @@ class MessengerController extends Controller
         abort_if(GeneralChat::isChangelog($chat) && ! GeneralChat::canPublish($me), 403, 'В Changelog публикуют только владелец и администраторы');
     }
 
+    /**
+     * Закреплять: в личных и рабочих чатах — всем, кто может писать; в общем
+     * чате — модераторам мессенджера; в Changelog — тем, кто публикует.
+     */
+    private function mayPin(Chat $chat, User $me): bool
+    {
+        if (GeneralChat::isChangelog($chat)) {
+            return GeneralChat::canPublish($me);
+        }
+        if (GeneralChat::is($chat)) {
+            return Access::allows($me, 'messenger', 'moderate');
+        }
+
+        return true;
+    }
+
+    private function canPin(Chat $chat, User $me): void
+    {
+        abort_unless($this->mayPin($chat, $me), 403, 'Закреплять сообщения здесь нельзя');
+    }
+
+    /** Закреплённые сообщения чата, новые первыми. */
+    private function pins(Chat $chat): array
+    {
+        return $chat->messages()->with(['files', 'reactions', 'replyTo'])->whereNotNull('pinned_at')
+            ->orderByDesc('pinned_at')->limit(self::PINS)->get()->map(fn (Message $message) => $this->message($message))->all();
+    }
+
     /** Чат карточки — только тем, кто видит саму карточку. */
     private function canSeeEntity(string $entity, User $me): void
     {
@@ -728,6 +783,7 @@ class MessengerController extends Controller
                 'members' => $memberIds,
                 'createdBy' => $chat->created_by,
                 'pinned' => (bool) $mine[$chat->id]->is_pinned,
+                'canPin' => $this->mayPin($chat, $me),
                 'lastReadId' => (int) $mine[$chat->id]->last_read_id,
                 'readUpTo' => (int) $others->max('last_read_id'),
                 /* До какого сообщения дочитал каждый — для аватарок под сообщениями. */
@@ -782,6 +838,7 @@ class MessengerController extends Controller
             ])->values(),
             'reactions' => $deleted ? [] : $reactions,
             'editedAt' => $message->edited_at?->toIso8601String(),
+            'pinnedAt' => $deleted ? null : $message->pinned_at?->toIso8601String(),
             'at' => $message->created_at?->toIso8601String(),
         ];
     }

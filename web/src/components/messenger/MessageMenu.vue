@@ -3,7 +3,7 @@
      щелчка и не вылезает за экран; Esc, щелчок мимо и прокрутка закрывают. -->
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { Star, Reply, Copy, Forward, Pencil, Trash2, Download, Smile, Eye, ChevronLeft, ChevronRight } from "@lucide/vue";
+import { Star, Reply, Copy, Forward, Pencil, Trash2, Download, Smile, Eye, ChevronLeft, ChevronRight, Pin, PinOff } from "@lucide/vue";
 import ChatFace from "./ChatFace.vue";
 import EmojiPicker from "./EmojiPicker.vue";
 import { QUICK } from "../../lib/emoji";
@@ -12,8 +12,8 @@ import { person, viewsOf, type ChatMessage } from "../../lib/messenger";
 import { isFavorite, loadFavorites, toggleFavorite } from "../../lib/gifs";
 import { computePosition, flip, offset, shift, size } from "@floating-ui/dom";
 
-const props = withDefaults(defineProps<{ message: ChatMessage; x: number; y: number; mine: boolean; canDelete: boolean; seen?: number; startViews?: boolean }>(), { seen: 0, startViews: false });
-const emit = defineEmits<{ close: []; react: [emoji: string]; reply: []; copy: []; forward: []; edit: []; remove: [] }>();
+const props = withDefaults(defineProps<{ message: ChatMessage; x: number; y: number; mine: boolean; canDelete: boolean; seen?: number; startViews?: boolean; canPin?: boolean }>(), { seen: 0, startViews: false, canPin: false });
+const emit = defineEmits<{ close: []; react: [emoji: string]; reply: []; copy: []; forward: []; edit: []; remove: []; pin: [] }>();
 
 const box = ref<HTMLElement | null>(null);
 const pos = ref({ left: props.x, top: props.y });
@@ -127,6 +127,7 @@ function remove() {
         <button type="button" role="menuitem" class="menu-row" @click="emit('reply')"><Reply class="size-[18px]" />Ответить</button>
         <button v-if="message.body" type="button" role="menuitem" class="menu-row" @click="emit('copy')"><Copy class="size-[18px]" />Копировать текст</button>
         <button type="button" role="menuitem" class="menu-row" @click="emit('forward')"><Forward class="size-[18px]" />Переслать</button>
+        <button v-if="canPin && !message.pending" type="button" role="menuitem" class="menu-row" @click="emit('pin')"><PinOff v-if="message.pinnedAt" class="size-[18px]" /><Pin v-else class="size-[18px]" />{{ message.pinnedAt ? "Открепить" : "Закрепить" }}</button>
         <button v-if="message.gif" type="button" role="menuitem" class="menu-row" @click="favorite"><Star class="size-[18px]" :class="isFavorite(message.gif.key) ? 'fill-warning text-warning' : ''" />{{ isFavorite(message.gif.key) ? "Убрать из избранного" : "В избранное" }}</button>
         <a v-if="file" :href="`${apiUrl(file.url)}?download=1`" role="menuitem" class="menu-row" @click="emit('close')"><Download class="size-[18px]" />Скачать файл</a>
         <button v-if="mine && !message.forwardedFrom && !message.gif" type="button" role="menuitem" class="menu-row" @click="emit('edit')"><Pencil class="size-[18px]" />Изменить</button>

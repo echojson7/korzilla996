@@ -35,6 +35,7 @@ const parts = computed<Part[] | null>(() => {
     /* Новый сотрудник: в общем чате и в личном чате с каждым коллегой. */
     case "team": return [...who, { text: " теперь в команде 👋" }];
     case "renamed": return [...who, { text: " переименовывает чат в " }, { strong: `«${String(props.message.meta?.title ?? "")}»` }];
+    case "pinned": return [...who, { text: " закрепляет сообщение" }];
     case "cover": return [...who, { text: body.includes("убирает") ? " убирает обложку чата" : " меняет обложку чата" }];
     default: return null;
   }
