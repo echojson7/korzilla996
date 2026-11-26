@@ -68,7 +68,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
 
   <Teleport to="body">
     <Transition name="fade">
-      <div v-if="panelChat" class="fixed inset-0 z-40 bg-black/25 md:right-[56px]" @click="quick = null" />
+      <div v-if="panelChat" class="fixed inset-0 z-40 bg-black/35 md:right-[56px]" @click="quick = null" />
     </Transition>
     <Transition name="slide">
       <!-- Мини-чат плавает с отступами; закрывается ярлычком слева,

@@ -48,7 +48,7 @@ watch(() => [props.open, props.chat?.entity, enabled.value] as const, async ([op
 <template>
   <Teleport to="body">
     <Transition name="fade">
-      <div v-if="open" class="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]" />
+      <div v-if="open" class="fixed inset-0 z-40 bg-black/40" />
     </Transition>
     <div v-if="open" class="fixed inset-0 z-50 flex p-2 md:py-3 md:pr-[68px] md:pl-12" @click.self="emit('close')">
       <Transition name="slide-left" appear>
