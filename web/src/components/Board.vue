@@ -110,11 +110,11 @@ defineExpose({ openAdd });
 </script>
 
 <template>
-  <div ref="board" class="flex h-full min-h-0 gap-2 overflow-x-auto overflow-y-hidden pb-1 photo-scroll">
+  <div ref="board" class="flex h-full min-h-0 overflow-x-auto overflow-y-hidden pb-1 photo-scroll">
     <section
       v-for="column in columns"
       :key="column.id"
-      class="flex h-full w-[264px] min-w-[248px] shrink-0 flex-col rounded-xl"
+      class="flex h-full w-[278px] min-w-[262px] shrink-0 flex-col border-l border-white/45 px-[7px] first:w-[271px] first:border-l-0 first:pl-0"
       :class="{ 'is-drop-target': dragging != null && over?.column === column.id }"
       :style="{ '--hue': column.hue }"
       @dragover="dragOver($event, column.id)"
