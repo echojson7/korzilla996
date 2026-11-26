@@ -48,6 +48,7 @@ class ImportCrm
         in_array('companies', $only, true) && $this->companies();
         in_array('contacts', $only, true) && $this->contacts();
         in_array('deals', $only, true) && $this->deals();
+        in_array('deal_contacts', $only, true) && $this->ownerContacts('deal');
         in_array('leads', $only, true) && $this->leads();
         in_array('products', $only, true) && $this->products();
 
@@ -218,34 +219,44 @@ class ImportCrm
         $this->leadContacts();
     }
 
-    /** Все контакты лидов (у лида их может быть несколько): batch по 50 лидов. */
     private function leadContacts(): void
     {
+        $this->ownerContacts('lead');
+    }
+
+    /**
+     * Все контакты лида или сделки (их может быть несколько, основной —
+     * в contact_id): batch по 50 записей, crm.{lead|deal}.contact.items.get.
+     */
+    private function ownerContacts(string $type): void
+    {
+        [$table, $links, $column] = $type === 'lead' ? ['crm_leads', 'crm_lead_contacts', 'lead_id'] : ['crm_deals', 'crm_deal_contacts', 'deal_id'];
         $this->contacts = $this->contacts ?: DB::table('crm_contacts')->whereNotNull('external_id')->pluck('id', 'external_id')->map(fn ($id) => (int) $id)->all();
-        $leads = DB::table('crm_leads')->whereNotNull('external_id')
-            ->whereNotExists(fn ($q) => $q->from('crm_lead_contacts')->whereColumn('crm_lead_contacts.lead_id', 'crm_leads.id'))
+        $owners = DB::table($table)->whereNotNull('external_id')
+            ->whereNotExists(fn ($q) => $q->from($links)->whereColumn("{$links}.{$column}", "{$table}.id"))
             ->whereNotNull('contact_id')->pluck('id', 'external_id')->all();
-        $this->report['lead_contacts'] = 0;
+        $key = $type.'_contacts';
+        $this->report[$key] = 0;
         $done = 0;
-        foreach (array_chunk($leads, 50, true) as $chunk) {
+        foreach (array_chunk($owners, 50, true) as $chunk) {
             $cmd = [];
             foreach ($chunk as $external => $id) {
-                $cmd['l'.$external] = 'crm.lead.contact.items.get?'.http_build_query(['id' => $external]);
+                $cmd['o'.$external] = "crm.{$type}.contact.items.get?".http_build_query(['id' => $external]);
             }
             $body = $this->bitrix->call('batch', ['halt' => 0, 'cmd' => $cmd]);
             $rows = [];
             foreach ($chunk as $external => $id) {
-                foreach ((array) ($body['result']['result']['l'.$external] ?? []) as $i => $item) {
+                foreach ((array) ($body['result']['result']['o'.$external] ?? []) as $i => $item) {
                     $contact = $this->contacts[(string) ($item['CONTACT_ID'] ?? '')] ?? null;
                     if ($contact) {
-                        $rows[] = ['lead_id' => $id, 'contact_id' => $contact, 'sort' => (int) ($item['SORT'] ?? $i)];
+                        $rows[] = [$column => $id, 'contact_id' => $contact, 'sort' => (int) ($item['SORT'] ?? $i)];
                     }
                 }
             }
-            $rows && DB::table('crm_lead_contacts')->insertOrIgnore($rows);
-            $this->report['lead_contacts'] += count($rows);
+            $rows && DB::table($links)->insertOrIgnore($rows);
+            $this->report[$key] += count($rows);
             $done += count($chunk);
-            $this->progress && ($this->progress)('lead_contacts', $done, count($leads));
+            $this->progress && ($this->progress)($key, $done, count($owners));
         }
     }
 

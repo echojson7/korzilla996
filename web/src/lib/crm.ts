@@ -60,6 +60,7 @@ export interface DealFull extends DealBrief {
   externalId: string | null;
   companyInfo?: { id: number; title: string; phones: Contact[]; emails: Contact[]; webs: Contact[]; address: string | null } | null;
   products?: ProductRow[];
+  contactList?: { id: number; name: string; post: string | null; phones: Contact[]; emails: Contact[] }[];
   contactInfo?: { id: number; name: string; post: string | null; phones: Contact[]; emails: Contact[] } | null;
   history: DealHistory[];
   can: { edit: boolean; delete: boolean };

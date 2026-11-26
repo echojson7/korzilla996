@@ -391,6 +391,18 @@ class DealController extends Controller
         return $one ? ['id' => $one->id, 'title' => $one->title, 'phones' => $one->phones ?? [], 'emails' => $one->emails ?? [], 'webs' => $one->webs ?? [], 'address' => $one->address] : null;
     }
 
+    /** Все контакты сделки (основной — первым). */
+    private function contactList(CrmDeal $deal): array
+    {
+        $ids = DB::table('crm_deal_contacts')->where('deal_id', $deal->id)->orderBy('sort')->pluck('contact_id')->map(fn ($id) => (int) $id)->all();
+        if ($deal->contact_id && ! in_array((int) $deal->contact_id, $ids, true)) {
+            array_unshift($ids, (int) $deal->contact_id);
+        }
+
+        return CrmContact::query()->whereIn('id', $ids)->get()->sortBy(fn ($one) => array_search($one->id, $ids))->values()
+            ->map(fn (CrmContact $one) => ['id' => $one->id, 'name' => $one->name, 'post' => $one->post, 'phones' => $one->phones ?? [], 'emails' => $one->emails ?? []])->all();
+    }
+
     private function contactInfo(?int $id): ?array
     {
         $one = $id ? CrmContact::query()->find($id) : null;
@@ -406,6 +418,7 @@ class DealController extends Controller
             'companyInfo' => $this->companyInfo($deal->company_id),
             'contactInfo' => $this->contactInfo($deal->contact_id),
             'products' => ProductRows::of('deal', $deal->id),
+            'contactList' => $this->contactList($deal),
             'history' => $deal->history()->orderByDesc('id')->limit(200)->get()->map(fn (CrmDealHistory $one) => [
                 'id' => $one->id, 'userId' => $one->user_id, 'field' => $one->field, 'old' => $one->old, 'new' => $one->new,
                 'at' => $one->created_at?->toIso8601String(),

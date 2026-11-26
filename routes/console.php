@@ -184,14 +184,14 @@ Artisan::command('bitrix:users {--no-photos : без фото} {--dry : толь
 
 
 /* Компании, контакты и сделки из Битрикс24 по вебхуку (см. App\Support\Bitrix\ImportCrm). Сначала bitrix:users и crm:import-bitrix. */
-Artisan::command('bitrix:crm {--only=* : companies, contacts, deals, leads, products (по умолчанию компании, контакты, сделки)} {--leads=all : all — все лиды, year — рабочие и провалы за год, work — рабочие} {--update : переписать уже перенесённые из Битрикса}', function () {
+Artisan::command('bitrix:crm {--only=* : companies, contacts, deals, deal_contacts, leads, products (по умолчанию компании, контакты, сделки)} {--leads=all : all — все лиды, year — рабочие и провалы за год, work — рабочие} {--update : переписать уже перенесённые из Битрикса}', function () {
     ini_set('memory_limit', '512M');
     Illuminate\Support\Facades\DB::disableQueryLog();
     $webhook = (string) config('services.bitrix24.webhook');
     $parts = parse_url($webhook);
     $portal = ($parts['scheme'] ?? 'https').'://'.($parts['host'] ?? '');
     $labels = ['companies' => 'Компании', 'contacts' => 'Контакты', 'deals' => 'Сделки', 'leads' => 'Лиды', 'products' => 'Товары (каталог)',
-        'lead_contacts' => 'Контакты лидов', 'product_rows_deal' => 'Товары сделок', 'product_rows_lead' => 'Товары лидов'];
+        'lead_contacts' => 'Контакты лидов', 'deal_contacts' => 'Контакты сделок', 'product_rows_deal' => 'Товары сделок', 'product_rows_lead' => 'Товары лидов'];
     $only = $this->option('only') ?: ['companies', 'contacts', 'deals'];
     $started = microtime(true);
     $import = new App\Support\Bitrix\ImportCrm(App\Support\Bitrix\Client::fromConfig(), $portal, (bool) $this->option('update'), function ($key, $done, $total) use ($labels, $started) {
@@ -205,7 +205,7 @@ Artisan::command('bitrix:crm {--only=* : companies, contacts, deals, leads, prod
             $this->info("{$label}: в Битриксе {$one['total']}, новых {$one['new']}, обновлено {$one['updated']}, уже были {$one['kept']}.");
         }
     }
-    foreach (['lead_contacts' => 'Связей лид — контакт', 'product_rows' => 'Строк товаров'] as $key => $label) {
+    foreach (['lead_contacts' => 'Связей лид — контакт', 'deal_contacts' => 'Связей сделка — контакт', 'product_rows' => 'Строк товаров'] as $key => $label) {
         isset($report[$key]) && $this->info("{$label}: {$report[$key]}.");
     }
     if (! empty($report['deals_no_pipeline'])) {

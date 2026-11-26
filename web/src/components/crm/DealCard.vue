@@ -5,7 +5,7 @@
      их в воронках Битрикса больше сотни. Правка сразу уходит на сервер. -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
-import { Check, ChevronDown, Clock, History, ListChecks, MoreHorizontal, Pencil, Plus, SlidersHorizontal, Trash2, Link2, Flag, RotateCcw, LayoutList, ShoppingCart } from "@lucide/vue";
+import { Check, ChevronDown, Clock, History, ListChecks, MoreHorizontal, Pencil, Plus, SlidersHorizontal, Trash2, Link2, Flag, RotateCcw, LayoutList, ShoppingCart, Users } from "@lucide/vue";
 import Popover from "../Popover.vue";
 import HueChip from "../HueChip.vue";
 import NoAccess from "../NoAccess.vue";
@@ -344,6 +344,14 @@ function copyLink() {
       <button v-if="group.hidden || expanded.has(group.name)" type="button" class="mx-4 mb-3 inline-flex items-center gap-1 text-sm text-accent" :class="group.shown.length ? 'mt-1' : ''" @click="toggleSection(group.name)">
         <template v-if="expanded.has(group.name)">Скрыть пустые</template>
         <template v-else><Plus class="size-3.5" />{{ group.shown.length ? "Ещё" : "Показать" }} {{ plural(group.hidden, "поле", "поля", "полей") }}</template>
+      </button>
+    </CardBlock>
+
+    <!-- Все контакты (когда их больше одного) -->
+    <CardBlock v-if="(deal.contactList?.length ?? 0) > 1" :icon="Users" title="Контакты" :count="deal.contactList!.length">
+      <button v-for="one in deal.contactList" :key="one.id" type="button" class="menu-row w-full" @click="navigate('/clients', { tab: 'contacts', open: `contact:${one.id}` })">
+        <span class="min-w-0 flex-1 truncate">{{ one.name }}<span v-if="one.post" class="text-muted"> · {{ one.post }}</span></span>
+        <span class="text-xs text-muted">{{ one.phones[0]?.value }}</span>
       </button>
     </CardBlock>
 

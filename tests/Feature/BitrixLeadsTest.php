@@ -36,7 +36,7 @@ class BitrixLeadsTest extends TestCase
                 ['ID' => '300', 'TITLE' => 'Заявка с сайта', 'STATUS_ID' => 'JUNK', 'STATUS_SEMANTIC_ID' => 'F', 'NAME' => 'Иван', 'LAST_NAME' => 'Петров',
                     'PHONE' => [['VALUE' => '+7 900 111-22-33', 'VALUE_TYPE' => 'MOBILE']], 'CONTACT_ID' => '9', 'SOURCE_ID' => 'WEB', 'UF_CRM_7' => '5', 'OPPORTUNITY' => '1000'],
             ], 'total' => 1]),
-            '*/batch.json' => Http::response(['result' => ['result' => ['l300' => [['CONTACT_ID' => 9, 'SORT' => 10], ['CONTACT_ID' => 10, 'SORT' => 20]]], 'result_error' => []]]),
+            '*/batch.json' => Http::response(['result' => ['result' => ['o300' => [['CONTACT_ID' => 9, 'SORT' => 10], ['CONTACT_ID' => 10, 'SORT' => 20]]], 'result_error' => []]]),
             '*/crm.product.list.json' => Http::response(['result' => [['ID' => '1', 'NAME' => 'Лендинг', 'PRICE' => '30000', 'CURRENCY_ID' => 'RUB', 'ACTIVE' => 'Y']], 'total' => 1]),
             '*/crm.item.productrow.list.json' => Http::response(['result' => ['productRows' => [
                 ['id' => 77, 'ownerId' => 300, 'ownerType' => 'L', 'productId' => 1, 'productName' => 'Лендинг', 'price' => 30000, 'quantity' => 2, 'discountSum' => 500, 'measureName' => 'шт', 'sort' => 10],
