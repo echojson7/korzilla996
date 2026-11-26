@@ -517,16 +517,17 @@ defineExpose({ create });
       @cancel="cancelDesc"
     />
     <template v-else>
-    <!-- Описание — просто текст задачи, без рамки; «Изменить» — при наведении. -->
-    <section class="group/desc relative pb-1">
+    <!-- Описание — просто текст задачи, без рамки; «Изменить» видна всегда,
+         если есть права, текст обтекает её. -->
+    <section class="flow-root px-1 pt-3 pb-4">
       <template v-if="v.description">
+        <button v-if="canEdit" type="button" class="button button--ghost button--sm float-right -mt-1 -mr-1 mb-1 ml-3" @click="editDesc"><Pencil class="size-3.5" />Изменить</button>
         <div class="desc-plain" @dblclick="canEdit && editDesc()">
           <MarkdownField :model-value="v.description" :editable="false" />
         </div>
-        <button v-if="canEdit" type="button" class="button button--ghost button--sm absolute top-0 right-0 bg-surface/80! opacity-0 backdrop-blur-sm transition-opacity group-hover/desc:opacity-100 focus-visible:opacity-100" @click="editDesc"><Pencil class="size-3.5" />Изменить</button>
       </template>
-      <button v-else-if="canEdit" type="button" class="flex w-full items-center gap-2 rounded-xl px-1 py-2 text-left text-sm text-muted transition-colors hover:text-accent" @click="editDesc"><Pencil class="size-3.5" />Добавить описание</button>
-      <p v-else class="px-1 py-2 text-sm text-muted">Описания нет.</p>
+      <button v-else-if="canEdit" type="button" class="flex w-full items-center gap-2 rounded-xl py-1 text-left text-sm text-muted transition-colors hover:text-accent" @click="editDesc"><Pencil class="size-3.5" />Добавить описание</button>
+      <p v-else class="py-1 text-sm text-muted">Описания нет.</p>
     </section>
 
     <!-- Свойства: поле слева, значение справа -->
@@ -796,7 +797,7 @@ defineExpose({ create });
 <style scoped>
 /* Описание без подложки: текст идёт прямо по фону карточки. */
 .desc-plain :deep(.md-box > div),
-.desc-plain > :deep(div.md) { padding: 0.125rem 0.25rem 0; }
+.desc-plain > :deep(div.md) { padding: 0; }
 
 /* Свойства: подпись слева, значение справа, строки через черту. */
 .props {
