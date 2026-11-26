@@ -213,7 +213,7 @@ class MessengerController extends Controller
         $me = $this->me($request);
         $this->membership($chat, $me);
         $this->groupOnly($chat);
-        abort_if(GeneralChat::is($chat), 422, 'В общем чате — все сотрудники портала, состав меняется сам');
+        abort_if(GeneralChat::isChannel($chat), 422, 'В канале портала — все сотрудники, состав меняется сам');
         $data = $request->validate([
             'user_ids' => ['required', 'array', 'min:1', 'max:200'],
             'user_ids.*' => ['integer', Rule::exists('users', 'id')],
@@ -239,7 +239,7 @@ class MessengerController extends Controller
         $me = $this->me($request);
         $this->membership($chat, $me);
         $this->groupOnly($chat);
-        abort_if(GeneralChat::is($chat), 422, 'В общем чате — все сотрудники портала, состав меняется сам');
+        abort_if(GeneralChat::isChannel($chat), 422, 'В канале портала — все сотрудники, состав меняется сам');
         if ($user->id !== $me->id) {
             $this->canManage($chat, $me);
         }
@@ -641,6 +641,7 @@ class MessengerController extends Controller
     private function canWrite(Chat $chat, User $me): void
     {
         abort_if(GeneralChat::is($chat) && ! Access::allows($me, 'messenger', 'general'), 403, 'В общий чат писать нельзя: нет права');
+        abort_if(GeneralChat::isChangelog($chat) && ! GeneralChat::canPublish($me), 403, 'В Changelog публикуют только владелец и администраторы');
     }
 
     /** Чат карточки — только тем, кто видит саму карточку. */
@@ -714,8 +715,11 @@ class MessengerController extends Controller
                 'entity' => $chat->entity,
                 /* Общий чат портала: обложка-ромб, всегда сверху, выйти нельзя. */
                 'general' => GeneralChat::is($chat),
-                /* Писать нельзя (общий чат без права) — поле ввода прячется. */
-                'readonly' => GeneralChat::is($chat) && ! Access::allows($me, 'messenger', 'general'),
+                /* Changelog: что нового в портале, посты в Markdown. */
+                'changelog' => GeneralChat::isChangelog($chat),
+                /* Писать нельзя (общий чат без права, Changelog не админу) — поле ввода прячется. */
+                'readonly' => (GeneralChat::is($chat) && ! Access::allows($me, 'messenger', 'general'))
+                    || (GeneralChat::isChangelog($chat) && ! GeneralChat::canPublish($me)),
                 'title' => $title,
                 'initials' => $peer ? $peer->initials() : self::initials((string) $title),
                 'hue' => $peer ? self::hue($peer->id) : self::hue($chat->id * 7 + 3),
@@ -741,7 +745,8 @@ class MessengerController extends Controller
         })->sortByDesc(fn ($one) => [$one['pinned'] ? 1 : 0, $one['at']])->values();
     }
 
-    private function message(Message $message): array
+    /** Сообщение для клиента (нужно и консоли: changelog:post). */
+    public function message(Message $message): array
     {
         $deleted = $message->trashed();
         $reactions = $message->reactions->groupBy('emoji')->map(fn ($rows, $emoji) => [
@@ -790,7 +795,12 @@ class MessengerController extends Controller
         if ($message->trashed()) {
             return 'Сообщение удалено';
         }
-        $text = trim(preg_replace('/\s+/u', ' ', (string) $message->body));
+        $body = (string) $message->body;
+        if ($message->chat_id && $message->user_id === null && $message->kind === 'text') {
+            /* Пост Changelog — Markdown: в превью без решёток, звёздочек и обратных кавычек. */
+            $body = preg_replace(['/^#{1,6}\s+/mu', '/^\s*[-*•]\s+/mu', '/[*_`]+/u', '/\[([^\]]+)\]\([^)]+\)/u'], ['', '', '', '$1'], $body);
+        }
+        $text = trim(preg_replace('/\s+/u', ' ', $body));
         if ($text === '' && isset($message->meta['gif'])) {
             $text = ($message->meta['gif']['type'] ?? 'gif') === 'sticker' ? 'Стикер' : 'GIF';
         } elseif ($text === '' && $message->relationLoaded('files') && $message->files->isNotEmpty()) {

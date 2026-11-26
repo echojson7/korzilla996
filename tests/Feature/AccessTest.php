@@ -96,7 +96,7 @@ class AccessTest extends TestCase
         $this->getJson("/api/profiles/{$intern->id}")->assertOk();
 
         $this->postJson('/api/messenger/chats', ['type' => 'group', 'title' => 'Мой чат'])->assertForbidden();
-        $this->postJson('/api/messenger/chats', ['type' => 'direct', 'user_id' => $boss->id])->assertCreated();
+        $this->postJson('/api/messenger/chats', ['type' => 'direct', 'user_id' => $boss->id])->assertSuccessful(); /* личный чат с коллегой уже заведён при появлении учётки */
         $general = GeneralChat::chat();
         $this->postJson("/api/messenger/chats/{$general->id}/messages", ['body' => 'Привет всем'])->assertForbidden();
         $this->postJson('/api/messenger/entity-chats', ['entity' => "task:{$foreign}", 'title' => 'Задача'])->assertNotFound();

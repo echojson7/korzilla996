@@ -46,6 +46,7 @@ import GifView from "./GifView.vue";
 import Popover from "../Popover.vue";
 import { apiUrl } from "../../lib/api";
 import { QUICK } from "../../lib/emoji";
+import { markdown as renderMarkdown } from "../../lib/markdown";
 import { person, meId, clock, fileSize, type ChatMessage, type ChatUser } from "../../lib/messenger";
 
 defineProps<{
@@ -59,6 +60,8 @@ defineProps<{
   menuOpen: boolean;
   read: boolean;
   readers?: ChatUser[];
+  /* Пост Changelog: текст — Markdown. */
+  markdown?: boolean;
 }>();
 const emit = defineEmits<{
   tap: [event: MouseEvent];
@@ -95,7 +98,7 @@ const emit = defineEmits<{
         ]"
       >
         <p v-if="head && author && !message.deleted" class="text-[13px] font-semibold" :style="{ color: `oklch(0.55 0.14 ${person(message.userId)?.hue ?? 220})` }">
-          {{ person(message.userId)?.name ?? "Сотрудник" }}
+          {{ message.userId ? person(message.userId)?.name ?? "Сотрудник" : "Korzilla 996" }}
         </p>
         <template v-if="message.deleted">Сообщение удалено</template>
         <template v-else>
@@ -126,7 +129,8 @@ const emit = defineEmits<{
           </component>
           <div v-if="message.pending && message.files.length && !message.failed" class="my-1 h-1 overflow-hidden rounded-full bg-black/10"><div class="h-full bg-accent transition-[width]" :style="{ width: `${Math.round((message.progress ?? 0) * 100)}%` }" /></div>
 
-          <p v-if="message.body" class="break-words whitespace-pre-wrap">
+          <div v-if="message.body && markdown" class="md-post break-words" v-html="renderMarkdown(message.body)" />
+          <p v-else-if="message.body" class="break-words whitespace-pre-wrap">
             <template v-for="(part, i) in parts(message.body)" :key="i"><a v-if="part.link" :href="part.text" target="_blank" rel="noopener noreferrer" class="link break-all" @click.stop>{{ part.text }}</a><span v-else-if="part.mention" class="font-medium text-accent">{{ part.text }}</span><template v-else>{{ part.text }}</template></template>
           </p>
         </template>

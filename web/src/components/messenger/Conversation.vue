@@ -410,7 +410,8 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
           <SystemLine v-if="group.system" :data-id="group.rows[0].message.id" :message="group.rows[0].message" />
           <div v-else class="mt-2.5 flex gap-2" :class="onRight(group.rows[0].message) ? 'flex-row-reverse' : ''">
             <div v-if="withAuthor(group.rows[0].message)" class="flex w-8 shrink-0 flex-col justify-end">
-              <a v-if="group.rows[0].message.userId" :href="href('/profile', { id: group.rows[0].message.userId })" class="sticky bottom-1 rounded-full" :aria-label="`Профиль: ${person(group.rows[0].message.userId)?.name ?? ''}`" @click.stop><ChatFace :user="person(group.rows[0].message.userId)" size="sm" /></a>
+              <ChatFace v-if="!group.rows[0].message.userId && chat?.changelog" :chat="chat" size="sm" class="sticky bottom-1" />
+              <a v-else-if="group.rows[0].message.userId" :href="href('/profile', { id: group.rows[0].message.userId })" class="sticky bottom-1 rounded-full" :aria-label="`Профиль: ${person(group.rows[0].message.userId)?.name ?? ''}`" @click.stop><ChatFace :user="person(group.rows[0].message.userId)" size="sm" /></a>
             </div>
             <div class="min-w-0 flex-1">
           <MessageRow
@@ -424,6 +425,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
             :menu-open="menu?.message.id === row.message.id"
             :read="readUpTo >= row.message.id"
             :readers="readersAt.get(row.message.id)"
+            :markdown="!!chat?.changelog"
             @tap="(event) => tap(row.message, event)"
             @quick="(event) => quickReply(row.message, event)"
             @leave="active = null"
@@ -449,7 +451,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
         </Transition>
       </div>
     </div>
-    <p v-if="chat?.readonly" class="relative z-10 mx-1.5 mb-1.5 rounded-2xl bg-surface/85 px-4 py-3 text-center text-sm text-muted shadow-sm backdrop-blur">В общий чат писать нельзя: так настроена ваша роль</p>
+    <p v-if="chat?.readonly" class="relative z-10 mx-1.5 mb-1.5 rounded-2xl bg-surface/85 px-4 py-3 text-center text-sm text-muted shadow-sm backdrop-blur">{{ chat.changelog ? "Здесь владелец и администраторы рассказывают, что нового в портале" : "В общий чат писать нельзя: так настроена ваша роль" }}</p>
     <Composer v-else class="relative z-10 mx-1.5 mb-1.5" ref="composer" :draft-key="chatId" :reply-to="replyTo" :editing="editing" @send="send" @gif="sendGifHere" @typing="sendTyping(chatId)" @save="save" @cancel="replyTo = null; editing = null" />
     </div>
 

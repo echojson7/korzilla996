@@ -67,3 +67,30 @@ Artisan::command('realtime:prune', function () {
 })->purpose('Убрать журнал real-time старше трёх суток');
 
 Schedule::command('realtime:prune')->hourly()->withoutOverlapping();
+
+/*
+ * Запись в канал «Changelog» мессенджера: Markdown из файла (или «-» —
+ * со стандартного ввода). Автор — сам портал, без сотрудника.
+ */
+Artisan::command('changelog:post {file : путь к .md или «-» для stdin}', function () {
+    $file = $this->argument('file');
+    $body = trim($file === '-' ? stream_get_contents(STDIN) : (is_file($file) ? file_get_contents($file) : ''));
+    if ($body === '') {
+        $this->error('Пустая запись: нужен непустой Markdown-файл.');
+
+        return 1;
+    }
+    if (mb_strlen($body) > 10000) {
+        $this->error('Слишком длинно: до 10 000 знаков.');
+
+        return 1;
+    }
+    \App\Support\GeneralChat::sync();
+    $chat = \App\Support\GeneralChat::chat(\App\Support\GeneralChat::CHANGELOG);
+    $message = $chat->messages()->create(['user_id' => null, 'kind' => 'text', 'body' => $body]);
+    $chat->update(['last_message_at' => $message->created_at]);
+    $payload = app(\App\Http\Controllers\MessengerController::class)->message($message->load(['files', 'reactions', 'replyTo']));
+    $ids = $chat->members()->pluck('user_id')->map(fn ($id) => (int) $id)->all();
+    \App\Support\Realtime::emit($ids, 'message', ['chatId' => $chat->id, 'message' => $payload, 'new' => true]);
+    $this->info("Опубликовано в Changelog: сообщение #{$message->id}");
+})->purpose('Опубликовать запись в канал Changelog');

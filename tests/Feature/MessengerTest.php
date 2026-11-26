@@ -168,12 +168,17 @@ class MessengerTest extends TestCase
         $anna = $make('Анна Общая');
         $boris = $make('Борис Общий');
 
-        $state = $this->actingAs($boris)->getJson('/api/messenger/chats')->assertOk()->json('data.chats');
-        $this->assertCount(1, $state);
+        $all = $this->actingAs($boris)->getJson('/api/messenger/chats')->assertOk()->json('data.chats');
+        /* Общий чат, Changelog и личный чат с новым коллегой. */
+        $this->assertCount(3, $all);
+        $direct = array_values(array_filter($all, fn ($chat) => $chat['type'] === 'direct'))[0];
+        $this->assertSame('Борис Общий теперь в команде', $direct['last']['text']);
+        $this->assertEqualsCanonicalizing([$anna->id, $boris->id], $direct['members']);
+        $state = array_values(array_filter($all, fn ($chat) => $chat['general']));
         $this->assertTrue($state[0]['general']);
         $this->assertSame('Общий чат', $state[0]['title']);
         $this->assertEqualsCanonicalizing([$anna->id, $boris->id], $state[0]['members']);
-        $this->assertSame('Борис Общий присоединяется к порталу', $state[0]['last']['text']);
+        $this->assertSame('Борис Общий теперь в команде', $state[0]['last']['text']);
         $id = $state[0]['id'];
 
         /* Выйти, исключить, добавить — нельзя; переименовать — только администратор. */
@@ -185,6 +190,31 @@ class MessengerTest extends TestCase
 
         /* Выключенная учётка выбывает. */
         $anna->update(['is_active' => false]);
-        $this->getJson('/api/messenger/chats')->assertJsonPath('data.chats.0.members', [$boris->id]);
+        $general = collect($this->getJson('/api/messenger/chats')->json('data.chats'))->firstWhere('general', true);
+        $this->assertSame([$boris->id], $general['members']);
+    }
+
+    public function test_changelog_channel_read_by_all_written_by_admins(): void
+    {
+        $make = fn (string $name, string $role) => User::query()->create(['name' => $name, 'email' => mb_strtolower(str_replace(' ', '.', $name)).'@c.ru', 'password' => 'secret-pass-123', 'is_active' => true, 'role' => $role]);
+        $owner = $make('Олег Главный', 'owner');
+        $staff = $make('Света Обычная', 'staff');
+
+        $this->artisan('changelog:post', ['file' => '/nonexistent.md'])->assertExitCode(1);
+        $path = tempnam(sys_get_temp_dir(), 'log');
+        file_put_contents($path, "## Мессенджер\n- **Общий чат** для всех");
+        $this->artisan('changelog:post', ['file' => $path])->assertExitCode(0);
+
+        $chats = collect($this->actingAs($staff)->getJson('/api/messenger/chats')->assertOk()->json('data.chats'));
+        $log = $chats->firstWhere('changelog', true);
+        $this->assertSame('Changelog', $log['title']);
+        $this->assertTrue($log['readonly']);
+        $this->assertSame(1, $log['unread']);
+        $this->getJson("/api/messenger/chats/{$log['id']}/messages")->assertJsonPath('data.messages.0.userId', null);
+        $this->postJson("/api/messenger/chats/{$log['id']}/messages", ['body' => 'привет'])->assertForbidden();
+        $this->deleteJson("/api/messenger/chats/{$log['id']}/members/{$staff->id}")->assertStatus(422);
+
+        $this->actingAs($owner)->getJson('/api/messenger/chats')->assertOk();
+        $this->postJson("/api/messenger/chats/{$log['id']}/messages", ['body' => '## Новое'])->assertCreated();
     }
 }

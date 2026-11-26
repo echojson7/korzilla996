@@ -33,6 +33,8 @@ export interface ChatItem {
   entity?: string | null;
   /* Общий чат портала: все сотрудники, обложка-ромб, всегда первым. */
   general?: boolean;
+  /* Канал «Changelog»: что нового в портале, посты в Markdown. */
+  changelog?: boolean;
   /* Писать нельзя: общий чат, а у роли нет права. */
   readonly?: boolean;
   title: string;
@@ -136,7 +138,7 @@ function restoreSnapshot() {
     const state = JSON.parse(raw) as { me: number; chats: ChatItem[]; people: ChatUser[] };
     meId.value = state.me;
     for (const one of state.people) people.set(one.id, one);
-    chats.value = state.chats;
+    chats.value = sortChats(state.chats);
     ready.value = true;
   } catch {
     /* битый снимок — просто ждём сервер */
@@ -152,7 +154,7 @@ interface Realtime {
 }
 let stamp = 0;
 let loadedOnce = false;
-const sortChats = (list: ChatItem[]) => list.sort((a, b) => Number(!!b.general) - Number(!!a.general) || Number(b.pinned) - Number(a.pinned) || b.at.localeCompare(a.at));
+const sortChats = (list: ChatItem[]) => list.sort((a, b) => Number(!!b.general) - Number(!!a.general) || Number(!!b.changelog) - Number(!!a.changelog) || Number(b.pinned) - Number(a.pinned) || b.at.localeCompare(a.at));
 
 async function applyChats(list: ChatItem[]) {
   if (list.some((chat) => chat.members.some((id) => !people.has(id)))) await loadPeople().catch(() => undefined);
@@ -165,7 +167,7 @@ async function applyChats(list: ChatItem[]) {
   }
   const gone = chats.value.filter((one) => !list.some((next) => next.id === one.id));
   for (const one of gone) threads.delete(one.id);
-  chats.value = list;
+  chats.value = sortChats(list);
   ready.value = true;
   loadedOnce = true;
   saveSnapshot();

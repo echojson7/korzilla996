@@ -31,7 +31,9 @@ const parts = computed<Part[] | null>(() => {
     case "watcher": return [...who, { text: " добавляет наблюдателем задачи " }, ...list(users.value)];
     case "removed": return [...who, { text: " исключает из чата " }, ...list(users.value)];
     case "left": return [...who, { text: " выходит из чата" }];
-    case "joined": return [...who, { text: " присоединяется к обсуждению" }];
+    case "joined": return [...who, { text: body.includes("к порталу") ? " теперь в команде 👋" : " присоединяется к обсуждению" }];
+    /* Новый сотрудник: в общем чате и в личном чате с каждым коллегой. */
+    case "team": return [...who, { text: " теперь в команде 👋" }];
     case "renamed": return [...who, { text: " переименовывает чат в " }, { strong: `«${String(props.message.meta?.title ?? "")}»` }];
     case "cover": return [...who, { text: body.includes("убирает") ? " убирает обложку чата" : " меняет обложку чата" }];
     default: return null;
