@@ -14,7 +14,7 @@ web/                       интерфейс: Vue 3 + Vite + Tailwind 4 + ст�
   src/pages/               обзор, сделки (канбан), задачи (канбан и таблица),
                            сотрудники, процессы
   src/lib/data.ts          демо-данные, пока их нет на сервере
-  public/bg/               фоны-фотографии (Unsplash License)
+  public/bg/               фоны (свои, web/scripts/backgrounds.py)
 public/portal/             готовая сборка web/ (коммитится: на стенде нет node)
 public/app/index.html      старый адрес, уводит на /portal/
 ```

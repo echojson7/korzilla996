@@ -1,6 +1,6 @@
-/* Внешний вид: светлая или тёмная тема и фон-фотография, как в Битрикс24.
-   Фото лежат в public/bg (Unsplash License): 1920 px для больших экранов,
-   1280 px для остальных и маленькая миниатюра для выбора. Пока фото
+/* Внешний вид: светлая или тёмная тема и фон-картинка, как в Битрикс24.
+   Фоны лежат в public/bg — свои, из web/scripts/backgrounds.py (без чужих
+   лицензий): 2560 px для больших экранов, 1280 px для остальных и миниатюра. Пока фото
    грузится, виден его средний цвет. Тот же выбор до первого кадра делает
    скрипт в index.html — держать их одинаковыми. */
 
@@ -13,15 +13,16 @@ export interface Backdrop {
   color: string;
 }
 export const BACKDROPS: Backdrop[] = [
-  { id: "fjord", name: "Горная долина", color: "rgb(85 105 111)" },
-  { id: "peaks", name: "Пики над облаками", color: "rgb(114 112 124)" },
-  { id: "forest", name: "Сосновый лес", color: "rgb(66 65 48)" },
-  { id: "alpine", name: "Скалы и луг", color: "rgb(78 78 62)" },
-  { id: "valley", name: "Зелёные холмы", color: "rgb(88 110 54)" },
-  { id: "hills", name: "Шотландия", color: "rgb(118 118 102)" },
-  { id: "coast", name: "Океан", color: "rgb(160 179 178)" },
+  { id: "synthwave", name: "Ретро-закат", color: "rgb(110 39 101)" },
+  { id: "dusk", name: "Горы на закате", color: "rgb(116 69 114)" },
+  { id: "aurora", name: "Северное сияние", color: "rgb(15 44 65)" },
+  { id: "waves", name: "Волны", color: "rgb(148 164 159)" },
+  { id: "dunes", name: "Дюны", color: "rgb(221 140 132)" },
+  { id: "nightforest", name: "Ночной лес", color: "rgb(37 51 97)" },
+  { id: "candy", name: "Конфетный градиент", color: "rgb(210 152 192)" },
+  { id: "lagoon", name: "Лагуна", color: "rgb(75 182 210)" },
 ];
-export const DEFAULT_BACKDROP = "fjord";
+export const DEFAULT_BACKDROP = "dusk";
 
 export type Theme = "light" | "dark" | "system";
 export const theme = local<Theme>("theme", "system");
