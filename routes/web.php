@@ -45,6 +45,7 @@ Route::prefix('api')->group(function () {
         Route::delete('messages/{message}', 'destroy');
         Route::post('messages/{message}/reactions', 'react');
         Route::post('messages/{message}/forward', 'forward');
+        Route::get('messages/{message}/views', 'views');
         Route::get('files/{file}', 'file');
     });
 

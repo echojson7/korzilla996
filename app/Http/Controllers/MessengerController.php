@@ -271,10 +271,29 @@ class MessengerController extends Controller
         $id = min((int) $data['id'], $last);
         if ($id > $member->last_read_id) {
             $member->update(['last_read_id' => $id]);
+            DB::table('chat_reads')->insert(['chat_id' => $chat->id, 'user_id' => $me->id, 'upto_id' => $id, 'created_at' => now()]);
             Realtime::emit($this->memberIds($chat), 'read', ['chatId' => $chat->id, 'userId' => $me->id, 'id' => $id]);
         }
 
         return response()->noContent();
+    }
+
+    /** Кто просмотрел сообщение и когда (кроме автора). */
+    public function views(Request $request, Message $message): JsonResponse
+    {
+        $me = $this->me($request);
+        $chat = $message->chat;
+        $this->membership($chat, $me);
+        $readers = ChatMember::query()->where('chat_id', $chat->id)->where('last_read_id', '>=', $message->id)
+            ->when($message->user_id, fn ($q) => $q->where('user_id', '!=', $message->user_id))->pluck('user_id');
+        $times = DB::table('chat_reads')->where('chat_id', $chat->id)->where('upto_id', '>=', $message->id)
+            ->whereIn('user_id', $readers)->groupBy('user_id')->selectRaw('user_id, min(created_at) as at')->pluck('at', 'user_id');
+        $rows = $readers->map(fn ($id) => [
+            'userId' => (int) $id,
+            'at' => isset($times[$id]) ? Carbon::parse($times[$id])->toIso8601String() : null,
+        ])->sortBy(fn ($row) => $row['at'] ?? '')->values();
+
+        return response()->json(['data' => $rows]);
     }
 
     public function uploadAvatar(Request $request, Chat $chat): JsonResponse
@@ -658,6 +677,8 @@ class MessengerController extends Controller
                 'pinned' => (bool) $mine[$chat->id]->is_pinned,
                 'lastReadId' => (int) $mine[$chat->id]->last_read_id,
                 'readUpTo' => (int) $others->max('last_read_id'),
+                /* До какого сообщения дочитал каждый — для аватарок под сообщениями. */
+                'reads' => $others->mapWithKeys(fn ($row) => [(string) $row->user_id => (int) $row->last_read_id])->all() ?: (object) [],
                 'unread' => (int) ($unread[$chat->id] ?? 0),
                 'last' => $message ? [
                     'id' => $message->id,

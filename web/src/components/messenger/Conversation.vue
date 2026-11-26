@@ -17,7 +17,7 @@ import { QUICK, remember } from "../../lib/emoji";
 import { plural } from "../../lib/format";
 import {
   chatById, threadOf, openThread, loadOlder, sendMessage, editMessage, deleteMessage, toggleReaction, markRead, togglePin, dropFailed,
-  typingIn, sendTyping, person, people, meId, focused, clock, dayLabel, fileSize, type ChatMessage, type ChatFile,
+  typingIn, sendTyping, person, people, meId, focused, clock, dayLabel, fileSize, type ChatMessage, type ChatFile, type ChatUser,
 } from "../../lib/messenger";
 import { toast } from "../../lib/toast";
 import { auth } from "../../lib/session";
@@ -58,6 +58,23 @@ const sub = computed(() => {
   const peer = person(one.peer);
   return [peer?.position, peer?.department].filter(Boolean).join(" · ") || "Личный чат";
 });
+/* Аватарки прочитавших — под последним своим сообщением, до которого
+   дочитал каждый, как в Битрикс24. */
+const readersAt = computed(() => {
+  const out = new Map<number, ChatUser[]>();
+  const own = thread.value.messages.filter((m) => m.userId === meId.value && !m.pending && !m.deleted && m.kind !== "system");
+  for (const [id, upto] of Object.entries(chat.value?.reads ?? {})) {
+    const who = person(Number(id));
+    if (!who || !upto) continue;
+    let target: ChatMessage | undefined;
+    for (let i = own.length - 1; i >= 0; i--) if (own[i].id <= upto) { target = own[i]; break; }
+    if (!target) continue;
+    if (!out.has(target.id)) out.set(target.id, []);
+    out.get(target.id)!.push(who);
+  }
+  return out;
+});
+const seenCount = (message: ChatMessage) => Object.entries(chat.value?.reads ?? {}).filter(([id, upto]) => upto >= message.id && Number(id) !== message.userId).length;
 const readUpTo = computed(() => Math.max(thread.value.readUpTo, chat.value?.readUpTo ?? 0));
 
 /* Лента: разделители дней и «шапка» у первого сообщения серии. */
@@ -199,9 +216,9 @@ function react(message: ChatMessage, emoji: string) {
   toggleReaction(message, emoji);
 }
 /* Меню действий: у кнопки «⋯» или в точке правого щелчка. */
-const menu = ref<{ message: ChatMessage; x: number; y: number } | null>(null);
+const menu = ref<{ message: ChatMessage; x: number; y: number; views?: boolean } | null>(null);
 const forwarding = ref<ChatMessage | null>(null);
-function openMenu(message: ChatMessage, event: MouseEvent) {
+function openMenu(message: ChatMessage, event: MouseEvent, views = false) {
   if (event.type === "contextmenu") {
     /* Свой текст можно выделить и скопировать штатно — в ссылке и выделении меню не мешаем. */
     if ((event.target as HTMLElement).closest("a") || String(window.getSelection() ?? "").trim()) return;
@@ -209,7 +226,7 @@ function openMenu(message: ChatMessage, event: MouseEvent) {
     menu.value = { message, x: event.clientX, y: event.clientY };
   } else {
     const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-    menu.value = { message, x: rect.left, y: rect.bottom + 6 };
+    menu.value = { message, x: rect.left, y: rect.bottom + 6, views };
   }
   active.value = null;
 }
@@ -404,7 +421,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
                   <template v-if="row.message.userId === meId && !row.message.deleted">
                     <AlertCircle v-if="row.message.failed" class="size-3.5 text-danger" />
                     <Clock v-else-if="row.message.pending" class="size-3" />
-                    <CheckCheck v-else-if="readUpTo >= row.message.id" class="size-3.5 text-accent" aria-label="Прочитано" />
+                    <CheckCheck v-else-if="readUpTo >= row.message.id" class="size-4 text-sky-500 dark:text-sky-400" aria-label="Прочитано" />
                     <Check v-else class="size-3.5" aria-label="Доставлено" />
                   </template>
                 </span>
@@ -427,6 +444,17 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
                   <span class="leading-none">{{ one.emoji }}</span><span class="text-xs font-medium tabular-nums">{{ one.users.length }}</span>
                 </button>
               </div>
+              <!-- Кто дочитал до этого сообщения. -->
+              <button
+                v-if="readersAt.get(row.message.id)?.length"
+                type="button"
+                class="mt-1 flex items-center -space-x-1.5 rounded-full p-0.5 transition hover:bg-black/5"
+                :title="`Просмотрели: ${readersAt.get(row.message.id)!.map((one) => one.name).join(', ')}`"
+                @click.stop="openMenu(row.message, $event, true)"
+              >
+                <ChatFace v-for="one in readersAt.get(row.message.id)!.slice(0, 3)" :key="one.id" :user="one" size="xs" class="!size-[18px] !text-[8px] ring-2 ring-[var(--surface-secondary)]" />
+                <span v-if="readersAt.get(row.message.id)!.length > 3" class="relative flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-default px-1 text-[10px] font-semibold text-muted ring-2 ring-[var(--surface-secondary)]">+{{ readersAt.get(row.message.id)!.length - 3 }}</span>
+              </button>
             </div>
 
             <!-- «⋯» сбоку пузыря: меню всех действий (то же — правый щелчок). -->
@@ -493,6 +521,8 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
       :y="menu.y"
       :mine="menu.message.userId === meId"
       :can-delete="canDelete(menu.message)"
+      :seen="menu.message.userId === meId ? seenCount(menu.message) : 0"
+      :start-views="!!menu.views"
       @close="menu = null"
       @react="(emoji) => { const m = menu!.message; menu = null; react(m, emoji); }"
       @reply="menuAction('reply')"

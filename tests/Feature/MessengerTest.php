@@ -144,4 +144,20 @@ class MessengerTest extends TestCase
         $this->get('/api/messenger/files/'.$copy['files'][0]['id'])->assertOk();
         $this->actingAs($boris)->getJson("/api/messenger/chats/{$foreign['id']}/messages")->assertJsonCount(0, 'data.messages');
     }
+
+    public function test_views_list_readers_with_time(): void
+    {
+        $anna = $this->user('Анна Иванова');
+        $boris = $this->user('Борис Петров');
+        $vera = $this->user('Вера Сидорова');
+        $chat = $this->actingAs($anna)->postJson('/api/messenger/chats', ['type' => 'group', 'title' => 'Продажи', 'user_ids' => [$boris->id, $vera->id]])->json('data');
+        $sent = $this->postJson("/api/messenger/chats/{$chat['id']}/messages", ['body' => 'Кто видел?'])->json('data');
+
+        $this->actingAs($boris)->postJson("/api/messenger/chats/{$chat['id']}/read", ['id' => $sent['id']])->assertNoContent();
+        $views = $this->actingAs($anna)->getJson("/api/messenger/messages/{$sent['id']}/views")->assertOk()->json('data');
+        $this->assertCount(1, $views);
+        $this->assertSame($boris->id, $views[0]['userId']);
+        $this->assertNotNull($views[0]['at']);
+        $this->getJson('/api/messenger/chats')->assertJsonPath('data.chats.0.reads.'.$boris->id, $sent['id']);
+    }
 }

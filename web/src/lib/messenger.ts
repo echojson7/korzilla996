@@ -34,6 +34,8 @@ export interface ChatItem {
   pinned: boolean;
   lastReadId: number;
   readUpTo: number;
+  /* До какого сообщения дочитал каждый из остальных: { userId: messageId }. */
+  reads?: Record<string, number>;
   unread: number;
   last: { id: number; userId: number | null; kind?: string; text: string; at: string } | null;
   at: string;
@@ -198,6 +200,7 @@ function handle(event: LiveEvent) {
       else reloadSoon();
     } else {
       chat.readUpTo = Math.max(chat.readUpTo, event.id);
+      chat.reads = { ...(chat.reads ?? {}), [event.userId]: Math.max(chat.reads?.[event.userId] ?? 0, event.id) };
       const one = threads.get(event.chatId);
       if (one) one.readUpTo = Math.max(one.readUpTo, event.id);
     }
@@ -501,6 +504,9 @@ export async function deleteMessage(message: ChatMessage) {
     toast(error instanceof ApiError ? error.first : "Не получилось удалить", "danger");
   }
 }
+
+/* Кто просмотрел сообщение и когда. */
+export const viewsOf = (messageId: number) => api<{ userId: number; at: string | null }[]>("GET", `messenger/messages/${messageId}/views`);
 
 export async function forwardMessage(message: ChatMessage, chatIds: number[]) {
   try {
