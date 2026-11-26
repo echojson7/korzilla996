@@ -33,7 +33,7 @@ const narrow = computed(() => props.collapsed && !props.mobileOpen);
   </Transition>
   <nav
     class="glass on-photo fixed inset-y-0 left-0 z-40 flex flex-col transition-[width,transform] duration-200 lg:static lg:z-auto lg:translate-x-0"
-    :class="[narrow ? 'w-[68px]' : 'w-[248px]', mobileOpen ? 'translate-x-0' : '-translate-x-full']"
+    :class="[narrow ? 'w-[68px]' : 'w-[224px]', mobileOpen ? 'translate-x-0' : '-translate-x-full']"
     aria-label="Разделы портала"
   >
     <div class="flex h-14 shrink-0 items-center gap-2.5 px-4">
