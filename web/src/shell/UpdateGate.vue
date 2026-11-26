@@ -1,9 +1,9 @@
 <!-- Korzilla 996 обновлена: окно поверх всего, интерфейс под ним недоступен,
-     пока страницу не перезагрузят. Через 30 с перезагрузка сама. -->
+     пока страницу не перезагрузят. Через 15 с перезагрузка сама. -->
 <script setup lang="ts">
 import { onMounted, ref, watch, nextTick } from "vue";
 
-const WAIT = 30;
+const WAIT = 15;
 import { RefreshCw } from "@lucide/vue";
 import { outdated, reloadFresh, watchUpdates } from "../lib/update";
 
