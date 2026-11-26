@@ -240,6 +240,24 @@ onMounted(load);
 /* Вернулись на вкладку — отметить прочитанным, что видно. */
 const onVisible = () => !document.hidden && read();
 onMounted(() => document.addEventListener("visibilitychange", onVisible));
+/* Поле ввода выросло (ответ, правка, файлы, длинный текст) — лента ниже
+   ужимается. Если стояли внизу, держим низ: последнее сообщение и строка
+   «печатает» не уходят под поле ввода. */
+let resize: ResizeObserver | null = null;
+let lastHeight = 0;
+onMounted(() => {
+  if (!scroller.value || typeof ResizeObserver === "undefined") return;
+  lastHeight = scroller.value.clientHeight;
+  resize = new ResizeObserver(() => {
+    const el = scroller.value;
+    if (!el) return;
+    const shrank = el.clientHeight < lastHeight;
+    lastHeight = el.clientHeight;
+    if (shrank && atBottom.value) el.scrollTop = el.scrollHeight;
+  });
+  resize.observe(scroller.value);
+});
+onBeforeUnmount(() => resize?.disconnect());
 onBeforeUnmount(() => document.removeEventListener("visibilitychange", onVisible));
 onBeforeUnmount(() => {
   if (focused.value === props.chatId) focused.value = null;
