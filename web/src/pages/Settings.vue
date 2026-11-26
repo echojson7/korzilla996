@@ -57,9 +57,9 @@ const text = ref("");
 const showOff = ref(false);
 const people = computed(() => {
   const words = text.value.trim().toLowerCase();
-  return (state.value?.users ?? []).filter((one) => (showOff.value || one.active) && (!words || `${one.name} ${one.email} ${one.position ?? ""} ${one.department ?? ""} ${one.roleLabel}`.toLowerCase().includes(words)));
+  return (state.value?.users ?? []).filter((one) => (showOff.value || !one.fired) && (!words || `${one.name} ${one.email} ${one.position ?? ""} ${one.department ?? ""} ${one.roleLabel}`.toLowerCase().includes(words)));
 });
-const offCount = computed(() => state.value?.users.filter((one) => !one.active).length ?? 0);
+const offCount = computed(() => state.value?.users.filter((one) => one.fired).length ?? 0);
 const ownersLeft = computed(() => state.value?.users.filter((one) => one.active && one.role === "owner").length ?? 0);
 
 /* Что можно сделать с учёткой: владельцев трогает только владелец. */
@@ -264,7 +264,7 @@ const usersOf = (role: RoleItem) => plural(role.users, "сотрудник", "с
         <Segmented label="Раздел настроек" :items="tabs" :model-value="tab" @update:model-value="(key) => setQuery({ tab: key === 'staff' ? null : key })" />
         <template v-if="tab === 'staff' && state">
           <SearchBox v-model="text" placeholder="Имя, логин, отдел или роль" class="w-full min-w-0 sm:w-auto sm:flex-1" />
-          <button v-if="offCount" type="button" class="button button--secondary button--sm" @click="showOff = !showOff">{{ showOff ? "Скрыть выключенных" : `Выключенные: ${offCount}` }}</button>
+          <button v-if="offCount" type="button" class="button button--secondary button--sm" @click="showOff = !showOff">{{ showOff ? "Скрыть уволенных" : `Уволенные: ${offCount}` }}</button>
           <button type="button" class="button button--primary button--sm ml-auto" @click="openAdd"><Plus class="size-4" />Сотрудник</button>
         </template>
         <button v-else-if="tab === 'roles' && state" type="button" class="button button--primary button--sm ml-auto" @click="openCreate"><Plus class="size-4" />Новая роль</button>

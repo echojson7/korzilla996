@@ -1,4 +1,6 @@
-<!-- Сотрудники: настоящие учётки портала (staff:create), без выключенных.
+<!-- Сотрудники: все учётки портала, кроме уволенных (они — вкладкой
+     «Уволенные», как в Битрикс24). Выключенные без пометки — с чипом
+     «Нет входа»: заведены (например, из Битрикса), но ещё не включены.
      Отделы вкладками — из поля «отдел» учёток, карточки или таблица, поиск
      по имени, должности и почте. Щелчок открывает профиль. -->
 <script setup lang="ts">
@@ -33,7 +35,14 @@ onMounted(async () => {
   }
 });
 
-const staff = computed(() => [...people.values()].filter((one) => one.active).sort((a, b) => a.name.localeCompare(b.name, "ru")));
+const fired = computed(() => route.value.query.get("fired") === "1");
+const working = computed(() => [...people.values()].filter((one) => !one.fired).length);
+const firedCount = computed(() => [...people.values()].filter((one) => one.fired).length);
+const STATES = computed(() => [
+  { key: "0", label: "Работают", count: working.value },
+  { key: "1", label: "Уволенные", count: firedCount.value },
+]);
+const staff = computed(() => [...people.values()].filter((one) => !!one.fired === fired.value).sort((a, b) => a.name.localeCompare(b.name, "ru")));
 const deptOf = (one: ChatUser) => one.department?.trim() || NO_DEPT;
 const departments = computed(() => [...new Set(staff.value.map(deptOf))].sort((a, b) => (a === NO_DEPT ? 1 : b === NO_DEPT ? -1 : a.localeCompare(b, "ru"))));
 const roleOf = (one: ChatUser) => one.roleLabel ?? ROLE[one.role ?? "staff"] ?? ROLE.staff;
@@ -83,6 +92,7 @@ async function write(one: ChatUser) {
   <div class="flex h-full min-h-0 flex-col">
     <PageHead title="Сотрудники" :sub="loading ? 'Загрузка…' : sub">
       <template #toolbar>
+        <Segmented v-if="firedCount" label="Сотрудники" :items="STATES" :model-value="fired ? '1' : '0'" @update:model-value="(key) => setQuery({ fired: key === '1' ? '1' : null, dept: null })" />
         <Segmented v-if="departments.length > 1" label="Отделы" :items="tabs" :model-value="dept" @update:model-value="(key) => setQuery({ dept: key === 'all' ? null : key })" />
         <SearchBox v-model="text" placeholder="Имя, должность или почта" class="w-full min-w-0 sm:w-auto sm:flex-1" />
         <div class="toggle-button-group toggle-button-group--horizontal" role="radiogroup" aria-label="Вид">
@@ -103,10 +113,12 @@ async function write(one: ChatUser) {
           <span class="pointer-events-none mt-3 flex flex-wrap justify-center gap-1.5">
             <span v-if="one.status" class="chip chip--sm chip--soft chip--accent"><span class="chip__label">{{ one.status.emoji }} {{ one.status.text }}</span></span>
             <span v-else class="chip chip--sm chip--soft" :class="one.role === 'staff' ? 'chip--default' : 'chip--accent'"><span class="chip__label">{{ roleOf(one) }}</span></span>
+            <span v-if="one.fired" class="chip chip--sm chip--soft chip--danger"><span class="chip__label">Уволен</span></span>
+            <span v-else-if="!one.active" class="chip chip--sm chip--soft chip--warning" title="Учётка заведена, но выключена: включить можно в «Настройках»"><span class="chip__label">Нет входа</span></span>
             <span v-if="one.id === meId" class="chip chip--sm chip--soft chip--success"><span class="chip__label">Это вы</span></span>
             <span v-else-if="daysToBirthday(one.birthday) === 0" class="chip chip--sm chip--soft chip--success"><span class="chip__label">🎂 День рождения</span></span>
           </span>
-          <button v-if="one.id !== meId" type="button" class="button button--ghost button--sm button--icon-only absolute top-2 right-2 opacity-0 transition group-hover:opacity-100 focus:opacity-100" :aria-label="`Написать: ${one.name}`" title="Написать" @click="write(one)"><MessageSquare class="size-4" /></button>
+          <button v-if="one.id !== meId && one.active" type="button" class="button button--ghost button--sm button--icon-only absolute top-2 right-2 opacity-0 transition group-hover:opacity-100 focus:opacity-100" :aria-label="`Написать: ${one.name}`" title="Написать" @click="write(one)"><MessageSquare class="size-4" /></button>
         </div>
       </div>
       <DataTable v-else :columns="TABLE" :rows="visible" :key-of="(one) => String(one.id)" label="Сотрудники" class="sheet" @open="open">
@@ -118,7 +130,7 @@ async function write(one: ChatUser) {
         </template>
         <template #dept="{ row }">{{ deptOf(row) }}</template>
         <template #email="{ row }"><a v-if="isMail(row.email)" :href="`mailto:${row.email}`" class="link" @click.stop>{{ row.email }}</a><span v-else class="text-muted">{{ row.email }}</span></template>
-        <template #role="{ row }">{{ roleOf(row) }}</template>
+        <template #role="{ row }"><span class="inline-flex items-center gap-1.5">{{ roleOf(row) }}<span v-if="row.fired" class="chip chip--sm chip--soft chip--danger"><span class="chip__label">Уволен</span></span><span v-else-if="!row.active" class="chip chip--sm chip--soft chip--warning"><span class="chip__label">Нет входа</span></span></span></template>
       </DataTable>
       <p v-if="!loading && !visible.length" class="on-photo py-16 text-center">{{ failed ? "Не получилось загрузить сотрудников" : !enabled ? "Сотрудники видны после входа" : "Никого не нашлось" }}</p>
     </div>
