@@ -27,7 +27,7 @@ function grow() {
   const el = box.value;
   if (!el) return;
   el.style.height = "auto";
-  el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
+  el.style.height = `${Math.min(Math.max(el.scrollHeight, 60), 220)}px`;
 }
 watch(text, () => nextTick(grow));
 
@@ -118,7 +118,7 @@ function onPick(event: Event) {
 </script>
 
 <template>
-  <div class="border-t border-separator bg-surface px-2 py-1.5" @click.self="box?.focus()">
+  <div class="rounded-2xl bg-surface px-2 py-2 shadow-[0_2px_12px_-2px_rgb(0_0_0/0.14)] ring-1 ring-black/5 dark:ring-white/10" @click.self="box?.focus()">
     <div v-if="editing || replyTo" class="mx-1 mt-0.5 mb-1.5 flex items-center gap-2 rounded-xl bg-surface-secondary px-3 py-2 text-sm">
       <Pencil v-if="editing" class="size-4 shrink-0 text-accent" />
       <Reply v-else class="size-4 shrink-0 text-accent" />
@@ -149,7 +149,7 @@ function onPick(event: Event) {
         ref="box"
         v-model="text"
         rows="1"
-        class="thin-scroll block max-h-[200px] min-h-10 min-w-0 flex-1 resize-none bg-transparent px-1 py-2.5 text-[15px] leading-5 outline-none placeholder:text-muted"
+        class="thin-scroll block max-h-[220px] min-h-[60px] min-w-0 flex-1 resize-none bg-transparent px-1 py-2.5 text-[15px] leading-5 outline-none placeholder:text-muted"
         :class="editing ? 'pl-3' : ''"
         placeholder="Напишите сообщение…"
         aria-label="Сообщение"
