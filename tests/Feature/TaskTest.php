@@ -123,6 +123,7 @@ class TaskTest extends TestCase
         $this->getJson("/api/tasks/{$id}")->assertJsonPath('data.auditors', [$gleb->id])->assertJsonPath('data.responsibleId', $boris->id);
         $this->actingAs($gleb)->getJson('/api/tasks')->assertJsonCount(1, 'data.tasks');
         $this->getJson("/api/messenger/chats/{$chat}/messages")->assertOk();
+        $this->assertDatabaseHas('realtime_events', ['user_id' => $gleb->id, 'type' => 'task', 'entity_id' => $id]);
 
         /* Повторное упоминание ничего не дублирует. */
         $this->actingAs($anna)->postJson("/api/messenger/chats/{$chat}/messages", ['body' => 'Ещё раз @Глеб'])->assertCreated();

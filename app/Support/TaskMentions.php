@@ -9,6 +9,7 @@ use App\Models\TaskHistory;
 use App\Models\TaskMember;
 use App\Models\User;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Упомянули человека (@Имя) в чате задачи — он становится наблюдателем,
@@ -55,6 +56,15 @@ class TaskMentions
             'task_id' => $task->id, 'user_id' => $me->id, 'field' => 'auditors',
             'old' => $names($before), 'new' => $names($before->merge($added->pluck('id'))),
         ]);
+
+        /* Как правка задачи через её API: версия растёт, участники и
+           администраторы получают событие task (см. BroadcastTaskChanges). */
+        DB::table('tasks')->where('id', $task->id)->increment('version');
+        $byUser = [];
+        foreach (array_unique(array_merge($had, $added->pluck('id')->all(), Realtime::admins())) as $userId) {
+            $byUser[$userId] = [$task->id];
+        }
+        Realtime::changed('task', $byUser);
 
         return $added->all();
     }
