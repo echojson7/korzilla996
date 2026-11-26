@@ -4,10 +4,11 @@
      добавление: Enter добавляет и оставляет поле для следующей, Esc закрывает.
      Перетаскивание — своё, на событиях указателя, без библиотек. -->
 <script setup lang="ts" generic="T">
-import { nextTick, onBeforeUnmount, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, ref } from "vue";
 import { Plus } from "@lucide/vue";
 
 import type { BoardColumn } from "../lib/move";
+import { useReveal } from "../lib/reveal";
 
 type Key = number | string;
 
@@ -34,12 +35,24 @@ const board = ref<HTMLElement | null>(null);
 const lists = new Map<string, HTMLElement>();
 const sections = new Map<string, HTMLElement>();
 
-const inColumn = (id: string) => props.items.filter((item) => props.columnOf(item) === id);
+/* Раскладка по колонкам — один проход по списку, а не по проходу на
+   каждую колонку и каждый вызов. */
+const grouped = computed(() => {
+  const map = new Map<string, T[]>();
+  for (const column of props.columns) map.set(column.id, []);
+  for (const item of props.items) map.get(props.columnOf(item))?.push(item);
+  return map;
+});
+const inColumn = (id: string) => grouped.value.get(id) ?? [];
+/* В колонке сначала 40 карточек, дальше — по прокрутке. */
+const reveal = useReveal(40);
 /* Строки колонки: карточки и, пока тянут, пустой слот на месте вставки. */
 function rowsOf(id: string): { key: string; slot: boolean; item?: T }[] {
   const rows: { key: string; slot: boolean; item?: T }[] = [];
   const target = dragging.value != null && over.value?.column === id ? over.value : null;
-  for (const item of inColumn(id)) {
+  const all = inColumn(id);
+  const shown = all.slice(0, reveal.limit(id));
+  for (const item of shown) {
     if (target && target.before === props.keyOf(item)) rows.push({ key: "__slot", slot: true });
     rows.push({ key: `i:${props.keyOf(item)}`, slot: false, item });
   }
@@ -282,6 +295,9 @@ defineExpose({ openAdd });
             </div>
           </li>
         </template>
+        <li v-if="inColumn(column.id).length > reveal.limit(column.id) && dragging == null" key="__more" :ref="reveal.mark(column.id)" :data-more="column.id" class="text-center">
+          <button type="button" class="button button--ghost button--sm on-photo" @click="reveal.more(column.id)">Ещё {{ inColumn(column.id).length - reveal.limit(column.id) }}</button>
+        </li>
         <li v-if="!inColumn(column.id).filter((item) => keyOf(item) !== dragging).length && !(dragging != null && over?.column === column.id)" key="__empty" class="on-photo py-6 text-center text-sm opacity-75">Пусто</li>
       </TransitionGroup>
     </section>

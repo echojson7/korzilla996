@@ -5,6 +5,7 @@ import { computed, ref } from "vue";
 import { ChevronDown } from "@lucide/vue";
 
 import type { Column } from "../lib/move";
+import { useReveal } from "../lib/reveal";
 
 const props = defineProps<{ columns: Column<T>[]; rows: T[]; keyOf: (row: T) => string | number; label: string }>();
 const emit = defineEmits<{ open: [row: T] }>();
@@ -21,6 +22,9 @@ const sorted = computed(() => {
     return desc.value ? -order : order;
   });
 });
+/* Тысячи строк не рисуем разом: сотня, дальше — по прокрутке. */
+const reveal = useReveal(100);
+const rendered = computed(() => sorted.value.slice(0, reveal.limit()));
 function toggle(column: Column<T>) {
   if (!column.sort) return;
   if (sortKey.value === column.key) desc.value = !desc.value;
@@ -54,9 +58,14 @@ function toggle(column: Column<T>) {
           </tr>
         </thead>
         <tbody class="table__body">
-          <tr v-for="row in sorted" :key="keyOf(row)" class="table__row cursor-pointer" tabindex="0" @click="emit('open', row)" @keydown.enter="emit('open', row)">
+          <tr v-for="row in rendered" :key="keyOf(row)" class="table__row cursor-pointer" tabindex="0" @click="emit('open', row)" @keydown.enter="emit('open', row)">
             <td v-for="column in columns" :key="column.key" class="table__cell" :class="column.class">
               <slot :name="column.key" :row="row" />
+            </td>
+          </tr>
+          <tr v-if="sorted.length > rendered.length" :ref="reveal.mark()" data-more="">
+            <td :colspan="columns.length" class="table__cell text-center">
+              <button type="button" class="button button--ghost button--sm" @click="reveal.more()">Показать ещё ({{ sorted.length - rendered.length }})</button>
             </td>
           </tr>
         </tbody>

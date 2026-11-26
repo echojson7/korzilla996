@@ -68,10 +68,12 @@ watch(() => props.taskId, (id) => {
   }
 }, { immediate: true });
 
-/* Кто-то поменял задачу — список это увидел опросом, подтягиваем карточку. */
+/* Кто-то поменял задачу — список узнал об этом из real-time, подтягиваем карточку. */
 const listed = computed(() => taskStore.list.find((one) => one.id === props.taskId));
-watch(() => listed.value?.updatedAt, (next) => {
-  if (next && task.value && next !== task.value.updatedAt && !saving.value) load(task.value.id);
+watch(() => listed.value && { version: listed.value.version, at: listed.value.updatedAt }, (next) => {
+  const t = task.value;
+  if (!next || !t || saving.value) return;
+  if ((next.version ?? 0) > (t.version ?? 0) || (next.version == null && next.at !== t.updatedAt)) load(t.id);
 });
 
 /* Значения для показа — из задачи или из черновика. */

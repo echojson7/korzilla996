@@ -1,12 +1,14 @@
 /* Задачи с сервера (как в Битрикс24): список видимых мне задач, открытая
-   задача целиком и действия с ней. Список обновляется опросом, пока
-   вкладка открыта. Люди — общий справочник сотрудников мессенджера. */
+   задача целиком и действия с ней. Список живой: по событию task из
+   общего канала (lib/realtime.ts) догружаются только поменявшиеся задачи,
+   номер version не даёт старому ответу перетереть свежий. Люди — общий справочник сотрудников мессенджера. */
 
 import { computed, reactive, watch } from "vue";
 import { api, upload } from "./api";
 import { auth } from "./session";
 import { people, loadPeople, person, type ChatUser } from "./messenger";
 import { DAY, startOfDay } from "./format";
+import { on, startRealtime } from "./realtime";
 
 export type Status = "pending" | "work" | "review" | "deferred" | "done";
 export type Priority = "low" | "normal" | "high";
@@ -51,6 +53,8 @@ export interface TaskBrief {
   completedAt: string | null;
   createdAt: string | null;
   updatedAt: string | null;
+  /* Номер правки: растёт с каждым изменением задачи. */
+  version?: number;
 }
 export interface CheckItem { id: number; title: string; done: boolean; doneBy: number | null; sort: number }
 export interface TaskFileItem { id: number; name: string; size: number; mime: string | null; image: boolean; userId: number | null; url: string; at: string | null }
@@ -122,11 +126,43 @@ export function startTasks() {
   started = true;
   if (!people.size) loadPeople().catch(() => undefined);
   loadTasks().catch((error) => (taskStore.error = error instanceof Error ? error.message : "Задачи не загрузились"));
-  const tick = async () => {
-    if (!document.hidden && !busy) await loadTasks().catch(() => undefined);
-    window.setTimeout(tick, document.hidden ? 60_000 : 15_000);
-  };
-  window.setTimeout(tick, 15_000);
+  on("task", (event) => {
+    for (const id of event.ids ?? []) pending.add(id);
+    flushSoon();
+  });
+  on("reset", () => void loadTasks().catch(() => undefined));
+  startRealtime();
+  /* Страховка: раз в 5 минут список целиком, если вкладка на виду. */
+  window.setInterval(() => {
+    if (!document.hidden && !busy) loadTasks().catch(() => undefined);
+  }, 300_000);
+}
+
+/* События склеиваются: десяток правок подряд — один запрос за ними. */
+const pending = new Set<number>();
+let flushTimer = 0;
+function flushSoon(delay = 80) {
+  clearTimeout(flushTimer);
+  flushTimer = window.setTimeout(flush, delay);
+}
+async function flush() {
+  if (busy) return flushSoon(150);
+  const ids = [...pending];
+  pending.clear();
+  for (let at = 0; at < ids.length; at += 200) {
+    const chunk = ids.slice(at, at + 200);
+    try {
+      const { tasks } = await api<{ tasks: TaskBrief[] }>("GET", `tasks?ids=${chunk.join(",")}`);
+      const got = new Map(tasks.map((one) => [one.id, one]));
+      for (const one of tasks) upsert(one);
+      /* Не вернулась — удалили или меня убрали из участников. */
+      const gone = new Set(chunk.filter((id) => !got.has(id)));
+      if (gone.size) taskStore.list = taskStore.list.filter((one) => !gone.has(one.id));
+    } catch {
+      for (const id of chunk) pending.add(id);
+      flushSoon(3_000);
+    }
+  }
 }
 /* Пока идёт своё действие — опрос не перетирает оптимистичный список. */
 let busy = 0;
@@ -142,13 +178,15 @@ async function act<T>(run: () => Promise<T>): Promise<T> {
 /* Обновить строку списка по ответу сервера. */
 export function upsert(one: TaskBrief) {
   const at = taskStore.list.findIndex((task) => task.id === one.id);
+  /* Пришло старше того, что уже есть, — ответы перепутались, пропускаем. */
+  if (at >= 0 && (taskStore.list[at].version ?? 0) > (one.version ?? 0)) return;
   const brief = { ...one } as TaskBrief & Partial<TaskFull>;
   for (const key of ["description", "checklistItems", "fileItems", "commentItems", "timeItems", "historyItems", "childItems", "parent", "can"] as const) delete brief[key];
   if (at >= 0) taskStore.list[at] = brief;
   else taskStore.list.unshift(brief);
   for (const child of (one as TaskFull).childItems ?? []) {
     const i = taskStore.list.findIndex((task) => task.id === child.id);
-    if (i >= 0) taskStore.list[i] = child;
+    if (i >= 0 && (taskStore.list[i].version ?? 0) <= (child.version ?? 0)) taskStore.list[i] = child;
   }
   if ((one as TaskFull).project && !taskStore.projects.includes((one as TaskFull).project!)) taskStore.projects.push((one as TaskFull).project!);
   for (const tag of one.tags) if (!taskStore.tags.includes(tag)) taskStore.tags.push(tag);

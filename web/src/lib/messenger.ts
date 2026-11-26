@@ -212,7 +212,10 @@ type LiveEvent =
   | { type: "read"; chatId: number; userId: number; id: number }
   | { type: "typing"; chatId: number; userId: number };
 
+const OWN = new Set(["message", "chat", "read", "typing"]);
 function handle(event: LiveEvent) {
+  /* В общей теме идут и события других разделов (task…) — не наши. */
+  if (!OWN.has(event.type)) return;
   const chat = chatById(event.chatId);
   if (event.type === "typing") return setTyping(event.chatId, event.userId);
   if (event.type === "chat" || !chat) return reloadSoon();

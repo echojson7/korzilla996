@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MessengerController;
+use App\Http\Controllers\RealtimeController;
 use App\Http\Controllers\TaskController;
+use App\Http\Middleware\BroadcastTaskChanges;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -17,6 +19,9 @@ Route::prefix('api')->group(function () {
     Route::get('auth', [AuthController::class, 'show']);
     Route::post('auth/login', [AuthController::class, 'login']);
     Route::post('auth/logout', [AuthController::class, 'logout']);
+
+    /* Общий канал обновлений (real-time), см. App\Support\Realtime. */
+    Route::get('realtime', [RealtimeController::class, 'sync'])->middleware('auth');
 
     /* Мессенджер: только для вошедших. */
     Route::prefix('messenger')->middleware('auth')->controller(MessengerController::class)->group(function () {
@@ -43,7 +48,7 @@ Route::prefix('api')->group(function () {
     });
 
     /* Задачи: только для вошедших. */
-    Route::middleware('auth')->controller(TaskController::class)->group(function () {
+    Route::middleware(['auth', BroadcastTaskChanges::class])->controller(TaskController::class)->group(function () {
         Route::get('tasks', 'index');
         Route::post('tasks', 'store');
         Route::get('tasks/{task}', 'show');

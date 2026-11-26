@@ -2,12 +2,18 @@
 
 namespace App\Support;
 
+use App\Models\User;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Доставка событий мессенджера.
+ * Real-time для всего портала: мессенджер, задачи, дальше — сделки.
+ * Один транспорт, одна закрытая тема у каждого сотрудника, события разных
+ * типов (message, chat, read, typing, task, …).
+ *
+ * Мессенджер:
  *
  * 1. Метка изменений у каждого сотрудника (кэш): лёгкий опрос
  *    GET messenger/sync?v=… сразу отвечает «ничего нового», пока метка
@@ -17,6 +23,11 @@ use Illuminate\Support\Facades\Log;
  *    и закрытая: подписаться на неё можно только с его токеном.
  *
  * Без Mercure всё работает на опросе, просто с задержкой в секунду-две.
+ *
+ * Записи (задачи и т. п.): changed() пишет журнал realtime_events на
+ * каждого, кто видит запись, и шлёт в Mercure {type, ev, ids}. Браузер
+ * по ids забирает свежие данные, а по журналу (GET realtime?after=ev)
+ * догружает всё, что пропустил, пока не было связи.
  */
 class Realtime
 {
@@ -44,8 +55,17 @@ class Realtime
         if (! self::enabled()) {
             return;
         }
-        $topics = $ids->map(fn ($id) => self::topic($id))->all();
-        $payload = json_encode(['type' => $type] + $data, JSON_UNESCAPED_UNICODE);
+        self::send($ids->all(), ['type' => $type] + $data);
+    }
+
+    /** В Mercure: одно событие в темы этих сотрудников. */
+    private static function send(array $userIds, array $event): void
+    {
+        if (! self::enabled() || ! $userIds) {
+            return;
+        }
+        $topics = array_map(fn ($id) => self::topic((int) $id), $userIds);
+        $payload = json_encode($event, JSON_UNESCAPED_UNICODE);
         try {
             if (function_exists('mercure_publish')) {
                 mercure_publish($topics, $payload, true);
@@ -81,7 +101,93 @@ class Realtime
 
     public static function topic(int $userId): string
     {
-        return 'https://korzilla996/messenger/user/'.$userId;
+        return 'https://korzilla996/user/'.$userId;
+    }
+
+    /* ---------- Записи: журнал изменений ---------- */
+
+    /** Журнал хранится трое суток: кто был без связи дольше — грузит всё заново. */
+    private const KEEP_HOURS = 72;
+
+    /**
+     * Записи type с ids поменялись: каждому из $byUser (id сотрудника =>
+     * id записей) — строка в журнал и событие в Mercure.
+     *
+     * @param  array<int, int[]>  $byUser
+     */
+    public static function changed(string $type, array $byUser): void
+    {
+        $now = now();
+        foreach ($byUser as $userId => $ids) {
+            $ids = array_values(array_unique(array_map('intval', $ids)));
+            if (! $ids) {
+                continue;
+            }
+            DB::table('realtime_events')->insert(array_map(
+                fn ($id) => ['user_id' => $userId, 'type' => $type, 'entity_id' => $id, 'created_at' => $now], $ids,
+            ));
+            $ev = (int) DB::table('realtime_events')->where('user_id', $userId)->max('id');
+            Cache::put(self::lastKey($userId), $ev, now()->addHours(self::KEEP_HOURS));
+            self::send([$userId], ['type' => $type, 'ev' => $ev, 'ids' => $ids]);
+        }
+        if (random_int(1, 200) === 1) {
+            self::prune();
+        }
+    }
+
+    /**
+     * Что поменялось у сотрудника после события $after.
+     * $after = null — только узнать номер последнего события (старт вкладки).
+     * reset — пропущено слишком много (или журнал уже почищен): грузить всё.
+     *
+     * @return array{last: int, changes: array<string, int[]>, reset: bool}
+     */
+    public static function since(int $userId, ?int $after): array
+    {
+        $cached = Cache::get(self::lastKey($userId));
+        if ($after !== null && $cached !== null && (int) $cached <= $after) {
+            return ['last' => $after, 'changes' => [], 'reset' => false];
+        }
+        $last = (int) DB::table('realtime_events')->where('user_id', $userId)->max('id');
+        Cache::put(self::lastKey($userId), $last, now()->addHours(self::KEEP_HOURS));
+        if ($after === null || $last <= $after) {
+            return ['last' => max($last, (int) $after), 'changes' => [], 'reset' => false];
+        }
+        if ($after < (int) Cache::get('realtime:floor', 0)) {
+            return ['last' => $last, 'changes' => [], 'reset' => true];
+        }
+        $rows = DB::table('realtime_events')->where('user_id', $userId)->where('id', '>', $after)
+            ->orderBy('id')->limit(2001)->get(['id', 'type', 'entity_id']);
+        if ($rows->count() > 2000) {
+            return ['last' => $last, 'changes' => [], 'reset' => true];
+        }
+        $changes = [];
+        foreach ($rows as $row) {
+            $changes[$row->type][(int) $row->entity_id] = (int) $row->entity_id;
+        }
+
+        return ['last' => (int) $rows->last()->id, 'changes' => array_map('array_values', $changes), 'reset' => false];
+    }
+
+    /** Сотрудники, которые видят всё (владелец, администраторы). */
+    public static function admins(): array
+    {
+        return Cache::remember('realtime:admins', 60, fn () => User::query()
+            ->whereIn('role', ['owner', 'admin'])->where('is_active', true)->pluck('id')->map(fn ($id) => (int) $id)->all());
+    }
+
+    private static function prune(): void
+    {
+        $edge = DB::table('realtime_events')->where('created_at', '<', now()->subHours(self::KEEP_HOURS))->max('id');
+        if ($edge) {
+            DB::table('realtime_events')->where('id', '<=', $edge)->delete();
+            Cache::forever('realtime:floor', (int) $edge);
+        }
+    }
+
+    private static function lastKey(int $userId): string
+    {
+        return 'realtime:last:'.$userId;
     }
 
     private static function key(int $userId): string

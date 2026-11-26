@@ -52,6 +52,14 @@ class TaskController extends Controller
             $query->where(fn ($q) => $q->where('creator_id', $me->id)->orWhere('responsible_id', $me->id)
                 ->orWhereIn('id', TaskMember::query()->select('task_id')->where('user_id', $me->id)));
         }
+        /* ids=1,2,3 — только эти задачи (догрузка по событиям real-time). */
+        if ($request->filled('ids')) {
+            $ids = array_slice(array_filter(array_map('intval', explode(',', (string) $request->input('ids')))), 0, 500);
+
+            return response()->json(['data' => [
+                'tasks' => $query->whereIn('id', $ids)->get()->map(fn (Task $task) => $this->brief($task)),
+            ]]);
+        }
         $tasks = $query->orderBy('sort')->orderByDesc('id')->get();
         $running = TaskTime::query()->where('user_id', $me->id)->whereNull('stopped_at')->first();
 
@@ -657,6 +665,7 @@ class TaskController extends Controller
             'completedAt' => $task->completed_at?->toIso8601String(),
             'createdAt' => $task->created_at?->toIso8601String(),
             'updatedAt' => $task->updated_at?->toIso8601String(),
+            'version' => (int) $task->version,
         ];
     }
 
