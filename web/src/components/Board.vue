@@ -54,6 +54,9 @@ function rowsOf(id: string): { key: string; slot: boolean; item?: T }[] {
   const shown = all.slice(0, reveal.limit(id));
   for (const item of shown) {
     if (target && target.before === props.keyOf(item)) rows.push({ key: "__slot", slot: true });
+    // Перетаскиваемую карточку убираем из списка, а не прячем: у скрытого
+    // элемента нулевые координаты, и после броска анимация вела бы его из угла.
+    if (dragging.value === props.keyOf(item)) continue;
     rows.push({ key: `i:${props.keyOf(item)}`, slot: false, item });
   }
   if (target && target.before == null) rows.push({ key: "__slot", slot: true });
@@ -178,10 +181,12 @@ function onPointerUp() {
   const target = over.value;
   justDragged = true;
   setTimeout(() => (justDragged = false), 0);
-  const slot = board.value?.querySelector<HTMLElement>("[data-slot]");
+  const slot = target ? lists.get(target.column)?.querySelector<HTMLElement>("[data-slot]") : null;
   const el = ghost;
-  if (el && slot) {
-    const box = slot.getBoundingClientRect();
+  const box = slot?.getBoundingClientRect();
+  if (el && box && box.width > 0) {
+    // Фиксируем текущее положение копии, чтобы посадка шла от курсора.
+    el.getBoundingClientRect();
     el.classList.remove("is-lifted");
     el.classList.add("is-landing");
     el.style.transform = `translate3d(${box.left}px, ${box.top}px, 0)`;
@@ -189,17 +194,27 @@ function onPointerUp() {
     const finish = () => {
       if (done) return;
       done = true;
+      land(key);
       if (target) emit("move", key, target.column, target.before);
       cleanup();
     };
     el.addEventListener("transitionend", finish, { once: true });
     setTimeout(finish, 260);
   } else {
+    land(key);
     if (target) emit("move", key, target.column, target.before);
     cleanup();
   }
   unlisten();
   press = null;
+}
+// Брошенная карточка встаёт на место слота сразу, без появления.
+const landed = ref<Key | null>(null);
+let landTimer = 0;
+function land(key: Key) {
+  landed.value = key;
+  clearTimeout(landTimer);
+  landTimer = window.setTimeout(() => (landed.value = null), 400);
 }
 function cancelPress() {
   if (press?.timer) clearTimeout(press.timer);
@@ -281,7 +296,7 @@ defineExpose({ openAdd });
       >
         <template v-for="row in rowsOf(column.id)" :key="row.key">
           <li v-if="row.slot" data-slot class="drop-slot" :style="{ height: `${slotHeight}px` }" />
-          <li v-else v-show="dragging !== keyOf(row.item!)">
+          <li v-else :class="landed === keyOf(row.item!) ? 'card-landed' : ''">
             <div
               :data-key="String(keyOf(row.item!))"
               role="button"

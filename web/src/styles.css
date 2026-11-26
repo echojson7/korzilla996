@@ -271,6 +271,13 @@ body {
 .card-leave-active {
   display: none;
 }
+.card-landed.card-enter-active {
+  transition: none;
+}
+.card-landed.card-enter-from {
+  opacity: 1;
+  transform: none;
+}
 @media (prefers-reduced-motion: reduce) {
   .drag-ghost, .drag-ghost.is-landing, .card-move, .card-enter-active { transition: none; }
 }
