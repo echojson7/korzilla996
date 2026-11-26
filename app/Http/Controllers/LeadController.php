@@ -82,6 +82,7 @@ class LeadController extends Controller
                 ->map(fn (CrmContact $one) => ['id' => $one->id, 'name' => $one->name, 'post' => $one->post, 'phones' => $one->phones ?? [], 'emails' => $one->emails ?? []]),
             'products' => ProductRows::of('lead', $lead->id),
             'invoices' => InvoiceRows::of('lead_id', $lead->id),
+            'documents' => CrmDocumentController::of('lead', $lead->id),
             'externalId' => $lead->external_id,
         ]]);
     }

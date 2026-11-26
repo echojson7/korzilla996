@@ -61,6 +61,7 @@ export interface DealFull extends DealBrief {
   companyInfo?: { id: number; title: string; phones: Contact[]; emails: Contact[]; webs: Contact[]; address: string | null } | null;
   products?: ProductRow[];
   invoices?: Invoice[];
+  documents?: CrmDocument[];
   contactList?: { id: number; name: string; post: string | null; phones: Contact[]; emails: Contact[] }[];
   contactInfo?: { id: number; name: string; post: string | null; phones: Contact[]; emails: Contact[] } | null;
   history: DealHistory[];
@@ -75,6 +76,8 @@ export interface Contact {
 export interface ProductRow { id: number; productId: number | null; name: string; price: number; quantity: number; discount: number; tax: number | null; measure: string | null; sum: number }
 /** Счёт сделки или лида (старый или смарт-счёт Битрикса). */
 export interface Invoice { id: number; number: string | null; title: string | null; status: string | null; semantic: string; amount: number; currency: string; dateBill: string | null; payBefore: string | null; paidAt: string | null; products: ProductRow[] }
+/** Документ из шаблона (договор, КП, акт). */
+export interface CrmDocument { id: number; title: string; number: string | null; template: string | null; file: { name: string; mime: string; size: number } | null; createdAt: string | null; creatorId: number | null }
 export interface DealInput {
   title?: string;
   amount?: number | null;

@@ -251,3 +251,14 @@ Artisan::command('bitrix:invoices', function () {
         $this->warn('Новые счета не перенеслись: '.$report['new_error']);
     }
 })->purpose('Перенести счета из Битрикс24');
+
+/* Документы из шаблонов Битрикс24 с файлами (см. App\Support\Bitrix\ImportDocuments). Сначала bitrix:crm и bitrix:invoices. */
+Artisan::command('bitrix:documents {--no-files : только записи, без скачивания файлов}', function () {
+    ini_set('memory_limit', '512M');
+    Illuminate\Support\Facades\DB::disableQueryLog();
+    $started = microtime(true);
+    $report = (new App\Support\Bitrix\ImportDocuments(App\Support\Bitrix\Client::fromConfig(), ! $this->option('no-files'), function ($key, $done, $total) use ($started) {
+        $this->line(sprintf('Документы: %d из %d (%d с)', $done, $total, microtime(true) - $started));
+    }))->run();
+    $this->info(sprintf('Документы: новых %d, уже были %d, файлов %d (%.1f МБ), без файла %d.', $report['new'], $report['kept'], $report['files'], $report['bytes'] / 1048576, $report['no_file']));
+})->purpose('Перенести документы из шаблонов Битрикс24 вместе с файлами');
