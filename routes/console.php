@@ -175,3 +175,10 @@ Artisan::command('crm:import-bitrix {--dir= : папка с deal-stages.json и 
     }
     App\Support\Realtime::changed('crm', App\Support\DealAccess::everyone());
 })->purpose('Перенести воронки, стадии и поля сделок из выгрузки Битрикс24');
+
+/* Сотрудники и отделы из Битрикс24 по вебхуку: новые — выключенными (см. App\Support\Bitrix\ImportUsers). */
+Artisan::command('bitrix:users {--no-photos : без фото} {--dry : только посчитать, ничего не записывать}', function () {
+    $report = (new App\Support\Bitrix\ImportUsers(App\Support\Bitrix\Client::fromConfig(), ! $this->option('no-photos'), (bool) $this->option('dry')))->run();
+    $this->info(($this->option('dry') ? 'Пробно. ' : '')."Отделов новых: {$report['departments']}. Сотрудников заведено выключенными: {$report['created']}, найдено по почте: {$report['linked']}, дописано полей у прежних: {$report['updated']}, фото: {$report['photos']}, пропущено без имени и почты: {$report['skipped']}.");
+})->purpose('Перенести сотрудников и отделы из Битрикс24 (новые учётки выключены)');
+

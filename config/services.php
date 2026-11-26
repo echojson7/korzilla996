@@ -55,4 +55,9 @@ return [
         'rating' => env('GIF_RATING', 'pg-13'),
     ],
 
+    /* Вебхук Битрикс24 для переноса (https://….bitrix24.ru/rest/ID/ТОКЕН/). Только в .env. */
+    'bitrix24' => [
+        'webhook' => env('BITRIX24_WEBHOOK'),
+    ],
+
 ];

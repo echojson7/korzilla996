@@ -24,7 +24,13 @@ class Avatars
 
     public static function store(User $user, UploadedFile $file): void
     {
-        $source = @imagecreatefromstring((string) file_get_contents($file->getRealPath()));
+        self::storeBytes($user, (string) file_get_contents($file->getRealPath()));
+    }
+
+    /** То же из байтов картинки (перенос фото из Битрикс24). */
+    public static function storeBytes(User $user, string $bytes): void
+    {
+        $source = @imagecreatefromstring($bytes);
         if (! $source) {
             throw ValidationException::withMessages(['avatar' => 'Не получилось прочитать картинку']);
         }
