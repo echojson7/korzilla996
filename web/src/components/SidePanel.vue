@@ -72,7 +72,7 @@ watch(() => [props.open, props.chat?.entity, enabled.value, again.value] as cons
               data-card
               :aria-label="title"
               class="flex w-full min-w-0 shrink-0 flex-col outline-none"
-              :class="chat ? [wide ? 'lg:w-[clamp(460px,50%,780px)]' : 'lg:w-[clamp(400px,38%,560px)]', 'lg:border-r lg:border-separator'] : ''"
+              :class="chat ? [wide ? 'lg:w-[clamp(440px,44%,660px)]' : 'lg:w-[clamp(400px,38%,560px)]', 'lg:border-r lg:border-separator'] : ''"
             >
               <header class="flex items-start gap-3 border-b border-separator bg-surface px-6 py-4">
                 <div class="min-w-0 flex-1">
