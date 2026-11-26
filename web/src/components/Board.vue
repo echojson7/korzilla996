@@ -160,7 +160,7 @@ defineExpose({ openAdd });
           </div>
         </li>
         <li v-if="dragging != null && over?.column === column.id && over.before == null" class="h-0.5 rounded-full bg-accent" />
-        <li v-if="!inColumn(column.id).length && !(dragging != null && over?.column === column.id)" class="on-photo rounded-xl border border-dashed border-white/35 py-6 text-center text-xs opacity-80">Пусто</li>
+        <li v-if="!inColumn(column.id).length && !(dragging != null && over?.column === column.id)" class="on-photo py-6 text-center text-sm opacity-75">Пусто</li>
       </ol>
     </section>
   </div>
