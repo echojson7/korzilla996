@@ -72,7 +72,7 @@ Schedule::command('realtime:prune')->hourly()->withoutOverlapping();
  * Запись в канал «Changelog» мессенджера: Markdown из файла (или «-» —
  * со стандартного ввода). Автор — сам портал, без сотрудника.
  */
-Artisan::command('changelog:post {file : путь к .md или «-» для stdin} {--at= : время записи, например «2026-11-26 10:05» (по умолчанию — сейчас)}', function () {
+Artisan::command('changelog:post {file : путь к .md или «-» для stdin} {--at= : время записи, например «2026-11-26 10:05» (по умолчанию — сейчас)} {--media=* : картинка или видео к записи (PNG, JPEG, WebP, GIF, MP4, WebM); первая — обложка}', function () {
     $file = $this->argument('file');
     $body = trim($file === '-' ? stream_get_contents(STDIN) : (is_file($file) ? file_get_contents($file) : ''));
     if ($body === '') {
@@ -87,7 +87,23 @@ Artisan::command('changelog:post {file : путь к .md или «-» для std
     }
     \App\Support\GeneralChat::sync();
     $chat = \App\Support\GeneralChat::chat(\App\Support\GeneralChat::CHANGELOG);
+    $media = $this->option('media');
+    foreach ($media as $path) {
+        if (! is_file($path)) {
+            $this->error("Нет файла: {$path}");
+
+            return 1;
+        }
+    }
     $message = $chat->messages()->create(['user_id' => null, 'kind' => 'text', 'body' => $body]);
+    foreach ($media as $path) {
+        $mime = mime_content_type($path) ?: 'application/octet-stream';
+        $size = str_starts_with($mime, 'image/') ? @getimagesize($path) : false;
+        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION) ?: 'bin');
+        $stored = 'messenger/'.$chat->id.'/'.\Illuminate\Support\Str::random(40).'.'.$ext;
+        \Illuminate\Support\Facades\Storage::disk('local')->put($stored, file_get_contents($path));
+        $message->files()->create(['name' => basename($path), 'path' => $stored, 'mime' => $mime, 'size' => filesize($path), 'width' => $size ? $size[0] : null, 'height' => $size ? $size[1] : null]);
+    }
     if ($this->option('at')) {
         $at = \Illuminate\Support\Carbon::parse($this->option('at'));
         $message->forceFill(['created_at' => $at, 'updated_at' => $at])->save();

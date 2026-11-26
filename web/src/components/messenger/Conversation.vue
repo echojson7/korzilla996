@@ -6,6 +6,7 @@ import { backdrop } from "../../lib/backdrop";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { ArrowLeft, Info, Pin, PinOff, X, ExternalLink, Download, ChevronDown, Upload } from "@lucide/vue";
 import ChatFace from "./ChatFace.vue";
+import ReleaseCard from "./ReleaseCard.vue";
 import { href } from "../../lib/router";
 import Composer from "./Composer.vue";
 import ChatInfo from "./ChatInfo.vue";
@@ -380,7 +381,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
       <button v-if="panel && !closeTab" type="button" class="button button--ghost button--icon-only" aria-label="Закрыть" @click="emit('close')"><X class="size-5" /></button>
     </header>
 
-    <div class="chat-wall relative flex min-h-0 flex-1 flex-col">
+    <div class="chat-wall relative flex min-h-0 flex-1 flex-col" :class="chat?.changelog ? 'chat-wall--changelog' : chat?.general ? 'chat-wall--general' : ''">
     <div ref="scroller" class="relative min-h-0 flex-1 overflow-y-auto px-3 pt-3 pb-1 sm:px-4 lg:px-5 thin-scroll" @scroll.passive="onScroll" @click.self="active = null">
       <p v-if="loading" class="py-16 text-center text-sm text-muted">Загружаем сообщения…</p>
       <div v-else-if="failed" class="py-16 text-center text-sm text-muted">
@@ -388,8 +389,8 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
         <button type="button" class="link" @click="load">Ещё раз</button>
       </div>
       <template v-else>
-        <p v-if="thread.loadingOlder" class="py-2 text-center text-xs text-muted">Загружаем…</p>
-        <p v-else-if="!thread.hasMore && !start && thread.messages.length" class="py-3 text-center text-xs text-muted">Начало переписки</p>
+        <p v-if="thread.loadingOlder" class="wall-note py-2 text-center text-xs text-muted">Загружаем…</p>
+        <p v-else-if="!thread.hasMore && !start && thread.messages.length" class="wall-note py-3 text-center text-xs text-muted">Начало переписки</p>
         <div v-if="!thread.messages.length" class="flex h-full flex-col items-center justify-center text-center text-sm text-muted">
           <ChatFace v-if="chat" :chat="chat" size="xl" />
           <p class="mt-3 font-medium text-foreground">Сообщений пока нет</p>
@@ -403,11 +404,15 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
           <div v-if="group.day" class="sticky top-0 z-10 flex justify-center py-2">
             <span class="rounded-full bg-surface/90 px-3 py-1 text-xs font-medium text-muted shadow-sm backdrop-blur">{{ group.day }}</span>
           </div>
-          <div v-if="group.unread" class="my-2 flex items-center gap-3 text-xs font-medium text-accent">
+          <div v-if="group.unread" class="my-2 flex items-center gap-3 text-xs font-medium text-accent wall-unread">
             <span class="h-px flex-1 bg-accent/40" />Новые сообщения<span class="h-px flex-1 bg-accent/40" />
           </div>
           <!-- Системное: карточкой события, без действий. -->
           <SystemLine v-if="group.system" :data-id="group.rows[0].message.id" :message="group.rows[0].message" />
+          <!-- Changelog: записи портала — карточками релиза. -->
+          <template v-else-if="chat?.changelog && !group.rows[0].message.userId">
+            <ReleaseCard v-for="row in group.rows" :key="row.message.id" :message="row.message" :chat="chat" @react="(emoji) => react(row.message, emoji)" @view="(file) => (viewer = file)" />
+          </template>
           <div v-else class="mt-2.5 flex gap-2" :class="onRight(group.rows[0].message) ? 'flex-row-reverse' : ''">
             <div v-if="withAuthor(group.rows[0].message)" class="flex w-8 shrink-0 flex-col justify-end">
               <ChatFace v-if="!group.rows[0].message.userId && chat?.changelog" :chat="chat" size="sm" class="sticky bottom-1" />

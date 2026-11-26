@@ -59,6 +59,7 @@ export interface ChatFile {
   size: number;
   mime: string | null;
   image: boolean;
+  video?: boolean;
   width: number | null;
   height: number | null;
   url: string;

@@ -551,13 +551,13 @@ class MessengerController extends Controller
         abort_unless($message && ! $message->trashed(), 404);
         $this->membership($message->chat, $this->me($request));
         abort_unless(Storage::disk('local')->exists($file->path), 404);
-        $inline = $file->isImage() && ! $request->boolean('download');
+        $inline = ($file->isImage() || $file->isVideo()) && ! $request->boolean('download');
 
         return Storage::disk('local')->response($file->path, $file->name, [
             'Content-Type' => $inline ? $file->mime : 'application/octet-stream',
             'Cache-Control' => 'private, max-age=604800',
             'X-Content-Type-Options' => 'nosniff',
-            'Content-Security-Policy' => "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; sandbox",
+            'Content-Security-Policy' => "default-src 'none'; img-src 'self'; media-src 'self'; style-src 'unsafe-inline'; sandbox",
         ], $inline ? 'inline' : 'attachment');
     }
 
@@ -775,6 +775,7 @@ class MessengerController extends Controller
                 'size' => $file->size,
                 'mime' => $file->mime,
                 'image' => $file->isImage(),
+                'video' => $file->isVideo(),
                 'width' => $file->width,
                 'height' => $file->height,
                 'url' => 'messenger/files/'.$file->id,

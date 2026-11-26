@@ -634,3 +634,48 @@ body {
 .md-post blockquote { padding-left: 0.75em; border-left: 3px solid var(--separator); color: var(--muted); }
 .md-post hr { border: 0; border-top: 1px solid var(--separator); margin: 0.8em 0; }
 .md-post code { white-space: nowrap; }
+
+/* Фон общего чата: глубокий индиго — в цвет его ромба, узор светлее. */
+.chat-wall--general {
+  --wall-ink: oklch(0.98 0.02 280 / 0.09);
+  background:
+    radial-gradient(120% 90% at 0% 0%, oklch(0.56 0.14 265), transparent 62%),
+    radial-gradient(110% 90% at 100% 100%, oklch(0.5 0.16 305), transparent 65%),
+    linear-gradient(160deg, oklch(0.5 0.13 270), oklch(0.42 0.12 290));
+}
+.dark .chat-wall--general {
+  --wall-ink: oklch(0.98 0.02 280 / 0.06);
+  background:
+    radial-gradient(120% 90% at 0% 0%, oklch(0.32 0.09 265), transparent 62%),
+    radial-gradient(110% 90% at 100% 100%, oklch(0.28 0.1 305), transparent 65%),
+    linear-gradient(160deg, oklch(0.25 0.06 270), oklch(0.2 0.05 290));
+}
+/* Changelog: спокойная «бумага» с тёплым светом и точечной сеткой, без узора. */
+.chat-wall--changelog {
+  background:
+    radial-gradient(70% 50% at 50% 0%, oklch(0.93 0.06 70 / 0.9), transparent 70%),
+    radial-gradient(60% 50% at 100% 100%, oklch(0.92 0.05 30 / 0.7), transparent 70%),
+    oklch(0.965 0.008 80);
+}
+.chat-wall--changelog::before {
+  background: oklch(0.4 0.03 60 / 0.16);
+  -webkit-mask: radial-gradient(circle, #000 1px, transparent 1.4px) 0 0 / 22px 22px;
+  mask: radial-gradient(circle, #000 1px, transparent 1.4px) 0 0 / 22px 22px;
+}
+.dark .chat-wall--changelog {
+  background:
+    radial-gradient(70% 50% at 50% 0%, oklch(0.3 0.05 60 / 0.8), transparent 70%),
+    radial-gradient(60% 50% at 100% 100%, oklch(0.26 0.05 30 / 0.6), transparent 70%),
+    oklch(0.17 0.006 70);
+}
+.dark .chat-wall--changelog::before { background: oklch(0.9 0.02 70 / 0.08); }
+
+/* Карточка релиза: медленный «наезд» камеры на кадр, как в монтаже. */
+.release-kenburns { animation: kenburns 18s ease-in-out infinite alternate; transform-origin: 60% 40%; }
+@keyframes kenburns { from { transform: scale(1); } to { transform: scale(1.08) translate(-1.5%, 1%); } }
+@media (prefers-reduced-motion: reduce) { .release-kenburns { animation: none; } }
+.release-body h4 { font-size: 1em; margin-top: 1em; }
+/* Подписи ленты на тёмном фоне общего чата — светлые. */
+.chat-wall--general .wall-note { color: rgb(255 255 255 / 0.72); }
+.chat-wall--general .wall-unread { color: rgb(255 255 255 / 0.9); }
+.chat-wall--general .wall-unread > span { background: rgb(255 255 255 / 0.35); }
