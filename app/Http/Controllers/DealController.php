@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Chat;
+use App\Models\CrmCompany;
+use App\Models\CrmContact;
 use App\Models\CrmDeal;
 use App\Models\CrmDealHistory;
 use App\Models\CrmField;
@@ -387,11 +389,28 @@ class DealController extends Controller
         ];
     }
 
+    /** Компания сделки с телефонами и почтой (перенесённая из Битрикс24). */
+    private function companyInfo(?int $id): ?array
+    {
+        $one = $id ? CrmCompany::query()->find($id) : null;
+
+        return $one ? ['id' => $one->id, 'title' => $one->title, 'phones' => $one->phones ?? [], 'emails' => $one->emails ?? [], 'webs' => $one->webs ?? [], 'address' => $one->address] : null;
+    }
+
+    private function contactInfo(?int $id): ?array
+    {
+        $one = $id ? CrmContact::query()->find($id) : null;
+
+        return $one ? ['id' => $one->id, 'name' => $one->name, 'post' => $one->post, 'phones' => $one->phones ?? [], 'emails' => $one->emails ?? []] : null;
+    }
+
     private function full(CrmDeal $deal, User $me): array
     {
         return $this->brief($deal) + [
             'comments' => $deal->comments,
             'externalId' => $deal->external_id,
+            'companyInfo' => $this->companyInfo($deal->company_id),
+            'contactInfo' => $this->contactInfo($deal->contact_id),
             'history' => $deal->history()->orderByDesc('id')->limit(200)->get()->map(fn (CrmDealHistory $one) => [
                 'id' => $one->id, 'userId' => $one->user_id, 'field' => $one->field, 'old' => $one->old, 'new' => $one->new,
                 'at' => $one->created_at?->toIso8601String(),

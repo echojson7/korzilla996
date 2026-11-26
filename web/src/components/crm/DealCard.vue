@@ -288,12 +288,23 @@ function copyLink() {
         <dd>
           <input v-if="canEdit" v-model="companyText" class="value-input w-full" placeholder="Не указана" @blur="saveText('company', companyText)" @keydown.enter="($event.target as HTMLInputElement).blur()" />
           <span v-else>{{ deal.company || "—" }}</span>
+          <span v-if="deal.companyInfo" class="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs">
+            <a v-for="one in deal.companyInfo.phones" :key="'p' + one.value" :href="`tel:${one.value.replace(/[^\d+]/g, '')}`" class="link">{{ one.value }}</a>
+            <a v-for="one in deal.companyInfo.emails" :key="'e' + one.value" :href="`mailto:${one.value}`" class="link">{{ one.value }}</a>
+            <a v-for="one in deal.companyInfo.webs" :key="'w' + one.value" :href="/^https?:/i.test(one.value) ? one.value : `https://${one.value}`" target="_blank" rel="noopener" class="link">{{ one.value }}</a>
+            <span v-if="deal.companyInfo.address" class="text-muted">{{ deal.companyInfo.address }}</span>
+          </span>
         </dd>
 
         <dt>Контакт</dt>
         <dd>
           <input v-if="canEdit" v-model="contactText" class="value-input w-full" placeholder="Не указан" @blur="saveText('contact', contactText)" @keydown.enter="($event.target as HTMLInputElement).blur()" />
           <span v-else>{{ deal.contact || "—" }}</span>
+          <span v-if="deal.contactInfo" class="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs">
+            <span v-if="deal.contactInfo.post" class="text-muted">{{ deal.contactInfo.post }}</span>
+            <a v-for="one in deal.contactInfo.phones" :key="'p' + one.value" :href="`tel:${one.value.replace(/[^\d+]/g, '')}`" class="link">{{ one.value }}</a>
+            <a v-for="one in deal.contactInfo.emails" :key="'e' + one.value" :href="`mailto:${one.value}`" class="link">{{ one.value }}</a>
+          </span>
         </dd>
 
         <dt>Дата завершения</dt>
