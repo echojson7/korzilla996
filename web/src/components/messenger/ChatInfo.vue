@@ -100,16 +100,17 @@ function onCover(event: Event) {
           </div>
         </div>
         <template v-else>
-          <button type="button" class="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-sm font-medium text-accent hover:bg-default" @click="adding = true"><UserPlus class="size-5" />Добавить участников</button>
+          <p v-if="chat.general" class="mb-2 rounded-xl bg-surface-secondary px-3 py-2 text-sm text-muted">Общий чат портала: в нём все сотрудники, новые попадают сюда сами.</p>
+          <button v-if="!chat.general" type="button" class="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-sm font-medium text-accent hover:bg-default" @click="adding = true"><UserPlus class="size-5" />Добавить участников</button>
           <div v-for="one in members" :key="one!.id" class="group flex items-center gap-3 rounded-xl px-2 py-1.5 hover:bg-default">
             <a :href="href('/profile', { id: one!.id })" class="rounded-full" :aria-label="`Профиль: ${one!.name}`" @click="emit('close')"><ChatFace :user="one" size="sm" /></a>
             <span class="min-w-0 flex-1">
               <span class="flex items-center gap-1 truncate text-sm font-medium">{{ one!.name }}<span v-if="one!.id === meId" class="text-muted">(вы)</span><Crown v-if="one!.id === chat.createdBy" class="size-3.5 text-warning" aria-label="Создатель чата" /></span>
               <span v-if="one!.position" class="block truncate text-xs text-muted">{{ one!.position }}</span>
             </span>
-            <button v-if="manager && one!.id !== meId" type="button" class="button button--ghost button--sm button--icon-only opacity-0 group-hover:opacity-100 focus:opacity-100" aria-label="Убрать из чата" @click="kick(one!.id)"><X class="size-4" /></button>
+            <button v-if="manager && !chat.general && one!.id !== meId" type="button" class="button button--ghost button--sm button--icon-only opacity-0 group-hover:opacity-100 focus:opacity-100" aria-label="Убрать из чата" @click="kick(one!.id)"><X class="size-4" /></button>
           </div>
-          <button type="button" class="mt-3 flex w-full items-center gap-3 rounded-xl px-2 py-2 text-sm font-medium text-danger hover:bg-danger/10" @click="leave">
+          <button v-if="!chat.general" type="button" class="mt-3 flex w-full items-center gap-3 rounded-xl px-2 py-2 text-sm font-medium text-danger hover:bg-danger/10" @click="leave">
             <component :is="confirmLeave ? Trash2 : LogOut" class="size-5" />{{ confirmLeave ? "Точно выйти? Нажмите ещё раз" : "Выйти из чата" }}
           </button>
         </template>

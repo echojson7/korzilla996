@@ -30,6 +30,8 @@ export interface ChatItem {
   type: "direct" | "group";
   /* Чат задачи, сделки и т. п.: «task:12». */
   entity?: string | null;
+  /* Общий чат портала: все сотрудники, обложка-ромб, всегда первым. */
+  general?: boolean;
   title: string;
   initials: string;
   hue: number;
@@ -147,7 +149,7 @@ interface Realtime {
 }
 let stamp = 0;
 let loadedOnce = false;
-const sortChats = (list: ChatItem[]) => list.sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.at.localeCompare(a.at));
+const sortChats = (list: ChatItem[]) => list.sort((a, b) => Number(!!b.general) - Number(!!a.general) || Number(b.pinned) - Number(a.pinned) || b.at.localeCompare(a.at));
 
 async function applyChats(list: ChatItem[]) {
   if (list.some((chat) => chat.members.some((id) => !people.has(id)))) await loadPeople().catch(() => undefined);

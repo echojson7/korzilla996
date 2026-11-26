@@ -47,6 +47,8 @@ Artisan::command('staff:password {email}', function () {
 })->purpose('Выдать сотруднику новый пароль');
 
 Artisan::command('staff:disable {email}', function () {
-    $count = User::query()->where('email', mb_strtolower(trim($this->argument('email'))))->update(['is_active' => false]);
-    $this->info($count ? 'Учётка выключена.' : 'Такой учётки нет.');
+    /* Через модель, не одним UPDATE: так учётка выбывает и из общего чата. */
+    $user = User::query()->where('email', mb_strtolower(trim($this->argument('email'))))->first();
+    $user?->update(['is_active' => false]);
+    $this->info($user ? 'Учётка выключена.' : 'Такой учётки нет.');
 })->purpose('Выключить учётку сотрудника');

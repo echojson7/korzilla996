@@ -13,7 +13,8 @@ class GifTest extends TestCase
 
     private function user(string $name): User
     {
-        return User::query()->create(['name' => $name, 'email' => mb_strtolower(str_replace(' ', '.', $name)).'@k.ru', 'password' => 'secret-pass-123', 'is_active' => true]);
+        /* Без событий модели: общий чат портала проверяет свой тест, здесь он только мешал бы порядку чатов. */
+        return User::withoutEvents(fn () => User::query()->create(['name' => $name, 'email' => mb_strtolower(str_replace(' ', '.', $name)).'@k.ru', 'password' => 'secret-pass-123', 'is_active' => true]));
     }
 
     private function klipyItem(string $slug, string $type = 'gif'): array

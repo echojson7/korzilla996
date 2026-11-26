@@ -9,6 +9,7 @@ use App\Models\MessageFile;
 use App\Models\MessageReaction;
 use App\Models\User;
 use App\Support\Gifs;
+use App\Support\GeneralChat;
 use App\Support\Realtime;
 use App\Support\TaskMentions;
 use Illuminate\Http\JsonResponse;
@@ -208,6 +209,7 @@ class MessengerController extends Controller
         $me = $this->me($request);
         $this->membership($chat, $me);
         $this->groupOnly($chat);
+        abort_if(GeneralChat::is($chat), 422, 'В общем чате — все сотрудники портала, состав меняется сам');
         $data = $request->validate([
             'user_ids' => ['required', 'array', 'min:1', 'max:200'],
             'user_ids.*' => ['integer', Rule::exists('users', 'id')],
@@ -233,6 +235,7 @@ class MessengerController extends Controller
         $me = $this->me($request);
         $this->membership($chat, $me);
         $this->groupOnly($chat);
+        abort_if(GeneralChat::is($chat), 422, 'В общем чате — все сотрудники портала, состав меняется сам');
         if ($user->id !== $me->id) {
             $this->canManage($chat, $me);
         }
@@ -678,6 +681,8 @@ class MessengerController extends Controller
                 'id' => $chat->id,
                 'type' => $chat->type,
                 'entity' => $chat->entity,
+                /* Общий чат портала: обложка-ромб, всегда сверху, выйти нельзя. */
+                'general' => GeneralChat::is($chat),
                 'title' => $title,
                 'initials' => $peer ? $peer->initials() : self::initials((string) $title),
                 'hue' => $peer ? self::hue($peer->id) : self::hue($chat->id * 7 + 3),

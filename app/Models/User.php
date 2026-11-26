@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\GeneralChat;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -23,6 +24,17 @@ class User extends Authenticatable
      *
      * @return array<string, string>
      */
+    /* Общий чат портала: новая учётка — в нём, выключенная — выбывает. */
+    protected static function booted(): void
+    {
+        static::created(fn (User $user) => GeneralChat::place($user));
+        static::updated(function (User $user) {
+            if ($user->wasChanged('is_active')) {
+                GeneralChat::place($user);
+            }
+        });
+    }
+
     protected function casts(): array
     {
         return [

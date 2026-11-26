@@ -1,5 +1,6 @@
 <!-- Список чатов: поиск, закреплённые сверху, непрочитанные — счётчиком. -->
 <script setup lang="ts">
+import { entityOf } from "../../lib/entities";
 import { computed, ref } from "vue";
 import { SquarePen, Pin, Check, CheckCheck, BellRing } from "@lucide/vue";
 import SearchBox from "../SearchBox.vue";
@@ -78,7 +79,7 @@ void props;
             <ChatFace :chat="one" size="lg" :class="selected === one.id ? 'ring-2 ring-white/70' : ''" />
             <span class="min-w-0 flex-1">
               <span class="flex items-baseline gap-2">
-                <span class="min-w-0 flex-1 truncate text-[15px] leading-5 font-semibold">{{ one.title }}</span>
+                <span class="flex min-w-0 flex-1 items-center gap-1 text-[15px] leading-5 font-semibold"><component :is="entityOf(one.entity)!.icon" v-if="entityOf(one.entity)" class="size-3.5 shrink-0 opacity-60" :aria-label="entityOf(one.entity)!.label" /><span class="truncate">{{ one.title }}</span></span>
                 <span class="flex shrink-0 items-center gap-1 text-xs tabular-nums" :class="selected === one.id ? 'text-accent-foreground/80' : one.unread ? 'font-medium text-accent' : 'text-muted'">
                   <template v-if="mine(one) && selected !== one.id">
                     <CheckCheck v-if="one.readUpTo >= one.last!.id" class="size-3.5 text-accent" aria-label="Прочитано" />

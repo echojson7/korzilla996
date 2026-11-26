@@ -3,7 +3,7 @@
      удаление; на телефоне то же по нажатию. Файлы можно бросить в ленту. -->
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { ArrowLeft, Info, Pin, PinOff, X, Smile, MoreHorizontal, Forward, Check, CheckCheck, Clock, AlertCircle, Download, FileText, ChevronDown, Upload } from "@lucide/vue";
+import { ArrowLeft, Info, Pin, PinOff, X, Smile, ExternalLink, MoreHorizontal, Forward, Check, CheckCheck, Clock, AlertCircle, Download, FileText, ChevronDown, Upload } from "@lucide/vue";
 import ChatFace from "./ChatFace.vue";
 import { href } from "../../lib/router";
 import Composer from "./Composer.vue";
@@ -22,6 +22,7 @@ import {
   typingIn, sendTyping, person, people, meId, focused, clock, dayLabel, fileSize, type ChatMessage, type ChatFile, type ChatUser,
 } from "../../lib/messenger";
 import { toast } from "../../lib/toast";
+import { entityOf, entityTitle } from "../../lib/entities";
 import type { GifItem } from "../../lib/gifs";
 import { auth } from "../../lib/session";
 
@@ -30,6 +31,7 @@ const props = withDefaults(defineProps<{ chatId: number; panel?: boolean; back?:
 const emit = defineEmits<{ close: []; back: [] }>();
 
 const chat = computed(() => chatById(props.chatId));
+const kind = computed(() => entityOf(chat.value?.entity));
 const thread = computed(() => threadOf(props.chatId));
 const loading = ref(false);
 const failed = ref(false);
@@ -334,11 +336,16 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
       <button v-if="chat" type="button" class="flex min-w-0 flex-1 items-center gap-3 text-left" @click="infoOpen = true">
         <ChatFace :chat="chat" size="md" />
         <span class="min-w-0">
-          <span class="block truncate font-semibold">{{ chat.title }}</span>
+          <span class="flex min-w-0 items-center gap-2">
+            <span v-if="kind" class="chip chip--sm chip--soft chip--accent shrink-0"><component :is="kind.icon" class="size-3.5" /><span class="chip__label">{{ kind.label }}</span></span>
+            <span class="truncate font-semibold">{{ kind ? entityTitle(chat.title, chat.entity) : chat.title }}</span>
+          </span>
           <span class="block truncate text-xs" :class="typers.length ? 'text-accent' : 'text-muted'">{{ sub }}</span>
         </span>
       </button>
       <span v-else class="flex-1" />
+      <!-- Чат карточки: открыть саму задачу, сделку… -->
+      <a v-if="kind" :href="kind.href" class="button button--secondary button--sm shrink-0" :title="kind.open" @click="panel && emit('close')"><ExternalLink class="size-4" /><span class="hidden sm:inline">{{ kind.open }}</span></a>
       <slot name="header-extra" />
       <button v-if="chat" type="button" class="button button--ghost button--icon-only" :aria-label="chat.pinned ? 'Открепить' : 'Закрепить'" :title="chat.pinned ? 'Открепить' : 'Закрепить наверху'" @click="togglePin(chat)">
         <PinOff v-if="chat.pinned" class="size-[18px]" /><Pin v-else class="size-[18px]" />

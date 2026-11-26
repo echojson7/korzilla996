@@ -14,7 +14,8 @@ class MessengerTest extends TestCase
 
     private function user(string $name): User
     {
-        return User::query()->create(['name' => $name, 'email' => mb_strtolower(str_replace(' ', '.', $name)).'@k.ru', 'password' => 'secret-pass-123', 'is_active' => true]);
+        /* Без событий модели: общий чат портала проверяет свой тест, здесь он только мешал бы порядку чатов. */
+        return User::withoutEvents(fn () => User::query()->create(['name' => $name, 'email' => mb_strtolower(str_replace(' ', '.', $name)).'@k.ru', 'password' => 'secret-pass-123', 'is_active' => true]));
     }
 
     public function test_guest_gets_401(): void
@@ -159,5 +160,31 @@ class MessengerTest extends TestCase
         $this->assertSame($boris->id, $views[0]['userId']);
         $this->assertNotNull($views[0]['at']);
         $this->getJson('/api/messenger/chats')->assertJsonPath('data.chats.0.reads.'.$boris->id, $sent['id']);
+    }
+
+    public function test_general_chat_has_every_active_employee(): void
+    {
+        $make = fn (string $name) => User::query()->create(['name' => $name, 'email' => mb_strtolower(str_replace(' ', '.', $name)).'@g.ru', 'password' => 'secret-pass-123', 'is_active' => true]);
+        $anna = $make('Анна Общая');
+        $boris = $make('Борис Общий');
+
+        $state = $this->actingAs($boris)->getJson('/api/messenger/chats')->assertOk()->json('data.chats');
+        $this->assertCount(1, $state);
+        $this->assertTrue($state[0]['general']);
+        $this->assertSame('Общий чат', $state[0]['title']);
+        $this->assertEqualsCanonicalizing([$anna->id, $boris->id], $state[0]['members']);
+        $this->assertSame('Борис Общий присоединяется к порталу', $state[0]['last']['text']);
+        $id = $state[0]['id'];
+
+        /* Выйти, исключить, добавить — нельзя; переименовать — только администратор. */
+        $this->deleteJson("/api/messenger/chats/{$id}/members/{$boris->id}")->assertStatus(422);
+        $this->deleteJson("/api/messenger/chats/{$id}/members/{$anna->id}")->assertStatus(422);
+        $this->postJson("/api/messenger/chats/{$id}/members", ['user_ids' => [$anna->id]])->assertStatus(422);
+        $this->patchJson("/api/messenger/chats/{$id}", ['title' => 'Своё'])->assertForbidden();
+        $this->postJson("/api/messenger/chats/{$id}/messages", ['body' => 'Всем привет'])->assertCreated();
+
+        /* Выключенная учётка выбывает. */
+        $anna->update(['is_active' => false]);
+        $this->getJson('/api/messenger/chats')->assertJsonPath('data.chats.0.members', [$boris->id]);
     }
 }
