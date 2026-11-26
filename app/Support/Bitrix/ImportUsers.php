@@ -104,6 +104,8 @@ class ImportUsers
             'department_id' => $dept > 0 ? $dept : null,
             'phone' => $phone ? mb_substr($phone, 0, 40) : null,
             'birthday' => $birthday,
+            /* Уволенный в Битриксе (ACTIVE = N) — с пометкой «Уволен», как там. */
+            'fired_at' => ($row['ACTIVE'] ?? true) === false || in_array((string) ($row['ACTIVE'] ?? 'Y'), ['N', '0', ''], true) ? $this->firedAt($row) : null,
         ], fn ($value) => $value !== null);
 
         $user = User::query()->where('bitrix_id', $bid)->first()
@@ -141,5 +143,19 @@ class ImportUsers
             } catch (Throwable) {
             }
         }
+    }
+
+    private function firedAt(array $row): string
+    {
+        foreach (['LAST_ACTIVITY_DATE', 'LAST_LOGIN', 'TIMESTAMP_X'] as $key) {
+            if (! empty($row[$key])) {
+                try {
+                    return Carbon::parse((string) $row[$key])->toDateTimeString();
+                } catch (Throwable) {
+                }
+            }
+        }
+
+        return now()->toDateTimeString();
     }
 }

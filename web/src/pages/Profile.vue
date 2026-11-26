@@ -261,7 +261,8 @@ async function submitPassword() {
               <div class="mt-2.5 flex flex-wrap items-center justify-center gap-1.5 sm:justify-start">
                 <span v-if="profile.status" class="chip chip--sm chip--soft chip--accent"><span class="chip__label">{{ profile.status.emoji }} {{ profile.status.text }}<template v-if="statusUntil"> · {{ statusUntil }}</template></span></span>
                 <span class="chip chip--sm chip--soft" :class="ROLE_TONE[profile.role ?? 'staff']"><span class="chip__label">{{ profile.roleLabel }}</span></span>
-                <span v-if="!profile.active" class="chip chip--sm chip--soft chip--danger"><span class="chip__label">Учётка выключена</span></span>
+                <span v-if="profile.fired" class="chip chip--sm chip--soft chip--danger"><span class="chip__label">Уволен</span></span>
+                <span v-else-if="!profile.active" class="chip chip--sm chip--soft chip--danger"><span class="chip__label">Учётка выключена</span></span>
                 <span v-if="birthdayIn === 0" class="chip chip--sm chip--soft chip--success"><span class="chip__label">🎂 Сегодня день рождения</span></span>
               </div>
             </div>

@@ -21,6 +21,8 @@ export interface ChatUser {
   position: string | null;
   department: string | null;
   active: boolean;
+  /* Уволен — пометка, как в Битрикс24 (учётка при этом выключена). */
+  fired?: boolean;
   hue: number;
   /* «avatars/5/m3x1k2» — размер дописывает avatarSrc(). */
   avatar?: string | null;

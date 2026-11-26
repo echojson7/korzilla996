@@ -27,9 +27,9 @@ class BitrixUsersTest extends TestCase
 
                 return Http::response(['result' => $active === 'Y' ? [
                     ['ID' => '6', 'NAME' => 'Иван', 'LAST_NAME' => 'Босс', 'EMAIL' => 'Boss@korzilla.ru', 'WORK_POSITION' => 'Директор', 'UF_DEPARTMENT' => [1]],
-                    ['ID' => '7', 'NAME' => 'Анна', 'LAST_NAME' => 'Петрова', 'EMAIL' => 'anna@korzilla.ru', 'UF_DEPARTMENT' => [3], 'PERSONAL_BIRTHDAY' => '1990-05-12T00:00:00+03:00'],
+                    ['ID' => '7', 'NAME' => 'Анна', 'LAST_NAME' => 'Петрова', 'ACTIVE' => true, 'EMAIL' => 'anna@korzilla.ru', 'UF_DEPARTMENT' => [3], 'PERSONAL_BIRTHDAY' => '1990-05-12T00:00:00+03:00'],
                 ] : [
-                    ['ID' => '9', 'NAME' => 'Пётр', 'LAST_NAME' => 'Ушёл', 'EMAIL' => ''],
+                    ['ID' => '9', 'ACTIVE' => false, 'NAME' => 'Пётр', 'LAST_NAME' => 'Ушёл', 'EMAIL' => ''],
                 ], 'total' => 1]);
             },
         ]);
@@ -50,6 +50,8 @@ class BitrixUsersTest extends TestCase
         $this->assertSame('Отдел продаж', $anna->department);
         $this->assertSame('1990-05-12', $anna->birthday->toDateString());
         $this->assertSame('b24-9', User::query()->where('bitrix_id', 9)->value('email'));
+        $this->assertNotNull(User::query()->where('bitrix_id', 9)->value('fired_at'));
+        $this->assertNull($anna->fired_at);
         $this->assertSame(Department::query()->where('bitrix_id', 1)->value('id'), Department::query()->where('bitrix_id', 3)->value('parent_id'));
 
         $again = $run();

@@ -60,7 +60,7 @@ export function avatarSrc(avatar: string | null | undefined, px: number) {
 /* Свежий профиль кладём и в общий список людей: аватар сразу везде. */
 function remember(profile: Profile) {
   const known = people.get(profile.id);
-  const card: ChatUser = { ...(known ?? {}), id: profile.id, name: profile.name, email: profile.email, role: profile.role, initials: profile.initials, position: profile.position, department: profile.department, active: profile.active, hue: profile.hue, avatar: profile.avatar, status: profile.status, birthday: profile.birthday };
+  const card: ChatUser = { ...(known ?? {}), id: profile.id, name: profile.name, email: profile.email, role: profile.role, initials: profile.initials, position: profile.position, department: profile.department, active: profile.active, fired: profile.fired, hue: profile.hue, avatar: profile.avatar, status: profile.status, birthday: profile.birthday };
   people.set(profile.id, card);
   if (auth.me && auth.me.id === profile.id) Object.assign(auth.me, { name: profile.name, initials: profile.initials, avatar: profile.avatar, position: profile.position });
   return profile;

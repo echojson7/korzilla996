@@ -5,7 +5,7 @@
      Вкладка — ?tab=roles, открытая роль — ?role=<id>. -->
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from "vue";
-import { Plus, KeyRound, Power, Copy, Trash2, ShieldCheck, Crown, Save } from "@lucide/vue";
+import { Plus, KeyRound, Power, Copy, Trash2, ShieldCheck, Crown, Save, UserX } from "@lucide/vue";
 import PageHead from "../components/PageHead.vue";
 import SearchBox from "../components/SearchBox.vue";
 import Segmented from "../components/Segmented.vue";
@@ -74,7 +74,7 @@ function put(person: Person) {
   else state.value.users.unshift(person);
 }
 
-async function patchUser(one: Person, patch: { role?: string; active?: boolean }, done: string) {
+async function patchUser(one: Person, patch: { role?: string; active?: boolean; fired?: boolean }, done: string) {
   busy.add(one.id);
   try {
     put(await api<Person>("PATCH", `access/users/${one.id}`, patch));
@@ -104,7 +104,7 @@ const setRole = (one: Person, key: string) => {
 };
 
 /* Подтверждение для выключения и нового пароля. */
-const asking = ref<{ kind: "off" | "password"; person: Person } | null>(null);
+const asking = ref<{ kind: "off" | "fire" | "password"; person: Person } | null>(null);
 const shownPassword = ref<{ name: string; login: string; password: string } | null>(null);
 
 async function confirmAsk() {
@@ -112,6 +112,7 @@ async function confirmAsk() {
   if (!ask) return;
   asking.value = null;
   if (ask.kind === "off") return patchUser(ask.person, { active: false }, `${ask.person.name}: учётка выключена`);
+  if (ask.kind === "fire") return patchUser(ask.person, { fired: true }, `${ask.person.name}: уволен`);
   busy.add(ask.person.id);
   try {
     const out = await api<{ password: string }>("POST", `access/users/${ask.person.id}/password`);
@@ -300,7 +301,8 @@ const usersOf = (role: RoleItem) => plural(role.users, "сотрудник", "с
             >
               <option v-for="role in roleChoices(one)" :key="role.key" :value="role.key" :disabled="one.role === 'owner' && role.key !== 'owner' && ownersLeft <= 1">{{ role.name }}</option>
             </select>
-            <span v-if="!one.active" class="chip chip--sm chip--soft chip--danger shrink-0"><span class="chip__label">Выключена</span></span>
+            <span v-if="one.fired" class="chip chip--sm chip--soft chip--danger shrink-0"><span class="chip__label">Уволен</span></span>
+            <span v-else-if="!one.active" class="chip chip--sm chip--soft chip--danger shrink-0"><span class="chip__label">Выключена</span></span>
           </span>
           <span class="col-start-2 row-start-1 flex justify-end gap-1 md:col-start-auto md:row-start-auto">
             <button type="button" class="button button--ghost button--sm button--icon-only" :disabled="locked(one) || one.id === meId || !one.active || busy.has(one.id)" aria-label="Новый пароль" title="Новый пароль" @click="asking = { kind: 'password', person: one }"><KeyRound class="size-4" /></button>
@@ -313,7 +315,16 @@ const usersOf = (role: RoleItem) => plural(role.users, "сотрудник", "с
               title="Выключить учётку"
               @click="asking = { kind: 'off', person: one }"
             ><Power class="size-4" /></button>
-            <button v-else type="button" class="button button--ghost button--sm" :disabled="locked(one) || busy.has(one.id)" @click="patchUser(one, { active: true }, `${one.name}: учётка включена`)">Включить</button>
+            <button
+              v-if="!one.fired"
+              type="button"
+              class="button button--ghost button--sm button--icon-only text-danger"
+              :disabled="locked(one) || one.id === meId || busy.has(one.id) || (one.role === 'owner' && ownersLeft <= 1)"
+              aria-label="Уволен"
+              title="Отметить: уволен"
+              @click="asking = { kind: 'fire', person: one }"
+            ><UserX class="size-4" /></button>
+            <button v-if="!one.active" type="button" class="button button--ghost button--sm" :disabled="locked(one) || busy.has(one.id)" @click="patchUser(one, { active: true }, one.fired ? `${one.name}: снова в команде, учётка включена` : `${one.name}: учётка включена`)">Включить</button>
           </span>
         </div>
         <p v-if="!people.length" class="px-4 py-10 text-center text-muted">Никого не нашлось</p>
@@ -422,12 +433,13 @@ const usersOf = (role: RoleItem) => plural(role.users, "сотрудник", "с
     </Modal>
 
     <!-- Подтверждения -->
-    <Modal :open="!!asking" :title="asking?.kind === 'off' ? 'Выключить учётку?' : 'Выдать новый пароль?'" @close="asking = null">
-      <p v-if="asking?.kind === 'off'" class="text-sm"><b>{{ asking.person.name }}</b> сразу выйдет из портала и не сможет войти. Задачи, сообщения и история останутся. Включить учётку можно здесь же.</p>
+    <Modal :open="!!asking" :title="asking?.kind === 'off' ? 'Выключить учётку?' : asking?.kind === 'fire' ? 'Отметить уволенным?' : 'Выдать новый пароль?'" @close="asking = null">
+      <p v-if="asking?.kind === 'fire'" class="text-sm">У <b>{{ asking.person.name }}</b> появится пометка «Уволен», учётка выключится. Сделки, задачи и сообщения останутся за ним. Кнопка «Включить» вернёт его в команду.</p>
+      <p v-else-if="asking?.kind === 'off'" class="text-sm"><b>{{ asking.person.name }}</b> сразу выйдет из портала и не сможет войти. Задачи, сообщения и история останутся. Включить учётку можно здесь же.</p>
       <p v-else-if="asking" class="text-sm">Старый пароль <b>{{ asking.person.name }}</b> перестанет работать, все входы закроются.</p>
       <template #footer>
         <button type="button" class="button button--ghost" @click="asking = null">Отмена</button>
-        <button type="button" class="button" :class="asking?.kind === 'off' ? 'button--danger' : 'button--primary'" @click="confirmAsk">{{ asking?.kind === "off" ? "Выключить" : "Новый пароль" }}</button>
+        <button type="button" class="button" :class="asking?.kind === 'password' ? 'button--primary' : 'button--danger'" @click="confirmAsk">{{ asking?.kind === "off" ? "Выключить" : asking?.kind === "fire" ? "Уволен" : "Новый пароль" }}</button>
       </template>
     </Modal>
 

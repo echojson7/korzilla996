@@ -11,6 +11,7 @@ class CrmDeal extends Model
     protected $fillable = [
         'pipeline_id', 'stage_id', 'title', 'amount', 'currency', 'responsible_id', 'creator_id', 'company', 'contact',
         'close_date', 'comments', 'fields', 'sort', 'closed', 'stage_changed_at', 'external_id', 'created_at', 'updated_at',
+        'company_id', 'contact_id',
     ];
 
     protected function casts(): array

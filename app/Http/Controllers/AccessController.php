@@ -140,13 +140,22 @@ class AccessController extends Controller
         $data = $request->validate([
             'role' => ['sometimes', 'string', Rule::exists('roles', 'key')],
             'active' => ['sometimes', 'boolean'],
+            'fired' => ['sometimes', 'boolean'],
         ], ['role.exists' => 'Такой роли нет']);
         $role = $data['role'] ?? $user->role;
         $active = array_key_exists('active', $data) ? (bool) $data['active'] : (bool) $user->is_active;
+        /* Уволенный не входит: пометка выключает учётку, включение снимает пометку. */
+        $fired = array_key_exists('fired', $data) ? (bool) $data['fired'] : $user->fired_at !== null;
+        if (($data['fired'] ?? false) === true) {
+            $active = false;
+        } elseif (($data['active'] ?? false) === true) {
+            $fired = false;
+        }
 
         $this->guard($me, $user, $role, $active);
 
-        DB::transaction(function () use ($user, $role, $active) {
+        DB::transaction(function () use ($user, $role, $active, $fired) {
+            $user->forceFill(['fired_at' => $fired ? ($user->fired_at ?? now()) : null]);
             $user->update(['role' => $role, 'is_active' => $active]);
             if (! $active) {
                 $this->signOut($user);

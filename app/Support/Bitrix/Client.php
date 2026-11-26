@@ -72,6 +72,44 @@ class Client
         } while ($start !== null && $rows);
     }
 
+    /**
+     * Весь список страницами по 50, но запросами batch: до 50 страниц
+     * (2500 записей) за один запрос к Битриксу. Порядок — по ID, чтобы
+     * новые записи во время переноса уходили в конец.
+     *
+     * @return \Generator<int, array> страница записей
+     */
+    public function pages(string $method, array $params = [], ?callable $progress = null): \Generator
+    {
+        $params += ['order' => ['ID' => 'ASC']];
+        $first = $this->call($method, $params + ['start' => 0]);
+        $total = (int) ($first['total'] ?? 0);
+        $progress && $progress(count($first['result'] ?? []), $total);
+        yield $first['result'] ?? [];
+        $offsets = range(50, max(50, $total - 1), 50);
+        if ($total <= 50) {
+            return;
+        }
+        $done = 50;
+        foreach (array_chunk($offsets, 50) as $chunk) {
+            $cmd = [];
+            foreach ($chunk as $offset) {
+                $cmd['p'.$offset] = $method.'?'.http_build_query($params + ['start' => $offset]);
+            }
+            $body = $this->call('batch', ['halt' => 0, 'cmd' => $cmd]);
+            $errors = $body['result']['result_error'] ?? [];
+            if ($errors) {
+                throw new RuntimeException("Битрикс24 batch {$method}: ".json_encode(array_slice($errors, 0, 2), JSON_UNESCAPED_UNICODE));
+            }
+            foreach ($chunk as $offset) {
+                $rows = $body['result']['result']['p'.$offset] ?? [];
+                $done += count($rows);
+                yield $rows;
+            }
+            $progress && $progress($done, $total);
+        }
+    }
+
     /** Файл по адресу из Битрикса (фото сотрудника и т. п.); null — не скачался. */
     public function download(string $url): ?string
     {

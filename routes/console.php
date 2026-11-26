@@ -182,3 +182,25 @@ Artisan::command('bitrix:users {--no-photos : без фото} {--dry : толь
     $this->info(($this->option('dry') ? 'Пробно. ' : '')."Отделов новых: {$report['departments']}. Сотрудников заведено выключенными: {$report['created']}, найдено по почте: {$report['linked']}, дописано полей у прежних: {$report['updated']}, фото: {$report['photos']}, пропущено без имени и почты: {$report['skipped']}.");
 })->purpose('Перенести сотрудников и отделы из Битрикс24 (новые учётки выключены)');
 
+
+/* Компании, контакты и сделки из Битрикс24 по вебхуку (см. App\Support\Bitrix\ImportCrm). Сначала bitrix:users и crm:import-bitrix. */
+Artisan::command('bitrix:crm {--only=* : companies, contacts, deals (по умолчанию всё по порядку)} {--update : переписать уже перенесённые из Битрикса}', function () {
+    $webhook = (string) config('services.bitrix24.webhook');
+    $parts = parse_url($webhook);
+    $portal = ($parts['scheme'] ?? 'https').'://'.($parts['host'] ?? '');
+    $labels = ['companies' => 'Компании', 'contacts' => 'Контакты', 'deals' => 'Сделки'];
+    $only = $this->option('only') ?: array_keys($labels);
+    $started = microtime(true);
+    $report = (new App\Support\Bitrix\ImportCrm(App\Support\Bitrix\Client::fromConfig(), $portal, (bool) $this->option('update'), function ($key, $done, $total) use ($labels, $started) {
+        $this->line(sprintf('%s: %d из %d (%d с)', $labels[$key], $done, $total, microtime(true) - $started));
+    }))->run($only);
+    foreach ($labels as $key => $label) {
+        if (isset($report[$key])) {
+            $one = $report[$key];
+            $this->info("{$label}: в Битриксе {$one['total']}, новых {$one['new']}, обновлено {$one['updated']}, уже были {$one['kept']}.");
+        }
+    }
+    if (! empty($report['deals_no_pipeline'])) {
+        $this->warn("Сделок без известной воронки (не перенесены): {$report['deals_no_pipeline']}.");
+    }
+})->purpose('Перенести компании, контакты и сделки из Битрикс24');

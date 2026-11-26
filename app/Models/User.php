@@ -48,6 +48,7 @@ class User extends Authenticatable
             'birthday' => 'date',
             'birthday_year_hidden' => 'boolean',
             'status_until' => 'datetime',
+            'fired_at' => 'datetime',
         ];
     }
 
@@ -146,6 +147,7 @@ class User extends Authenticatable
             'position' => $this->position,
             'department' => $this->department,
             'active' => (bool) $this->is_active,
+            'fired' => $this->fired_at !== null,
             'hue' => $this->hue(),
             'avatar' => Avatars::url($this),
             'status' => $this->status(),
