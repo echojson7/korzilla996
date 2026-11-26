@@ -352,7 +352,7 @@ function copyLink() {
 
     <!-- Все контакты (когда их больше одного) -->
     <CardBlock v-if="(deal.contactList?.length ?? 0) > 1" :icon="Users" title="Контакты" :count="deal.contactList!.length">
-      <button v-for="one in deal.contactList" :key="one.id" type="button" class="menu-row w-full" @click="navigate('/clients', { tab: 'contacts', open: `contact:${one.id}` })">
+      <button v-for="one in deal.contactList" :key="one.id" type="button" class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-default/60" @click="navigate('/clients', { tab: 'contacts', open: `contact:${one.id}` })">
         <span class="min-w-0 flex-1 truncate">{{ one.name }}<span v-if="one.post" class="text-muted"> · {{ one.post }}</span></span>
         <span class="text-xs text-muted">{{ one.phones[0]?.value }}</span>
       </button>

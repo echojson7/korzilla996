@@ -173,7 +173,7 @@ const sub = computed(() => (pipeline.value ? plural(total.value, "лид", "ли
 
     <SidePanel :open="!!openId" :chat="null" :title="opened?.title ?? 'Лид'" :sub="opened ? `Лид №${opened.id}${opened.createdAt ? ` · ${date(opened.createdAt)}` : ''}` : ''" @close="setQuery({ open: null })">
       <div v-if="opened" class="space-y-3 p-3 md:p-4">
-        <CardBlock :icon="UserRound" title="О лиде">
+        <CardBlock :icon="UserRound" title="Основное">
           <div class="space-y-2 text-sm">
             <p v-if="stageOf(opened.stageId)"><HueChip :hue="hueOf(stageOf(opened.stageId)!.color)">{{ stageOf(opened.stageId)!.title }}</HueChip></p>
             <p v-if="opened.name" class="font-medium">{{ opened.name }}<span v-if="opened.post" class="font-normal text-muted"> · {{ opened.post }}</span></p>
@@ -197,7 +197,7 @@ const sub = computed(() => (pipeline.value ? plural(total.value, "лид", "ли
         </CardBlock>
 
         <CardBlock v-if="opened.contacts.length" :icon="UserRound" title="Контакты" :count="opened.contacts.length">
-          <button v-for="one in opened.contacts" :key="one.id" type="button" class="menu-row w-full" @click="navigate('/clients', { tab: 'contacts', open: `contact:${one.id}` })">
+          <button v-for="one in opened.contacts" :key="one.id" type="button" class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-default/60" @click="navigate('/clients', { tab: 'contacts', open: `contact:${one.id}` })">
             <span class="min-w-0 flex-1 truncate">{{ one.name }}<span v-if="one.post" class="text-muted"> · {{ one.post }}</span></span>
             <span class="text-xs text-muted">{{ one.phones[0]?.value }}</span>
           </button>

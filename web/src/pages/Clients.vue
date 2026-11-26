@@ -155,7 +155,7 @@ const sub = computed(() => (loading.value && !rows.value.length ? "" : plural(to
 
         <section v-if="opened.contacts?.length">
           <h3 class="mb-1.5 text-xs font-medium text-muted">Контакты · {{ opened.contacts.length }}</h3>
-          <button v-for="one in opened.contacts" :key="one.id" type="button" class="menu-row w-full" @click="open('contact', one.id)">
+          <button v-for="one in opened.contacts" :key="one.id" type="button" class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-default/60" @click="open('contact', one.id)">
             <UserRound class="size-4 shrink-0 text-muted" />
             <span class="min-w-0 flex-1 truncate">{{ one.name }}<span v-if="one.post" class="text-muted"> · {{ one.post }}</span></span>
             <span class="text-xs text-muted">{{ one.phones[0]?.value }}</span>
@@ -165,7 +165,7 @@ const sub = computed(() => (loading.value && !rows.value.length ? "" : plural(to
         <section>
           <h3 class="mb-1.5 text-xs font-medium text-muted">Сделки · {{ opened.dealList.length }}</h3>
           <p v-if="!opened.dealList.length" class="text-sm text-muted">Сделок нет</p>
-          <button v-for="one in opened.dealList" :key="one.id" type="button" class="menu-row w-full" @click="navigate('/deals', { open: one.id, view: 'list' })">
+          <button v-for="one in opened.dealList" :key="one.id" type="button" class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-default/60" @click="navigate('/deals', { open: one.id, view: 'list' })">
             <span class="size-2.5 shrink-0 rounded-full" :style="{ background: one.color ?? '#999' }" />
             <span class="min-w-0 flex-1 truncate">{{ one.title }}</span>
             <span class="shrink-0 text-xs text-muted">{{ one.stage }}</span>
