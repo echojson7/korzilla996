@@ -38,6 +38,14 @@ const dropping = ref(false);
 const atBottom = ref(true);
 
 const typers = computed(() => typingIn(props.chatId));
+/* «Анна печатает…», «Анна, Глеб печатают…», «Анна, Глеб, Вера и ещё 2 печатают…». */
+const typingText = computed(() => {
+  const names = typers.value.map((one) => one.name.split(/\s+/)[0]);
+  if (!names.length) return "";
+  if (names.length === 1) return `${names[0]} печатает…`;
+  const shown = names.slice(0, 3).join(", ");
+  return names.length > 3 ? `${shown} и ещё ${names.length - 3} печатают…` : `${shown} печатают…`;
+});
 const sub = computed(() => {
   const one = chat.value;
   if (!one) return "";
@@ -264,7 +272,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
     </header>
 
     <div class="chat-wall relative flex min-h-0 flex-1 flex-col">
-    <div ref="scroller" class="relative min-h-0 flex-1 overflow-y-auto px-3 py-3 md:px-6 thin-scroll" @scroll.passive="onScroll" @click.self="active = null">
+    <div ref="scroller" class="relative min-h-0 flex-1 overflow-y-auto px-3 py-3 sm:px-4 lg:px-5 thin-scroll" @scroll.passive="onScroll" @click.self="active = null">
       <p v-if="loading" class="py-16 text-center text-sm text-muted">Загружаем сообщения…</p>
       <div v-else-if="failed" class="py-16 text-center text-sm text-muted">
         Не получилось загрузить чат.
@@ -292,15 +300,17 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
           <div
             v-else
             :data-id="row.message.id"
-            class="group/msg relative flex gap-2 rounded-xl px-1 transition-colors"
+            class="group/msg relative flex gap-2 rounded-xl transition-colors"
             :class="[row.message.userId === meId ? 'flex-row-reverse' : '', row.head ? 'mt-2.5' : 'mt-0.5']"
             @click="active = active === row.message.id ? null : row.message.id"
           >
-            <div class="w-8 shrink-0">
-              <ChatFace v-if="row.tail && row.message.userId !== meId && chat?.type === 'group'" :user="person(row.message.userId)" size="sm" />
+            <!-- Место под аватар — только у чужих сообщений в группе, как в Telegram:
+                 свои прижаты к правому краю, в личном чате чужие — к левому. -->
+            <div v-if="row.message.userId !== meId && chat?.type === 'group'" class="flex w-8 shrink-0 items-end">
+              <ChatFace v-if="row.tail" :user="person(row.message.userId)" size="sm" />
             </div>
 
-            <div class="flex max-w-[min(560px,78%)] min-w-0 flex-col" :class="row.message.userId === meId ? 'items-end' : 'items-start'">
+            <div class="flex max-w-[min(540px,82%)] min-w-0 flex-col" :class="row.message.userId === meId ? 'items-end' : 'items-start'">
               <div
                 class="relative min-w-0 rounded-2xl px-3 py-1.5 text-[15px] leading-snug shadow-sm"
                 :class="[
@@ -378,7 +388,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
             <div
               v-if="!row.message.deleted && !row.message.pending"
               class="absolute -top-8 z-20 items-center gap-0.5 rounded-full border border-separator bg-overlay p-0.5 shadow-overlay"
-              :class="[row.message.userId === meId ? 'right-10' : 'left-10', active === row.message.id ? 'flex' : 'hidden group-hover/msg:flex has-[[aria-expanded=true]]:flex']"
+              :class="[row.message.userId === meId ? 'right-2' : chat?.type === 'group' ? 'left-12' : 'left-2', active === row.message.id ? 'flex' : 'hidden group-hover/msg:flex has-[[aria-expanded=true]]:flex']"
               @click.stop
             >
               <button v-for="emoji in QUICK.slice(0, 5)" :key="emoji" type="button" class="flex size-7 items-center justify-center rounded-full text-base transition hover:scale-125" :aria-label="`Реакция ${emoji}`" @click="react(row.message, emoji)">{{ emoji }}</button>
@@ -396,6 +406,15 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
           </div>
         </template>
       </template>
+    </div>
+    <!-- Кто печатает — над полем ввода, без сдвига ленты. -->
+    <div class="relative h-0">
+      <Transition name="fade">
+        <p v-if="typingText" class="absolute bottom-1 left-4 z-10 flex max-w-[calc(100%-2rem)] items-center gap-2 rounded-full bg-surface/85 px-3 py-1 text-[13px] text-muted shadow-sm backdrop-blur" aria-live="polite">
+          <span class="typing-dots" aria-hidden="true"><i /><i /><i /></span>
+          <span class="truncate">{{ typingText }}</span>
+        </p>
+      </Transition>
     </div>
     <Composer class="relative z-10 mx-1.5 mb-1.5" ref="composer" :draft-key="chatId" :reply-to="replyTo" :editing="editing" @send="send" @typing="sendTyping(chatId)" @save="save" @cancel="replyTo = null; editing = null" />
     </div>

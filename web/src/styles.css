@@ -523,3 +523,25 @@ body {
 .ui-check:has(input:focus-visible) .checkbox__control { outline: 2px solid var(--focus); outline-offset: 2px; }
 .ui-check:not([data-selected="true"]) .checkbox__control { border: 1.5px solid color-mix(in oklab, var(--foreground) 24%, transparent); }
 .ui-check:not([data-selected="true"]):hover .checkbox__control { border-color: var(--accent); }
+
+/* «Печатает…»: три прыгающие точки. */
+.typing-dots {
+  display: inline-flex;
+  gap: 3px;
+}
+.typing-dots i {
+  width: 5px;
+  height: 5px;
+  border-radius: 9999px;
+  background: var(--accent);
+  animation: typing-dot 1.2s infinite ease-in-out;
+}
+.typing-dots i:nth-child(2) { animation-delay: 0.15s; }
+.typing-dots i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes typing-dot {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.45; }
+  30% { transform: translateY(-3px); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .typing-dots i { animation: none; }
+}
