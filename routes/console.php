@@ -72,7 +72,7 @@ Schedule::command('realtime:prune')->hourly()->withoutOverlapping();
  * Запись в канал «Changelog» мессенджера: Markdown из файла (или «-» —
  * со стандартного ввода). Автор — сам портал, без сотрудника.
  */
-Artisan::command('changelog:post {file : путь к .md или «-» для stdin}', function () {
+Artisan::command('changelog:post {file : путь к .md или «-» для stdin} {--at= : время записи, например «2026-11-26 10:05» (по умолчанию — сейчас)}', function () {
     $file = $this->argument('file');
     $body = trim($file === '-' ? stream_get_contents(STDIN) : (is_file($file) ? file_get_contents($file) : ''));
     if ($body === '') {
@@ -88,9 +88,30 @@ Artisan::command('changelog:post {file : путь к .md или «-» для std
     \App\Support\GeneralChat::sync();
     $chat = \App\Support\GeneralChat::chat(\App\Support\GeneralChat::CHANGELOG);
     $message = $chat->messages()->create(['user_id' => null, 'kind' => 'text', 'body' => $body]);
-    $chat->update(['last_message_at' => $message->created_at]);
+    if ($this->option('at')) {
+        $at = \Illuminate\Support\Carbon::parse($this->option('at'));
+        $message->forceFill(['created_at' => $at, 'updated_at' => $at])->save();
+    }
+    $chat->update(['last_message_at' => $chat->messages()->max('created_at')]);
     $payload = app(\App\Http\Controllers\MessengerController::class)->message($message->load(['files', 'reactions', 'replyTo']));
     $ids = $chat->members()->pluck('user_id')->map(fn ($id) => (int) $id)->all();
     \App\Support\Realtime::emit($ids, 'message', ['chatId' => $chat->id, 'message' => $payload, 'new' => true]);
     $this->info("Опубликовано в Changelog: сообщение #{$message->id}");
 })->purpose('Опубликовать запись в канал Changelog');
+
+/* Убрать все записи портала из Changelog (например, чтобы переложить их заново). */
+Artisan::command('changelog:clear {--force : без вопроса}', function () {
+    $chat = \App\Support\GeneralChat::chat(\App\Support\GeneralChat::CHANGELOG);
+    $query = $chat->messages()->withTrashed()->whereNull('user_id')->where('kind', 'text');
+    $count = (clone $query)->count();
+    if (! $count || (! $this->option('force') && ! $this->confirm("Удалить записей: {$count}?"))) {
+        $this->info('Ничего не удалено.');
+
+        return 0;
+    }
+    $query->get()->each->forceDelete();
+    $chat->members()->update(['last_read_id' => 0]);
+    $chat->update(['last_message_at' => $chat->messages()->max('created_at')]);
+    \App\Support\Realtime::emit($chat->members()->pluck('user_id')->map(fn ($id) => (int) $id)->all(), 'chat', ['chatId' => $chat->id]);
+    $this->info("Удалено записей: {$count}");
+})->purpose('Удалить записи портала из канала Changelog');
