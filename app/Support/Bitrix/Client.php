@@ -2,6 +2,7 @@
 
 namespace App\Support\Bitrix;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
@@ -39,7 +40,17 @@ class Client
                 usleep((int) ($wait * 1e6));
             }
             $this->last = microtime(true);
-            $response = Http::timeout(60)->asForm()->post($this->webhook.$method.'.json', $params);
+            try {
+                $response = Http::timeout(180)->connectTimeout(20)->asForm()->post($this->webhook.$method.'.json', $params);
+            } catch (ConnectionException $error) {
+                /* Таймаут или обрыв: подождать и повторить. Адрес с токеном в текст ошибки не пускаем. */
+                if ($try >= 6) {
+                    throw new RuntimeException("Битрикс24 {$method}: нет ответа (".$this->hide($error->getMessage()).')');
+                }
+                sleep(5 * $try);
+
+                continue;
+            }
             $body = $response->json() ?? [];
             $error = $body['error'] ?? null;
             if ($response->successful() && ! $error) {
@@ -108,6 +119,12 @@ class Client
             }
             $progress && $progress($done, $total);
         }
+    }
+
+    /** Текст без адреса вебхука (в нём токен). */
+    private function hide(string $text): string
+    {
+        return str_replace($this->webhook, '…/', preg_replace('~https?://\S+/rest/\d+/[^/\s]+/~', '…/', $text));
     }
 
     /** Файл по адресу из Битрикса (фото сотрудника и т. п.); null — не скачался. */
