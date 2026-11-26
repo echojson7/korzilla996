@@ -199,13 +199,67 @@ body {
   scrollbar-color: oklch(1 0 0 / 0.35) transparent;
 }
 
-/* Перетаскивание в канбане. */
-.is-dragging {
-  opacity: 0.35;
+/* Перетаскивание в канбане: поднятая карточка — копия поверх страницы. */
+.drag-ghost {
+  position: fixed;
+  z-index: 100;
+  margin: 0;
+  pointer-events: none;
+  will-change: transform;
+  transition: box-shadow 160ms ease-out;
 }
-.is-drop-target {
-  outline: 2px dashed color-mix(in oklch, var(--accent) 70%, white);
-  outline-offset: -2px;
+.drag-ghost > * {
+  transition: transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.drag-ghost.is-lifted {
+  box-shadow: none;
+}
+.drag-ghost.is-lifted > *,
+.drag-ghost.is-lifted {
+  cursor: grabbing;
+}
+.drag-ghost.is-lifted {
+  filter: drop-shadow(0 14px 22px oklch(0 0 0 / 0.28)) drop-shadow(0 3px 6px oklch(0 0 0 / 0.16));
+}
+.drag-ghost.is-lifted {
+  rotate: 3deg;
+  scale: 1.04;
+}
+.drag-ghost {
+  transition: rotate 160ms cubic-bezier(0.2, 0.8, 0.2, 1), scale 160ms cubic-bezier(0.2, 0.8, 0.2, 1), filter 160ms;
+}
+.drag-ghost.is-landing {
+  transition: transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1), rotate 200ms, scale 200ms, filter 200ms;
+}
+.is-board-dragging,
+.is-board-dragging * {
+  cursor: grabbing !important;
+  user-select: none;
+}
+/* Место, куда сядет карточка. */
+.drop-slot {
+  flex-shrink: 0;
+  border-radius: 0.75rem;
+  border: 2px dashed oklch(1 0 0 / 0.7);
+  background: oklch(1 0 0 / 0.22);
+  backdrop-filter: blur(6px);
+}
+/* Соседние карточки плавно расступаются. */
+.card-move {
+  transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.card-enter-active {
+  transition: opacity 150ms, transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.card-enter-from {
+  opacity: 0;
+  transform: scale(0.97);
+}
+.card-leave-active {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .drag-ghost, .drag-ghost.is-landing, .card-move, .card-enter-active { transition: none; }
 }
 
 /* Плавное появление панелей и окон. */
