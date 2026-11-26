@@ -181,6 +181,13 @@ class TaskController extends Controller
             $before = isset($data['before']) ? Task::query()->find($data['before']) : null;
             if ($before && $before->id !== $task->id) {
                 $prev = Task::query()->where('sort', '<', $before->sort)->whereKeyNot($task->id)->orderByDesc('sort')->first();
+                /* Середина между соседями: после ~50 бросков в одну щель точности
+                   double не хватит и номера совпадут. Щель стала узкой — сначала
+                   перенумеровать все задачи с шагом, порядок не меняется. */
+                if ($prev && $before->sort - $prev->sort < self::SORT_GAP) {
+                    $this->renumber();
+                    [$before, $prev] = [$before->fresh(), $prev->fresh()];
+                }
                 $task->sort = $prev ? ($prev->sort + $before->sort) / 2 : $before->sort - 1;
             } elseif (! $before) {
                 $task->sort = (float) Task::query()->whereKeyNot($task->id)->max('sort') + 1;
@@ -541,6 +548,27 @@ class TaskController extends Controller
         $entry->seconds = max(1, (int) $entry->started_at->diffInSeconds($entry->stopped_at));
         $entry->save();
         Task::query()->whereKey($entry->task_id)->update(['updated_at' => now()]);
+    }
+
+    /** Меньше — перенумеровать порядок канбана (см. move). */
+    private const SORT_GAP = 1e-6;
+
+    /**
+     * Порядок канбана заново: 1024, 2048, … в том же порядке, что видит
+     * список (sort, затем новые выше). Без updated_at и version: порядок
+     * не меняется, браузеры держат его сами по списку, а не по числам.
+     */
+    private function renumber(): void
+    {
+        $ids = Task::query()->orderBy('sort')->orderByDesc('id')->pluck('id');
+        $n = 0;
+        foreach ($ids->chunk(500) as $chunk) {
+            /* В case только целые из базы и счётчика — подставляются как есть. */
+            $cases = $chunk->map(function ($id) use (&$n) {
+                return 'when '.(int) $id.' then '.(++$n * 1024);
+            })->implode(' ');
+            DB::table('tasks')->whereIn('id', $chunk->values()->all())->update(['sort' => DB::raw("case id {$cases} end")]);
+        }
     }
 
     private function wouldLoop(Task $task, int $parentId): bool
