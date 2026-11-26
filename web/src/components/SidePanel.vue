@@ -1,7 +1,8 @@
 <!-- Карточка сущности поверх раздела, как слайдер Битрикс24: один
      плавающий блок с отступами и скруглением, слева карточка (уже), справа
      чат этой задачи или сделки (один на сущность, живёт в мессенджере).
-     Закрывает ярлычок слева, Esc или щелчок мимо. -->
+     Закрывает ярлычок слева, Esc или щелчок мимо. Колонка чатов справа
+     остаётся открытой: из неё поверх карточки открываются мини-чаты. -->
 <script setup lang="ts">
 import { backdrop } from "../lib/backdrop";
 import { defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch, nextTick } from "vue";
@@ -50,9 +51,9 @@ watch(() => [props.open, props.chat?.entity, enabled.value] as const, async ([op
 <template>
   <Teleport to="body">
     <Transition name="fade">
-      <div v-if="open" class="fixed inset-0 z-40 bg-black/40" />
+      <div v-if="open" class="fixed inset-0 z-40 bg-black/40 md:right-[56px]" />
     </Transition>
-    <div v-if="open" class="fixed inset-0 z-50 flex p-2 md:py-3 md:pr-[68px] md:pl-12" v-on="shut">
+    <div v-if="open" class="fixed inset-0 z-50 flex p-2 md:right-[56px] md:py-3 md:pr-3 md:pl-12" v-on="shut">
       <Transition name="slide-left" appear>
         <!-- Карточка и чат — один цельный блок: карточка уже, чат шире. -->
         <div class="relative flex min-w-0 overflow-visible" :class="chat ? 'w-full' : 'w-full md:w-[min(760px,100%)]'">
@@ -62,6 +63,7 @@ watch(() => [props.open, props.chat?.entity, enabled.value] as const, async ([op
               tabindex="-1"
               role="dialog"
               aria-modal="true"
+              data-card
               :aria-label="title"
               class="flex w-full min-w-0 shrink-0 flex-col outline-none"
               :class="chat ? 'lg:w-[clamp(400px,38%,560px)] lg:border-r lg:border-separator' : ''"

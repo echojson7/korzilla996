@@ -1,8 +1,9 @@
 <!-- Колонка чатов справа, как в Битрикс24: обложки чатов на стекле,
-     непрочитанные — счётчиком. Щелчок открывает чат в панели поверх
-     раздела; в самом мессенджере — просто выбирает чат. -->
+     непрочитанные — счётчиком. Колонка видна всегда — и над карточкой
+     задачи, и в мессенджере; щелчок открывает мини-чат поверх всего.
+     В мессенджере щелчок по уже открытому там чату ничего не делает. -->
 <script setup lang="ts">
-import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { MessagesSquare, Plus, X } from "@lucide/vue";
 import ChatFace from "../components/messenger/ChatFace.vue";
 /* Сам чат и окно «Новый чат» — отдельными кусками: нужны по щелчку. */
@@ -14,27 +15,34 @@ import { route, href, setQuery, navigate } from "../lib/router";
 const quick = ref<number | null>(null);
 const creating = ref(false);
 const onMessenger = computed(() => route.value.path === "/messenger");
-const current = computed(() => (onMessenger.value ? Number(route.value.query.get("chat")) || null : quick.value));
+const routeChat = computed(() => (onMessenger.value ? Number(route.value.query.get("chat")) || null : null));
+const current = computed(() => quick.value ?? routeChat.value);
 const visible = computed(() => chats.value.slice(0, 30));
 
 function open(id: number) {
-  if (onMessenger.value) setQuery({ chat: id }, { replace: false });
-  else quick.value = quick.value === id ? null : id;
+  quick.value = quick.value === id || routeChat.value === id ? null : id;
 }
-const panelChat = computed(() => (quick.value && !onMessenger.value && chatById(quick.value) ? quick.value : null));
+/* Открыли раздел — мини-чат закрываем: он про то место, где его открыли. */
+watch(() => route.value.path, () => (quick.value = null));
+const panelChat = computed(() => (quick.value && chatById(quick.value) ? quick.value : null));
 function expand() {
   const id = quick.value;
   quick.value = null;
-  navigate("/messenger", { chat: id });
+  if (onMessenger.value) setQuery({ chat: id }, { replace: false });
+  else navigate("/messenger", { chat: id });
 }
+/* Esc закрывает сначала мини-чат, а не карточку задачи под ним
+   (перехват до её обработчика); окна поверх мини-чата закрываются сами. */
 const onKey = (event: KeyboardEvent) => {
-  if (event.key === "Escape" && quick.value && !document.querySelector("[aria-modal=true]")) quick.value = null;
+  if (event.key !== "Escape" || !quick.value || document.querySelector("[aria-modal=true]:not([data-card])")) return;
+  event.stopPropagation();
+  quick.value = null;
 };
 onMounted(() => {
   startMessenger();
-  document.addEventListener("keydown", onKey);
+  document.addEventListener("keydown", onKey, true);
 });
-onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
+onBeforeUnmount(() => document.removeEventListener("keydown", onKey, true));
 </script>
 
 <template>
@@ -68,12 +76,12 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
 
   <Teleport to="body">
     <Transition name="fade">
-      <div v-if="panelChat" class="fixed inset-0 z-40 bg-black/35 md:right-[56px]" @click="quick = null" />
+      <div v-if="panelChat" class="fixed inset-0 z-[52] bg-black/35 md:right-[56px]" @click="quick = null" />
     </Transition>
     <Transition name="slide">
       <!-- Мини-чат плавает с отступами; закрывается ярлычком слева,
            выступающим из блока. -->
-      <div v-if="panelChat" class="fixed inset-y-2 right-2 left-11 z-50 md:inset-y-3 md:right-[68px] md:left-auto md:w-[min(640px,calc(100vw-120px))]">
+      <div v-if="panelChat" class="fixed inset-y-2 right-2 left-11 z-[55] md:inset-y-3 md:right-[68px] md:left-auto md:w-[min(640px,calc(100vw-120px))]">
         <div class="flex h-full flex-col overflow-hidden rounded-2xl bg-surface shadow-2xl ring-1 ring-black/5 dark:ring-white/10">
           <Conversation :chat-id="panelChat" panel close-tab class="min-h-0 flex-1" @close="quick = null" />
           <button type="button" class="border-t border-separator bg-surface py-2 text-center text-xs text-muted hover:text-foreground" @click="expand">Открыть в мессенджере</button>
