@@ -48,7 +48,7 @@ class MessengerController extends Controller
 
     public function users(Request $request): JsonResponse
     {
-        $users = User::query()->orderBy('name')->get()->map(fn (User $user) => $this->person($user));
+        $users = User::query()->with('roleRecord')->orderBy('name')->get()->map(fn (User $user) => $this->person($user));
 
         return response()->json(['data' => $users]);
     }
@@ -687,7 +687,12 @@ class MessengerController extends Controller
         }
         $chats = Chat::query()->whereIn('id', $ids)->get();
         $members = ChatMember::query()->whereIn('chat_id', $ids)->get(['chat_id', 'user_id', 'last_read_id'])->groupBy('chat_id');
-        $users = User::query()->whereIn('id', $members->flatten()->pluck('user_id')->unique())->get()->keyBy('id');
+        /* Нужны только собеседники личных чатов: в общем чате — все сотрудники, тянуть их целиком незачем. */
+        $direct = $chats->where('type', 'direct')->pluck('id')->all();
+        $peerIds = $members->toBase()->filter(fn ($rows, $chatId) => in_array($chatId, $direct))
+            ->flatMap(fn ($rows) => $rows->pluck('user_id'))->map(fn ($id) => (int) $id)
+            ->reject(fn ($id) => $id === $me->id)->unique()->values();
+        $users = $peerIds->isEmpty() ? collect() : User::query()->whereIn('id', $peerIds)->get(['id', 'name'])->keyBy('id');
         $last = Message::query()->with('files')->whereIn('id', Message::query()->selectRaw('max(id)')->whereIn('chat_id', $ids)->groupBy('chat_id'))->get()->keyBy('chat_id');
         $unread = DB::table('messages as m')
             ->join('chat_members as cm', fn ($join) => $join->on('cm.chat_id', '=', 'm.chat_id')->where('cm.user_id', '=', $me->id))

@@ -32,7 +32,7 @@ class AccessController extends Controller
         return response()->json(['data' => [
             'schema' => Access::schema(),
             'roles' => $this->roles(),
-            'users' => User::query()->orderByDesc('is_active')->orderBy('name')->get()->map(fn (User $user) => $this->person($user))->values(),
+            'users' => User::query()->with('roleRecord')->orderByDesc('is_active')->orderBy('name')->get()->map(fn (User $user) => $this->person($user))->values(),
             'departments' => User::query()->whereNotNull('department')->where('department', '!=', '')->distinct()->orderBy('department')->pluck('department'),
         ]]);
     }

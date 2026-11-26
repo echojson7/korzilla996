@@ -118,15 +118,24 @@ class Realtime
     public static function changed(string $type, array $byUser): void
     {
         $now = now();
-        foreach ($byUser as $userId => $ids) {
-            $ids = array_values(array_unique(array_map('intval', $ids)));
-            if (! $ids) {
-                continue;
+        /* Журнал — одной транзакцией: одна блокировка записи и одна фиксация
+           на всех получателей, а не по штуке на каждого. В Mercure — после. */
+        $sent = DB::transaction(function () use ($byUser, $type, $now) {
+            $sent = [];
+            foreach ($byUser as $userId => $ids) {
+                $ids = array_values(array_unique(array_map('intval', $ids)));
+                if (! $ids) {
+                    continue;
+                }
+                DB::table('realtime_events')->insert(array_map(
+                    fn ($id) => ['user_id' => $userId, 'type' => $type, 'entity_id' => $id, 'created_at' => $now], $ids,
+                ));
+                $sent[$userId] = [(int) DB::table('realtime_events')->where('user_id', $userId)->max('id'), $ids];
             }
-            DB::table('realtime_events')->insert(array_map(
-                fn ($id) => ['user_id' => $userId, 'type' => $type, 'entity_id' => $id, 'created_at' => $now], $ids,
-            ));
-            $ev = (int) DB::table('realtime_events')->where('user_id', $userId)->max('id');
+
+            return $sent;
+        });
+        foreach ($sent as $userId => [$ev, $ids]) {
             Cache::put(self::lastKey($userId), $ev, now()->addHours(self::KEEP_HOURS));
             self::send([$userId], ['type' => $type, 'ev' => $ev, 'ids' => $ids]);
         }

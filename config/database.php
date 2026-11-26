@@ -52,7 +52,12 @@ return [
                 'mmap_size' => (int) env('DB_MMAP_SIZE', 64 * 1024 * 1024),
                 'temp_store' => 'memory',
             ],
-            'transaction_mode' => 'DEFERRED',
+            /* IMMEDIATE: транзакция сразу берёт блокировку записи и при занятой
+               базе ждёт busy_timeout. В DEFERRED транзакция, которая сначала
+               читает, а потом пишет (firstOrCreate, счётчики), в WAL при
+               параллельной записи из другого воркера падает «database is
+               locked» мгновенно, без ожидания. Все транзакции портала пишут. */
+            'transaction_mode' => env('DB_TRANSACTION_MODE', 'IMMEDIATE'),
         ],
 
         'mysql' => [
