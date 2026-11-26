@@ -125,7 +125,11 @@ Artisan::command('changelog:clear {--force : без вопроса}', function (
 
         return 0;
     }
-    $query->get()->each->forceDelete();
+    /* Вместе со строками — и сами файлы, иначе они остаются в storage. */
+    $query->with('files')->get()->each(function ($message) {
+        \Illuminate\Support\Facades\Storage::disk('local')->delete($message->files->pluck('path')->all());
+        $message->forceDelete();
+    });
     $chat->members()->update(['last_read_id' => 0]);
     $chat->update(['last_message_at' => $chat->messages()->max('created_at')]);
     \App\Support\Realtime::emit($chat->members()->pluck('user_id')->map(fn ($id) => (int) $id)->all(), 'chat', ['chatId' => $chat->id]);
