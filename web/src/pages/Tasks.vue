@@ -1,17 +1,19 @@
 <!-- Задачи как в Битрикс24: роли (Делаю / Помогаю / Поручил / Наблюдаю),
      просроченные и все; три вида — канбан по статусам (по умолчанию),
      «Сроки» (колонки по крайнему сроку, перенос меняет срок) и таблица.
-     Вид помнится (k996.tasks.view) и стоит в адресе (?view), вкладка — ?tab,
+     Вид помнится (k996.tasks.view) и стоит в адресе (?view), фильтр — ?tab, q, st… (components/tasks/filter.ts),
      открытая задача — ?open (new — новая задача). Данные — с сервера. -->
 <script setup lang="ts">
 import { can } from "../lib/access";
-import { computed, onMounted, watch } from "vue";
-import { Plus, Kanban, Table2, CalendarRange, Briefcase, Flame, CalendarClock, ListChecks, Paperclip, GitBranch, Timer, Hash, Folder } from "@lucide/vue";
+import { computed, onMounted, ref, watch } from "vue";
+import { Plus, Kanban, Table2, CalendarRange, Briefcase, Flame, CalendarClock, ListChecks, Paperclip, GitBranch, Timer, Hash, Folder, ArrowUpDown, Check, AlarmClock, MessageCircle, CheckCheck } from "@lucide/vue";
 import PageHead from "../components/PageHead.vue";
 import Board from "../components/Board.vue";
 import DataTable from "../components/DataTable.vue";
-import Segmented from "../components/Segmented.vue";
-import SearchBox from "../components/SearchBox.vue";
+import Popover from "../components/Popover.vue";
+import TaskFilter from "../components/tasks/TaskFilter.vue";
+import { PRESETS, SORTS, preset as filterPreset, statuses, sort, only, matches, sorted, unreadByTask, setSort, toggleOnly, type Preset } from "../components/tasks/filter";
+import { chats, markChatsRead } from "../lib/messenger";
 import SidePanel from "../components/SidePanel.vue";
 import HueChip from "../components/HueChip.vue";
 import ChatFace from "../components/messenger/ChatFace.vue";
@@ -19,7 +21,7 @@ import TaskCard from "../components/tasks/TaskCard.vue";
 import { dueLook } from "../components/tasks/when";
 import {
   taskStore, tasksEnabled, startTasks, loadTasks, STATUSES, STATUS, PERIODS, periodOf, deadlineFor, isOpenTask, isOverdueTask,
-  person, nameOf, createTask, moveTask, updateTask, overdueAll, duration, type TaskBrief, type Status, type Period, type TaskInput,
+  person, nameOf, createTask, moveTask, setStatus, updateTask, overdueAll, duration, type TaskBrief, type Status, type Period, type TaskInput,
 } from "../lib/tasks";
 import { deals } from "../lib/data";
 import { auth } from "../lib/session";
@@ -51,37 +53,36 @@ const VIEWS = [
 ];
 
 const me = () => taskStore.me;
-const TABS = {
-  mine: { label: "Мои", test: (one: TaskBrief) => [one.creatorId, one.responsibleId, ...one.accomplices, ...one.auditors].includes(me()) },
-  doing: { label: "Делаю", test: (one: TaskBrief) => one.responsibleId === me() },
-  helping: { label: "Помогаю", test: (one: TaskBrief) => one.accomplices.includes(me()) },
-  given: { label: "Поручил", test: (one: TaskBrief) => one.creatorId === me() && one.responsibleId !== me() },
-  watching: { label: "Наблюдаю", test: (one: TaskBrief) => one.auditors.includes(me()) },
-  overdue: { label: "Просрочены", test: (one: TaskBrief) => isOverdueTask(one) },
-  all: { label: "Все", test: () => true },
-} as const;
-type Tab = keyof typeof TABS;
-const tab = computed<Tab>(() => {
-  const raw = route.value.query.get("tab");
-  return raw && raw in TABS ? (raw as Tab) : "mine";
-});
-const text = computed({ get: () => route.value.query.get("q") ?? "", set: (q) => setQuery({ q }) });
-
-/* В таблице и «Сроках» — без завершённых (кроме «Все»); в канбане им своя колонка. */
-const hideDone = (key: Tab) => view.value !== "board" && key !== "all";
-const inTab = (key: Tab) => taskStore.list.filter((one) => TABS[key].test(one) && (!hideDone(key) || isOpenTask(one)));
 const dealOf = (id: number | null) => (id ? deals.find((deal) => deal.id === id) ?? null : null);
-const visible = computed(() => {
-  const words = text.value.trim().toLowerCase();
-  const list = inTab(tab.value);
-  if (!words) return list;
-  return list.filter((one) => {
-    const deal = dealOf(one.dealId);
-    const people = [one.responsibleId, one.creatorId, ...one.accomplices].map(nameOf).join(" ");
-    return `${one.title} ${one.id} ${people} ${deal?.title ?? ""} ${deal?.company ?? ""} ${one.project ?? ""} ${one.tags.map((t) => `#${t}`).join(" ")}`.toLowerCase().includes(words);
-  });
+
+/* Отбор — в components/tasks/filter.ts (набор, поля, поиск, сортировка,
+   счётчики). В таблице и «Сроках» без завершённых, если стадию не выбрали
+   явно и набор не «Все задачи»; в канбане им своя колонка. */
+const hideDone = computed(() => view.value !== "board" && filterPreset.value !== "all" && !statuses.value.length);
+const visible = computed(() => sorted(taskStore.list.filter((one) => matches(one) && (!hideDone.value || isOpenTask(one)))));
+const presetCounts = computed(() => {
+  const out = {} as Record<Preset, number>;
+  for (const key of Object.keys(PRESETS) as Preset[]) out[key] = taskStore.list.filter((one) => PRESETS[key].test(one) && isOpenTask(one)).length;
+  return out;
 });
-const tabs = computed(() => (Object.keys(TABS) as Tab[]).map((key) => ({ key, label: TABS[key].label, count: inTab(key).filter(isOpenTask).length })));
+/* Счётчики над доской — по набору и полям, без самих переключателей. */
+const base = computed(() => taskStore.list.filter((one) => matches(one, { skipOnly: true })));
+const overdueCount = computed(() => base.value.filter((one) => isOverdueTask(one)).length);
+const commentTasks = computed(() => base.value.filter((one) => unreadByTask.value.has(one.id)));
+const commentCount = computed(() => commentTasks.value.reduce((sum, one) => sum + (unreadByTask.value.get(one.id) ?? 0), 0));
+async function readAll() {
+  const ids = new Set(commentTasks.value.map((one) => one.id));
+  const list = chats.value.filter((chat) => {
+    const hit = /^task:(\d+)$/.exec(chat.entity ?? "");
+    return hit && chat.unread > 0 && ids.has(Number(hit[1]));
+  });
+  if (!list.length) return;
+  await markChatsRead(list);
+  if (only.value === "comments") toggleOnly("comments");
+  toast(`Прочитано: ${plural(list.length, "чат задачи", "чата задач", "чатов задач")}`, "success");
+}
+const sortLabel = computed(() => SORTS.find((one) => one.id === sort.value)!.label);
+const sortPop = ref<{ close: () => void } | null>(null);
 
 const statusColumns = STATUSES.map((one) => ({ id: one.id, label: one.column, hue: one.hue }));
 const periodColumns = PERIODS.map((one) => ({ id: one.id, label: one.label, hue: one.hue }));
@@ -106,10 +107,13 @@ async function move(key: number | string, column: string, before: number | strin
   }
   const status = column as Status;
   const old = was.status;
-  moveBefore(taskStore.list, id, (one) => one.id, before == null ? null : Number(before));
+  /* Сортировка не «вручную» — место в колонке задаёт она, меняем только стадию. */
+  const manual = sort.value === "manual";
+  if (!manual && status === old) return;
+  if (manual) moveBefore(taskStore.list, id, (one) => one.id, before == null ? null : Number(before));
   was.status = status;
   try {
-    const saved = await moveTask(id, status, before == null ? null : Number(before));
+    const saved = manual ? await moveTask(id, status, before == null ? null : Number(before)) : await setStatus(id, status);
     if (old !== status) {
       if (status === "done" && saved.status === "review") toast(`«${saved.title}» ушла на контроль постановщику`, "success");
       else toast(`«${saved.title}» → ${STATUS[saved.status].label}`, "success");
@@ -164,13 +168,36 @@ const due = (one: TaskBrief) => dueLook(one.status, one.deadline);
 
 <template>
   <div class="flex h-full min-h-0 flex-col">
-    <PageHead title="Задачи" :sub="!tasksEnabled ? '' : late ? `Просрочено у меня: ${plural(late, 'задача', 'задачи', 'задач')}` : 'Всё в срок'">
+    <PageHead title="Задачи" :sub="!tasksEnabled ? '' : `${PRESETS[filterPreset].label}: ${plural(visible.length, 'задача', 'задачи', 'задач')}${late ? ` · просрочено у меня ${late}` : ''}`">
       <template #actions>
+        <!-- Счётчики, как в Битрикс24: щелчок — показать только их. -->
+        <div v-if="tasksEnabled" class="flex flex-wrap items-center justify-end gap-1.5">
+          <button type="button" class="counter-chip" :data-on="only === 'overdue' ? 'true' : undefined" :disabled="!overdueCount && only !== 'overdue'" @click="toggleOnly('overdue')">
+            <AlarmClock class="size-3.5" />Просрочены<span class="counter-chip__n" :style="overdueCount ? { background: 'var(--danger)', color: 'var(--danger-foreground)' } : undefined">{{ overdueCount }}</span>
+          </button>
+          <button type="button" class="counter-chip" :data-on="only === 'comments' ? 'true' : undefined" :disabled="!commentCount && only !== 'comments'" @click="toggleOnly('comments')">
+            <MessageCircle class="size-3.5" />Комментарии<span class="counter-chip__n" :style="commentCount ? { background: 'var(--success)', color: 'var(--success-foreground)' } : undefined">{{ commentCount }}</span>
+          </button>
+          <button type="button" class="counter-chip counter-chip--ghost" :disabled="!commentCount" title="Отметить прочитанными все чаты задач" @click="readAll"><CheckCheck class="size-3.5" />Прочитать все</button>
+        </div>
         <button v-if="can('tasks', 'create')" type="button" class="button button--primary" :disabled="!tasksEnabled" @click="newTask"><Plus class="size-4" />Задача</button>
       </template>
       <template #toolbar>
-        <Segmented label="Задачи" :items="tabs" :model-value="tab" @update:model-value="(key) => setQuery({ tab: key === 'mine' ? null : key })" />
-        <SearchBox v-model="text" placeholder="Задача, сотрудник, сделка, проект или #тег" class="w-full min-w-0 sm:w-auto sm:flex-1" />
+        <TaskFilter :counts="presetCounts" />
+        <Popover ref="sortPop" align="right" width="w-64">
+          <template #trigger="{ toggle, open: shown }">
+            <button type="button" class="glass-btn" :data-open="shown ? 'true' : undefined" :data-on="sort !== 'manual' ? 'true' : undefined" :title="`Сортировка: ${sortLabel.toLowerCase()}`" @click="toggle">
+              <ArrowUpDown class="size-4" /><span class="hidden lg:inline">{{ sort === "manual" ? "Сортировка" : sortLabel }}</span>
+            </button>
+          </template>
+          <div class="p-1.5">
+            <p class="px-2.5 pt-1 pb-1.5 text-xs font-medium text-muted">Сортировка</p>
+            <button v-for="one in SORTS" :key="one.id" type="button" class="sort-row" :data-on="sort === one.id ? 'true' : undefined" @click="setSort(one.id); sortPop?.close()">
+              <span class="min-w-0 flex-1"><span class="block text-sm">{{ one.label }}</span><span class="block text-xs text-muted">{{ one.hint }}</span></span>
+              <Check v-if="sort === one.id" class="size-4 shrink-0 text-accent" />
+            </button>
+          </div>
+        </Popover>
         <div class="toggle-button-group toggle-button-group--horizontal" role="radiogroup" aria-label="Вид">
           <button
             v-for="one in VIEWS"
@@ -187,6 +214,7 @@ const due = (one: TaskBrief) => dueLook(one.status, one.deadline);
         </div>
       </template>
     </PageHead>
+
 
     <div class="min-h-0 flex-1 px-3 pb-3 md:px-5">
       <p v-if="auth.ready && !tasksEnabled" class="on-photo py-12 text-center">Задачи работают с сервером портала — войдите в портал на стенде.</p>
@@ -215,7 +243,8 @@ const due = (one: TaskBrief) => dueLook(one.status, one.deadline);
             <span v-if="one.project" class="inline-flex items-center gap-0.5 rounded bg-default px-1.5"><Folder class="size-3" />{{ one.project }}</span>
             <span v-for="tag in one.tags.slice(0, 3)" :key="tag" class="inline-flex items-center rounded bg-default px-1.5"><Hash class="size-2.5" />{{ tag }}</span>
           </p>
-          <div v-if="one.checklist.total || one.files || one.children || taskStore.timer?.taskId === one.id" class="mt-1.5 flex items-center gap-2.5 text-xs text-muted tabular-nums">
+          <div v-if="one.checklist.total || one.files || one.children || taskStore.timer?.taskId === one.id || unreadByTask.has(one.id)" class="mt-1.5 flex items-center gap-2.5 text-xs text-muted tabular-nums">
+            <span v-if="unreadByTask.has(one.id)" class="inline-flex h-[18px] items-center gap-0.5 rounded-full px-1.5 font-semibold" :style="{ background: 'var(--success)', color: 'var(--success-foreground)' }" :title="`Новых сообщений: ${unreadByTask.get(one.id)}`"><MessageCircle class="size-3" />{{ unreadByTask.get(one.id) }}</span>
             <span v-if="one.checklist.total" class="inline-flex items-center gap-0.5" :class="{ 'text-success': one.checklist.done === one.checklist.total }"><ListChecks class="size-3.5" />{{ one.checklist.done }}/{{ one.checklist.total }}</span>
             <span v-if="one.children" class="inline-flex items-center gap-0.5"><GitBranch class="size-3.5" />{{ one.children }}</span>
             <span v-if="one.files" class="inline-flex items-center gap-0.5"><Paperclip class="size-3.5" />{{ one.files }}</span>
@@ -249,7 +278,7 @@ const due = (one: TaskBrief) => dueLook(one.status, one.deadline);
           <template #project="{ row }"><span class="text-muted">{{ row.project || "—" }}</span></template>
           <template #time="{ row }"><span class="text-muted tabular-nums">{{ row.timeSpent ? duration(row.timeSpent) : "—" }}</span></template>
         </DataTable>
-        <p v-if="taskStore.loaded && !visible.length" class="on-photo py-12 text-center">{{ tab === "overdue" ? "Всё сделано в срок." : "Задач нет." }}</p>
+        <p v-if="taskStore.loaded && !visible.length" class="on-photo py-12 text-center">{{ only === "overdue" ? "Всё сделано в срок." : only === "comments" ? "Новых комментариев нет." : "По фильтру задач нет." }}</p>
       </div>
     </div>
 
@@ -277,3 +306,67 @@ const due = (one: TaskBrief) => dueLook(one.status, one.deadline);
     </SidePanel>
   </div>
 </template>
+
+<style scoped>
+.counter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  height: 2.125rem;
+  padding: 0 0.375rem 0 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--foreground);
+  background: color-mix(in oklab, var(--surface) 88%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--surface-shadow);
+  text-shadow: none;
+  transition: background-color 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.counter-chip:hover:not(:disabled):not([data-on]) { background: var(--surface); }
+.counter-chip[data-on]:hover { background: color-mix(in oklab, var(--accent) 88%, black); }
+.counter-chip:disabled { opacity: 0.7; cursor: default; }
+.counter-chip[data-on] { background: var(--accent); color: var(--accent-foreground); }
+.counter-chip--ghost { padding-right: 0.75rem; }
+.counter-chip__n {
+  min-width: 1.375rem;
+  height: 1.375rem;
+  padding: 0 0.375rem;
+  border-radius: 9999px;
+  background: var(--default);
+  font-size: 0.75rem;
+  line-height: 1.375rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.counter-chip[data-on] .counter-chip__n { background: color-mix(in oklab, white 25%, transparent) !important; color: inherit !important; }
+.glass-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  height: 2.375rem;
+  padding: 0 0.75rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: color-mix(in oklab, var(--surface) 88%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--surface-shadow);
+}
+.glass-btn:hover, .glass-btn[data-open] { background: var(--surface); }
+.glass-btn[data-on] { color: var(--accent); }
+.sort-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.625rem;
+  border-radius: 0.625rem;
+  text-align: left;
+}
+.sort-row:hover { background: var(--default); }
+.sort-row[data-on] { background: var(--accent-soft); }
+</style>

@@ -595,6 +595,19 @@ export async function markRead(chatId: number) {
   await api("POST", `messenger/chats/${chatId}/read`, { id: last }).catch(() => reading.delete(chatId));
 }
 
+/* Отметить прочитанными сразу несколько чатов (например, все чаты задач)
+   по последнему сообщению из списка — переписку грузить не нужно. */
+export async function markChatsRead(list: ChatItem[]) {
+  await Promise.all(list.map(async (chat) => {
+    const last = chat.last?.id ?? 0;
+    if (!last || last <= chat.lastReadId) return void (chat.unread = 0);
+    chat.lastReadId = last;
+    chat.unread = 0;
+    reading.set(chat.id, last);
+    await api("POST", `messenger/chats/${chat.id}/read`, { id: last }).catch(() => reading.delete(chat.id));
+  }));
+}
+
 /* ---------- Чаты ---------- */
 
 function upsert(chat: ChatItem) {
