@@ -39,7 +39,7 @@ function imageBox(file: ChatFile, many: boolean) {
 </script>
 
 <script setup lang="ts">
-import { Smile, MoreHorizontal, Forward, Check, CheckCheck, Clock, AlertCircle, Download, FileText } from "@lucide/vue";
+import { Smile, SmilePlus, MoreHorizontal, Forward, Check, CheckCheck, Clock, AlertCircle, Download, FileText } from "@lucide/vue";
 import ChatFace from "./ChatFace.vue";
 import EmojiPicker from "./EmojiPicker.vue";
 import GifView from "./GifView.vue";
@@ -146,15 +146,25 @@ const emit = defineEmits<{
         </span>
         <!-- Реакция — кружок в нижнем углу пузыря, только при наведении. -->
         <template v-if="!message.deleted && !message.pending">
-        <Popover class="!absolute -bottom-2.5 z-10 transition-opacity" :class="[right ? '-left-3' : '-right-3', active ? 'opacity-100' : 'opacity-0 group-hover/msg:opacity-100 has-[[aria-expanded=true]]:opacity-100']" :align="right ? 'right' : 'left'" up width="w-auto">
+        <!-- Наведение на кружок — быстрые реакции; в конце, за чертой, «ещё» —
+             вложенная панель со всеми эмодзи по группам. -->
+        <Popover hover class="!absolute -bottom-2.5 z-10 transition-opacity" :class="[right ? '-left-3' : '-right-3', active ? 'opacity-100' : 'opacity-0 group-hover/msg:opacity-100 has-[[aria-expanded=true]]:opacity-100']" :align="right ? 'right' : 'left'" up width="w-auto">
           <template #trigger="{ toggle, open }">
             <button type="button" class="msg-side-btn !size-7" aria-label="Поставить реакцию" title="Реакция" :aria-expanded="open" @click="toggle"><Smile class="size-4" /></button>
           </template>
           <template #default="{ close }">
-            <div class="flex items-center gap-0.5 px-1 pb-1">
+            <div class="flex items-center gap-0.5">
               <button v-for="emoji in QUICK.slice(0, 7)" :key="emoji" type="button" class="flex size-9 items-center justify-center rounded-full text-[22px] leading-none transition hover:scale-125 hover:bg-default" :aria-label="`Реакция ${emoji}`" @click="close(); emit('react', emoji)">{{ emoji }}</button>
+              <span class="mx-1 h-6 w-px bg-separator" aria-hidden="true" />
+              <Popover :align="right ? 'right' : 'left'" up width="w-auto">
+                <template #trigger="{ toggle: more, open: full }">
+                  <button type="button" class="flex size-9 items-center justify-center rounded-full text-muted transition hover:bg-default hover:text-foreground" :class="full ? 'bg-default text-foreground' : ''" aria-label="Все реакции" title="Все реакции" :aria-expanded="full" @click="more"><SmilePlus class="size-5" /></button>
+                </template>
+                <template #default="{ close: closeFull }">
+                  <EmojiPicker @pick="(emoji) => { closeFull(); close(); emit('react', emoji); }" />
+                </template>
+              </Popover>
             </div>
-            <EmojiPicker @pick="(emoji) => { close(); emit('react', emoji); }" />
           </template>
         </Popover>
         </template>

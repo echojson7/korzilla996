@@ -9,7 +9,7 @@
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { autoUpdate, computePosition, flip, offset, shift, size, type Placement } from "@floating-ui/dom";
 
-const props = withDefaults(defineProps<{ align?: "left" | "right"; width?: string; up?: boolean }>(), { align: "right", width: "w-72", up: false });
+const props = withDefaults(defineProps<{ align?: "left" | "right"; width?: string; up?: boolean; hover?: boolean }>(), { align: "right", width: "w-72", up: false, hover: false });
 const open = ref(false);
 const root = ref<HTMLElement | null>(null);
 const panel = ref<HTMLElement | null>(null);
@@ -79,11 +79,31 @@ onBeforeUnmount(() => {
   stop?.();
 });
 const close = () => (open.value = false);
+
+/* hover: панель открывается наведением мыши на кнопку и закрывается, когда
+   мышь ушла и с кнопки, и с панели (с паузой, чтобы успеть перейти).
+   Пока открыта вложенная панель, эта не закрывается. Палец — как раньше,
+   нажатием. */
+let hoverTimer = 0;
+function hoverIn(event: PointerEvent) {
+  if (!props.hover || event.pointerType !== "mouse") return;
+  clearTimeout(hoverTimer);
+  open.value = true;
+}
+function hoverOut(event: PointerEvent) {
+  if (!props.hover || event.pointerType !== "mouse") return;
+  clearTimeout(hoverTimer);
+  hoverTimer = window.setTimeout(() => {
+    if (document.querySelector(`[data-popover][data-parent="${panelId}"]`)) return;
+    open.value = false;
+  }, 250);
+}
+onBeforeUnmount(() => clearTimeout(hoverTimer));
 defineExpose({ close });
 </script>
 
 <template>
-  <div ref="root" class="relative">
+  <div ref="root" class="relative" @pointerenter="hoverIn" @pointerleave="hoverOut">
     <slot name="trigger" :open="open" :toggle="() => (open = !open)" />
     <Teleport to="body">
       <Transition name="pop">
@@ -93,6 +113,8 @@ defineExpose({ close });
           data-popover
           :data-id="panelId"
           :data-parent="parentId"
+          @pointerenter="hoverIn"
+          @pointerleave="hoverOut"
           class="popover-layer fixed top-0 left-0 overflow-y-auto overscroll-contain rounded-2xl bg-overlay p-1.5 text-overlay-foreground shadow-overlay thin-scroll"
           :class="[side === 'top' ? 'origin-bottom' : 'origin-top', width]"
         >

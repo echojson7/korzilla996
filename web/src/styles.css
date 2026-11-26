@@ -679,3 +679,15 @@ body {
 .chat-wall--general .wall-note { color: rgb(255 255 255 / 0.72); }
 .chat-wall--general .wall-unread { color: rgb(255 255 255 / 0.9); }
 .chat-wall--general .wall-unread > span { background: rgb(255 255 255 / 0.35); }
+
+/* Наведение — мгновенно: подсветка кнопок, ссылок, пунктов меню и строк
+   появляется сразу под курсором, даже если провести мышью быстро; плавно
+   только гаснет (длительность перехода берётся из состояния, в которое
+   переходим). Только у самих кликабельных элементов — у их родителей
+   (меню, панели) свои анимации остаются. */
+@media (hover: hover) {
+  :is(a, button, summary, label, tr, [role="button"], [role="menuitem"], [role="option"], [role="tab"]):hover {
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+  }
+}
