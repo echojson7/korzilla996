@@ -251,6 +251,54 @@ Artisan::command('bitrix:lead-settings', function () {
     }
 })->purpose('Перенести статусы и поля лидов из Битрикс24');
 
+/*
+ * Роботы стадий из бизнес-процесса сделок Битрикс24 (см. App\Support\Bitrix\ImportRobots).
+ * Файл — выгрузка bizproc.workflow.template.list (bp-templates.json). Роботы приходят
+ * выключенными; --active включает перенесённые целиком. Сначала crm:import-bitrix и bitrix:users.
+ */
+Artisan::command('bitrix:robots {file? : bp-templates.json} {--template=260 : номер шаблона БП} {--active : включить перенесённых целиком} {--update : переписать уже перенесённых} {--report= : куда записать отчёт (Markdown)}', function () {
+    $file = $this->argument('file') ?: (getenv('HOME') ?: '').'/korzillax-env/bitrix24-export/bp-templates.json';
+    $list = is_file($file) ? json_decode(file_get_contents($file), true) : null;
+    $template = collect($list ?? [])->firstWhere('ID', (string) $this->option('template')) ?? collect($list ?? [])->firstWhere('ID', (int) $this->option('template'));
+    if (! $template) {
+        $this->error("Нет шаблона №{$this->option('template')} в {$file}");
+
+        return 1;
+    }
+    try {
+        $client = App\Support\Bitrix\Client::fromConfig();
+    } catch (Throwable) {
+        $client = null;
+    }
+    $result = (new App\Support\Bitrix\ImportRobots((bool) $this->option('active'), (bool) $this->option('update'), $client))->run($template);
+    $this->info("Роботов создано: {$result['created']}, обновлено: {$result['updated']}, уже были: {$result['skipped']}. Перенесены целиком: {$result['active']}, ждут настройки: {$result['todo']}.");
+    if ($path = $this->option('report')) {
+        $pipelines = App\Models\CrmPipeline::query()->with('stages')->get()->keyBy('id');
+        $md = "# Роботы из БП Битрикс24 №{$template['ID']} «{$template['NAME']}»\n\n";
+        $md .= "Создано {$result['created']}, обновлено {$result['updated']}. Готовы: {$result['active']}, нужно настроить: {$result['todo']}.\n";
+        foreach ($result['report'] as $pipelineId => $stages) {
+            $pipeline = $pipelines[$pipelineId];
+            $md .= "\n## {$pipeline->title}\n";
+            foreach ($pipeline->stages as $stage) {
+                if (empty($stages[$stage->id])) {
+                    continue;
+                }
+                $md .= "\n**{$stage->title}**\n\n";
+                foreach ($stages[$stage->id] as $one) {
+                    $md .= '- '.($one['complete'] ? '✅' : '⚠️')." {$one['title']}";
+                    $extra = trim(preg_replace('/^Перенесено из БП Битрикс24 №\d+\.\s*/u', '', (string) $one['note']));
+                    $md .= $extra !== '' && ! $one['complete'] ? ' — '.str_replace("\n", '; ', $extra) : '';
+                    $md .= "\n";
+                }
+            }
+        }
+        file_put_contents($path, $md);
+        $this->info("Отчёт: {$path}");
+    }
+
+    return 0;
+})->purpose('Перенести роботов стадий из бизнес-процесса сделок Битрикс24');
+
 /* Счета из Битрикс24: старые и смарт-счета (см. App\Support\Bitrix\ImportInvoices). Сначала bitrix:crm (сделки, лиды). */
 Artisan::command('bitrix:invoices', function () {
     ini_set('memory_limit', '512M');

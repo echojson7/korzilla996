@@ -64,3 +64,11 @@
   '(new PDO("sqlite:database/database.sqlite"))->exec("VACUUM INTO \"/путь/копия.sqlite\"");'`.
 - Обои — AVIF и WebP рядом (`web/public/bg`): новое фото — оба формата,
   AVIF: `ffmpeg -i x.webp -c:v libaom-av1 -still-picture 1 -crf 26 x.avif`.
+- Роботы и триггеры CRM — `App\Support\Robots` (`Automation` — очередь
+  `crm_robot_runs` и смена стадии, `Actions` — действия, `Conditions`,
+  `Template` — подстановки `{{Название}}`/`{{uf_crm_…}}`). Сделку на новую
+  стадию переводить через `Automation::moveTo` или после записи звать
+  `Automation::stageEntered` — иначе роботы стадии не запустятся. Импорт
+  сделок из Битрикса роботов не запускает (пишет в базу напрямую).
+  Отложенные выполняет `crm:robots` из планировщика. Роботы из БП
+  Битрикс24 — `bitrix:robots` (приходят выключенными).
