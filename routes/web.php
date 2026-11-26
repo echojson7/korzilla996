@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AccessController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CrmClientController;
 use App\Http\Controllers\CrmController;
 use App\Http\Controllers\DealController;
 use App\Http\Controllers\GifController;
@@ -100,6 +101,10 @@ Route::prefix('api')->group(function () {
         Route::patch('crm/fields/{field}', [CrmController::class, 'updateField']);
         Route::delete('crm/fields/{field}', [CrmController::class, 'destroyField']);
 
+        Route::get('crm/companies', [CrmClientController::class, 'companies']);
+        Route::get('crm/companies/{company}', [CrmClientController::class, 'showCompany']);
+        Route::get('crm/contacts', [CrmClientController::class, 'contacts']);
+        Route::get('crm/contacts/{contact}', [CrmClientController::class, 'showContact']);
         Route::get('crm/deals', [DealController::class, 'index']);
         Route::get('crm/summary', [DealController::class, 'summary']);
         Route::post('crm/deals', [DealController::class, 'store']);

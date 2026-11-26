@@ -14,6 +14,12 @@ class CrmDeal extends Model
         'company_id', 'contact_id',
     ];
 
+    /* Строка поиска (App\Support\CrmSearch) — при каждой записи. */
+    protected static function booted(): void
+    {
+        static::saving(fn (self $one) => $one->search = \App\Support\CrmSearch::of('crm_deals', $one->getAttributes()));
+    }
+
     protected function casts(): array
     {
         return [

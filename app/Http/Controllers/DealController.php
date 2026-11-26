@@ -12,6 +12,7 @@ use App\Models\CrmPipeline;
 use App\Models\CrmStage;
 use App\Models\User;
 use App\Support\Access;
+use App\Support\CrmSearch;
 use App\Support\CrmFields;
 use App\Support\DealAccess;
 use App\Support\Realtime;
@@ -72,14 +73,7 @@ class DealController extends Controller
             $query->where('responsible_id', (int) $request->input('responsible'));
         }
         if ($request->filled('q')) {
-            $words = trim((string) $request->input('q'));
-            $query->where(function ($q) use ($words) {
-                $like = '%'.str_replace(['%', '_'], ['\%', '\_'], $words).'%';
-                $q->where('title', 'like', $like)->orWhere('company', 'like', $like)->orWhere('contact', 'like', $like);
-                if (ctype_digit($words)) {
-                    $q->orWhere('id', (int) $words);
-                }
-            });
+            CrmSearch::apply($query, (string) $request->input('q'));
         }
         $total = (clone $query)->count();
         $sum = (float) (clone $query)->sum('amount');

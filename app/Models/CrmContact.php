@@ -10,6 +10,12 @@ class CrmContact extends Model
 
     protected $guarded = ['id'];
 
+    /* Строка поиска (App\Support\CrmSearch) — при каждой записи. */
+    protected static function booted(): void
+    {
+        static::saving(fn (self $one) => $one->search = \App\Support\CrmSearch::of('crm_contacts', $one->getAttributes()));
+    }
+
     protected function casts(): array
     {
         return [
@@ -18,5 +24,15 @@ class CrmContact extends Model
             'fields' => 'array',
             'birthday' => 'date',
         ];
+    }
+
+    public function deals(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(CrmDeal::class, 'contact_id');
+    }
+
+    public function company(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(CrmCompany::class, 'company_id');
     }
 }

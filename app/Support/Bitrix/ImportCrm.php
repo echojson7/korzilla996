@@ -177,6 +177,7 @@ class ImportCrm
                     continue;
                 }
                 $data['external_id'] = $external;
+                $data['search'] = \App\Support\CrmSearch::of($table, $data);
                 if (isset($known[$external])) {
                     $update[$known[$external]] = $data;
                 } else {

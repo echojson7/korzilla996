@@ -3,7 +3,7 @@
    Новый раздел — строка здесь и файл в pages/. */
 
 import { defineAsyncComponent, type Component } from "vue";
-import { House, Briefcase, ListChecks, Users, Workflow, MessagesSquare, UserRound, Settings } from "@lucide/vue";
+import { House, Briefcase, Building2, ListChecks, Users, Workflow, MessagesSquare, UserRound, Settings } from "@lucide/vue";
 import { can, isManager } from "./lib/access";
 
 export interface PageDef {
@@ -28,6 +28,7 @@ export const PAGES: PageDef[] = [
   { id: "overview", path: "/", title: "Обзор", icon: House, group: "", load: once(() => import("./pages/Overview.vue")) },
   { id: "messenger", path: "/messenger", title: "Мессенджер", icon: MessagesSquare, group: "", load: once(() => import("./pages/Messenger.vue")) },
   { id: "deals", path: "/deals", title: "Сделки", icon: Briefcase, group: "CRM", allowed: () => can("crm", "view"), load: once(() => import("./pages/Deals.vue")) },
+  { id: "clients", path: "/clients", title: "Компании и контакты", icon: Building2, group: "CRM", allowed: () => can("crm", "view"), load: once(() => import("./pages/Clients.vue")) },
   { id: "tasks", path: "/tasks", title: "Задачи", icon: ListChecks, group: "Работа", allowed: () => can("tasks", "view"), load: once(() => import("./pages/Tasks.vue")) },
   { id: "staff", path: "/staff", title: "Сотрудники", icon: Users, group: "Компания", allowed: () => can("staff", "view"), load: once(() => import("./pages/Staff.vue")) },
   { id: "profile", path: "/profile", title: "Профиль", icon: UserRound, group: "Компания", hidden: true, load: once(() => import("./pages/Profile.vue")) },

@@ -30,7 +30,7 @@ class BitrixCrmTest extends TestCase
 
         Http::fake([
             '*/crm.company.list.json' => Http::response(['result' => [
-                ['ID' => '5', 'TITLE' => 'ООО Ромашка', 'PHONE' => [['VALUE' => '+7 900', 'VALUE_TYPE' => 'WORK']], 'ASSIGNED_BY_ID' => '7', 'DATE_CREATE' => '2023-01-02T10:00:00+03:00', 'UF_CRM_INN' => '123'],
+                ['ID' => '5', 'TITLE' => 'ООО Ромашка', 'PHONE' => [['VALUE' => '+7 (900) 123-45-67', 'VALUE_TYPE' => 'WORK']], 'ASSIGNED_BY_ID' => '7', 'DATE_CREATE' => '2023-01-02T10:00:00+03:00', 'UF_CRM_INN' => '123'],
             ], 'total' => 1]),
             '*/crm.contact.list.json' => Http::response(['result' => [
                 ['ID' => '9', 'NAME' => 'Иван', 'LAST_NAME' => 'Петров', 'COMPANY_ID' => '5', 'EMAIL' => [['VALUE' => 'i@r.ru', 'VALUE_TYPE' => 'WORK']]],
@@ -64,6 +64,10 @@ class BitrixCrmTest extends TestCase
         $this->assertSame(0, $again['deals']['new'] + $again['companies']['new'] + $again['contacts']['new']);
         $this->assertSame(1, $again['deals']['kept']);
 
-        $this->actingAs($anna->fresh())->getJson('/api/crm/deals/'.$deal->id)->assertOk();
+        $this->actingAs($anna->fresh())->getJson('/api/crm/deals/'.$deal->id)->assertOk()->assertJsonPath('data.companyInfo.phones.0.value', '+7 (900) 123-45-67');
+        $this->getJson('/api/crm/companies?q=ромашка')->assertOk()->assertJsonPath('data.total', 1)->assertJsonPath('data.rows.0.deals', 1);
+        $this->getJson('/api/crm/companies/'.$deal->company_id)->assertOk()->assertJsonPath('data.contacts.0.name', 'Петров Иван')->assertJsonPath('data.dealList.0.title', 'Сайт для Ромашки');
+        $this->getJson('/api/crm/contacts?q=i@r.ru')->assertOk()->assertJsonPath('data.rows.0.company', 'ООО Ромашка');
+        $this->getJson('/api/crm/companies?q=8 900 123')->assertOk()->assertJsonPath('data.total', 1);
     }
 }
