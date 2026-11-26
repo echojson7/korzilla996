@@ -72,9 +72,9 @@ watch(() => [props.open, props.chat?.entity, enabled.value, again.value] as cons
               data-card
               :aria-label="title"
               class="flex w-full min-w-0 shrink-0 flex-col outline-none"
-              :class="chat ? [wide ? 'lg:w-[clamp(440px,44%,660px)]' : 'lg:w-[clamp(400px,38%,560px)]', 'lg:border-r lg:border-separator'] : ''"
+              :class="chat ? [wide ? 'lg:w-[clamp(460px,47%,720px)]' : 'lg:w-[clamp(400px,38%,560px)]', 'lg:border-r lg:border-separator'] : ''"
             >
-              <header class="flex items-start gap-3 border-b border-separator bg-surface px-6 py-4">
+              <header class="flex items-start gap-3 border-b border-separator bg-surface py-4" :class="wide ? 'px-8' : 'px-6'">
                 <div class="min-w-0 flex-1">
                   <slot name="title"><h2 class="text-xl font-semibold">{{ title }}</h2></slot>
                   <p v-if="sub" class="mt-0.5 text-sm text-muted">{{ sub }}</p>
@@ -83,8 +83,8 @@ watch(() => [props.open, props.chat?.entity, enabled.value, again.value] as cons
                   <X class="size-5" />
                 </button>
               </header>
-              <div class="relative min-h-0 flex-1 overflow-y-auto p-6 thin-scroll"><slot /></div>
-              <footer v-if="$slots.footer" class="flex items-center gap-2 border-t border-separator bg-surface px-6 py-3"><slot name="footer" /></footer>
+              <div class="relative min-h-0 flex-1 overflow-y-auto thin-scroll" :class="wide ? 'px-8 py-7' : 'p-6'"><slot /></div>
+              <footer v-if="$slots.footer" class="flex items-center gap-2 border-t border-separator bg-surface py-3" :class="wide ? 'px-8' : 'px-6'"><slot name="footer" /></footer>
             </aside>
 
             <section v-if="chat" class="hidden min-w-0 flex-1 flex-col bg-surface lg:flex" :aria-label="`Чат: ${chat.title}`">

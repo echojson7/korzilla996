@@ -193,7 +193,7 @@ const mine = (one: TaskFull["timeItems"][number]) => one.userId === taskStore.me
 </script>
 
 <template>
-  <section :class="mode === 'work' ? 'card card--default gap-0 px-4 pt-0 pb-4' : ''">
+  <section :class="mode === 'work' ? 'card card--default gap-0 px-5 pt-0 pb-5' : ''">
     <div v-if="mode === 'work'" class="flex h-11 shrink-0 items-center gap-2 pt-1">
       <h3 v-if="tabs.length === 1" class="flex items-center gap-2 text-sm font-semibold"><Clock class="size-4 text-muted" />Учёт времени</h3>
       <div v-else class="toggle-button-group toggle-button-group--horizontal" role="tablist">

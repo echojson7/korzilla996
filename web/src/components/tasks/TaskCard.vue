@@ -504,7 +504,7 @@ defineExpose({ create });
   </template>
   <div
     v-else-if="task || draft"
-    :class="descEditing ? 'absolute inset-0 bg-surface' : '-m-3 flex flex-col gap-3'"
+    :class="descEditing ? 'absolute inset-0 bg-surface' : '-m-3 flex flex-col gap-4'"
     @keydown.ctrl.enter="draft && !descEditing && create()"
     @keydown.meta.enter="draft && !descEditing && create()"
   >
@@ -883,14 +883,14 @@ defineExpose({ create });
   border-top: 1px solid var(--separator);
 }
 .props > dt {
-  margin-left: 1rem;
+  margin-left: 1.25rem;
   padding-right: 0.75rem;
   color: var(--muted);
   font-size: 0.8125rem;
 }
 .props > dd {
   min-width: 0;
-  margin-right: 1rem;
+  margin-right: 1.25rem;
 }
 .props > dt:first-of-type,
 .props > dt:first-of-type + dd {
