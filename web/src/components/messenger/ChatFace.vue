@@ -32,11 +32,11 @@ const look = computed(() => {
       <img v-if="look.image" :src="look.image" alt="" class="block size-full scale-[1.42] -rotate-45 object-cover" loading="lazy" decoding="async" draggable="false" />
     </span>
     <Sparkles v-if="!look.image && look.changelog" class="relative size-[42%] text-white" />
-    <span v-else-if="!look.image" class="relative text-white">{{ look.initials }}</span>
+    <span v-else-if="!look.image" class="initials relative text-white">{{ look.initials }}</span>
   </span>
   <span v-else class="relative inline-flex aspect-square shrink-0 items-center justify-center rounded-full font-semibold select-none" :class="[SIZE[size], look.image ? '' : 'hue-face']" :style="{ '--hue': look.hue }" :title="look.title" role="img" :aria-label="look.title">
     <img v-if="look.image" :src="look.image" alt="" class="block size-full rounded-full object-cover" loading="lazy" decoding="async" draggable="false" />
-    <template v-else>{{ look.initials }}</template>
+    <span v-else class="initials">{{ look.initials }}</span>
     <span v-if="look.kind && (size === 'md' || size === 'lg')" class="absolute -right-0.5 -bottom-0.5 flex size-4 items-center justify-center rounded-full bg-surface text-muted shadow-sm ring-1 ring-black/5" :title="look.kind.label"><component :is="look.kind.icon" class="size-2.5" /></span>
     <span v-else-if="look.group && !look.image && (size === 'md' || size === 'lg')" class="absolute -right-0.5 -bottom-0.5 flex size-4 items-center justify-center rounded-full bg-surface text-muted shadow-sm ring-1 ring-black/5"><Users class="size-2.5" /></span>
   </span>

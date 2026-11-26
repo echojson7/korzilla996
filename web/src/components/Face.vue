@@ -11,6 +11,6 @@ const TEXT = { xs: "text-[9px] tracking-tighter", sm: "text-xs", md: "text-sm", 
 
 <template>
   <span v-if="one" class="avatar shrink-0" :class="SIZE[size]" :title="one.name" role="img" :aria-label="one.name">
-    <span class="avatar__fallback hue-face font-semibold" :class="TEXT[size]" :style="{ '--hue': one.hue }">{{ one.initials }}</span>
+    <span class="avatar__fallback hue-face font-semibold" :class="TEXT[size]" :style="{ '--hue': one.hue }"><span class="initials">{{ one.initials }}</span></span>
   </span>
 </template>

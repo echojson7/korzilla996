@@ -161,7 +161,7 @@ async function signOut() {
       <template #trigger="{ toggle }">
         <button type="button" class="glass-light flex h-9 items-center gap-2 rounded-xl pr-2.5 pl-1" aria-label="Профиль" @click="toggle">
           <img v-if="meAvatar" :src="meAvatar" alt="" class="size-7 rounded-full object-cover ring-1 ring-white/50" />
-          <span v-else class="flex size-7 items-center justify-center rounded-full bg-white/90 text-xs font-bold text-black [text-shadow:none]">{{ auth.me?.initials }}</span>
+          <span v-else class="flex size-7 items-center justify-center rounded-full bg-white/90 text-xs font-bold text-black [text-shadow:none]"><span class="initials">{{ auth.me?.initials }}</span></span>
           <span class="hidden max-w-[160px] truncate text-sm font-medium md:inline">{{ auth.me?.name }}</span>
         </button>
       </template>
@@ -169,7 +169,7 @@ async function signOut() {
       <div class="[text-shadow:none]" @click="($event.target as HTMLElement).closest('a') && close()">
         <a :href="href('/profile')" class="flex items-center gap-3 rounded-xl px-3 pt-2 pb-2 hover:bg-default">
           <img v-if="meAvatarBig" :src="meAvatarBig" alt="" class="size-10 shrink-0 rounded-full object-cover" />
-          <span v-else class="hue-face flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold" :style="{ '--hue': auth.me?.hue ?? 220 }">{{ auth.me?.initials }}</span>
+          <span v-else class="hue-face flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold" :style="{ '--hue': auth.me?.hue ?? 220 }"><span class="initials">{{ auth.me?.initials }}</span></span>
           <span class="min-w-0">
             <span class="block truncate font-semibold">{{ auth.me?.name }}</span>
             <span class="block truncate text-xs text-muted">{{ auth.me?.position || auth.me?.roleLabel }} · {{ auth.me?.email }}</span>

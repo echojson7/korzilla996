@@ -175,6 +175,14 @@ body {
   background: oklch(0.92 0.055 var(--hue));
   color: oklch(0.42 0.13 var(--hue));
 }
+/* Буквы на заглушке аватара — ровно по центру: высота строки обрезается
+   до заглавных (у Onest над буквами запас больше, чем под ними). */
+.initials {
+  display: block;
+  line-height: 1;
+  text-box: trim-both cap alphabetic;
+}
+
 /* Заглушка аватара с буквами: приглушённый тон потемнее, белые буквы. */
 .hue-face {
   background: oklch(0.6 0.075 var(--hue));
