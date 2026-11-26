@@ -6,6 +6,7 @@ use App\Http\Controllers\CrmClientController;
 use App\Http\Controllers\CrmController;
 use App\Http\Controllers\CrmDocumentController;
 use App\Http\Controllers\LeadController;
+use App\Http\Controllers\SmartController;
 use App\Http\Controllers\DealController;
 use App\Http\Controllers\GifController;
 use App\Http\Controllers\MessengerController;
@@ -104,6 +105,9 @@ Route::prefix('api')->group(function () {
         Route::delete('crm/fields/{field}', [CrmController::class, 'destroyField']);
 
         Route::get('crm/documents/{document}/file', [CrmDocumentController::class, 'file'])->whereNumber('document');
+        Route::get('crm/smart-types', [SmartController::class, 'types']);
+        Route::get('crm/smart', [SmartController::class, 'index']);
+        Route::get('crm/smart/{item}', [SmartController::class, 'show'])->whereNumber('item');
         Route::get('crm/lead-schema', [LeadController::class, 'schema']);
         Route::get('crm/leads', [LeadController::class, 'index']);
         Route::get('crm/leads/{lead}', [LeadController::class, 'show']);

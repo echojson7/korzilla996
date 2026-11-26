@@ -420,6 +420,7 @@ class DealController extends Controller
             'products' => ProductRows::of('deal', $deal->id),
             'invoices' => InvoiceRows::of('deal_id', $deal->id),
             'documents' => CrmDocumentController::of('deal', $deal->id),
+            'smart' => SmartController::related('deal_id', $deal->id),
             'contactList' => $this->contactList($deal),
             'history' => $deal->history()->orderByDesc('id')->limit(200)->get()->map(fn (CrmDealHistory $one) => [
                 'id' => $one->id, 'userId' => $one->user_id, 'field' => $one->field, 'old' => $one->old, 'new' => $one->new,

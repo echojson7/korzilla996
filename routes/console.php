@@ -262,3 +262,15 @@ Artisan::command('bitrix:documents {--no-files : только записи, бе
     }))->run();
     $this->info(sprintf('Документы: новых %d, уже были %d, файлов %d (%.1f МБ), без файла %d.', $report['new'], $report['kept'], $report['files'], $report['bytes'] / 1048576, $report['no_file']));
 })->purpose('Перенести документы из шаблонов Битрикс24 вместе с файлами');
+
+/* Смарт-процессы Битрикс24: типы, стадии, поля, элементы (см. App\Support\Bitrix\ImportSmart). После bitrix:crm и bitrix:documents. */
+Artisan::command('bitrix:smart', function () {
+    ini_set('memory_limit', '512M');
+    Illuminate\Support\Facades\DB::disableQueryLog();
+    $parts = parse_url((string) config('services.bitrix24.webhook'));
+    $started = microtime(true);
+    $report = (new App\Support\Bitrix\ImportSmart(App\Support\Bitrix\Client::fromConfig(), ($parts['scheme'] ?? 'https').'://'.($parts['host'] ?? ''), function ($key, $done, $total) use ($started) {
+        $this->line(sprintf('Смарт-процесс %s: %d из %d (%d с)', $key, $done, $total, microtime(true) - $started));
+    }))->run();
+    $this->info("Смарт-процессы: типов +{$report['types']}, стадий +{$report['stages']}, полей +{$report['fields']}, элементов {$report['items']} (уже были {$report['kept']}), документов привязано {$report['documents']}.");
+})->purpose('Перенести смарт-процессы из Битрикс24');

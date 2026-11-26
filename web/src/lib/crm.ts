@@ -62,6 +62,7 @@ export interface DealFull extends DealBrief {
   products?: ProductRow[];
   invoices?: Invoice[];
   documents?: CrmDocument[];
+  smart?: SmartBrief[];
   contactList?: { id: number; name: string; post: string | null; phones: Contact[]; emails: Contact[] }[];
   contactInfo?: { id: number; name: string; post: string | null; phones: Contact[]; emails: Contact[] } | null;
   history: DealHistory[];
@@ -78,6 +79,8 @@ export interface ProductRow { id: number; productId: number | null; name: string
 export interface Invoice { id: number; number: string | null; title: string | null; status: string | null; semantic: string; amount: number; currency: string; dateBill: string | null; payBefore: string | null; paidAt: string | null; products: ProductRow[] }
 /** Документ из шаблона (договор, КП, акт). */
 export interface CrmDocument { id: number; title: string; number: string | null; template: string | null; file: { name: string; mime: string; size: number } | null; createdAt: string | null; creatorId: number | null }
+/** Элемент смарт-процесса, связанный со сделкой или лидом. */
+export interface SmartBrief { id: number; typeId: number; typeTitle: string; title: string; stage: { title: string; color: string; semantic: string } | null; amount: number; closed: boolean }
 export interface DealInput {
   title?: string;
   amount?: number | null;

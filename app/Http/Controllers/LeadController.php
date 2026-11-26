@@ -83,6 +83,7 @@ class LeadController extends Controller
             'products' => ProductRows::of('lead', $lead->id),
             'invoices' => InvoiceRows::of('lead_id', $lead->id),
             'documents' => CrmDocumentController::of('lead', $lead->id),
+            'smart' => SmartController::related('lead_id', $lead->id),
             'externalId' => $lead->external_id,
         ]]);
     }

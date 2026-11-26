@@ -15,6 +15,7 @@ class CrmSearch
         'crm_companies' => ['title', 'address', 'phones', 'emails', 'webs'],
         'crm_contacts' => ['name', 'post', 'phones', 'emails'],
         'crm_deals' => ['title', 'company', 'contact'],
+        'crm_smart_items' => ['title'],
         'crm_invoices' => ['number', 'title'],
         'crm_leads' => ['title', 'name', 'company_title', 'phones', 'emails', 'webs'],
     ];

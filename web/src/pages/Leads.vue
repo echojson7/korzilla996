@@ -4,7 +4,7 @@
      В адресе: ?stage, ?q, ?open. Пока только просмотр. -->
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { Phone, Mail, Globe, MapPin, UserRound, ShoppingCart, SlidersHorizontal, Pencil, Receipt, FileText } from "@lucide/vue";
+import { Phone, Mail, Globe, MapPin, UserRound, ShoppingCart, SlidersHorizontal, Pencil, Receipt, FileText, Layers } from "@lucide/vue";
 import PageHead from "../components/PageHead.vue";
 import SearchBox from "../components/SearchBox.vue";
 import SidePanel from "../components/SidePanel.vue";
@@ -15,8 +15,9 @@ import FieldValue from "../components/crm/FieldValue.vue";
 import ProductRows from "../components/crm/ProductRows.vue";
 import InvoiceList from "../components/crm/InvoiceList.vue";
 import DocumentList from "../components/crm/DocumentList.vue";
+import SmartList from "../components/crm/SmartList.vue";
 import { api, ApiError } from "../lib/api";
-import { hueOf, type Contact, type Field, type FieldValue as Value, type Pipeline, type CrmDocument, type Invoice, type ProductRow, type Stage } from "../lib/crm";
+import { hueOf, type Contact, type Field, type FieldValue as Value, type Pipeline, type CrmDocument, type Invoice, type SmartBrief, type ProductRow, type Stage } from "../lib/crm";
 import { person, nameOf } from "../lib/tasks";
 import { money, plural } from "../lib/format";
 import { navigate, route, setQuery } from "../lib/router";
@@ -28,7 +29,7 @@ interface Lead {
 }
 interface LeadFull extends Lead {
   comments: string | null; fields: Record<string, Value>; webs: Contact[]; address: string | null;
-  contacts: { id: number; name: string; post: string | null; phones: Contact[]; emails: Contact[] }[]; products: ProductRow[]; invoices: Invoice[]; documents: CrmDocument[];
+  contacts: { id: number; name: string; post: string | null; phones: Contact[]; emails: Contact[] }[]; products: ProductRow[]; invoices: Invoice[]; documents: CrmDocument[]; smart: SmartBrief[];
 }
 
 const fail = (error: unknown) => toast(error instanceof ApiError ? error.first : "Не получилось загрузить", "danger");
@@ -208,6 +209,10 @@ const sub = computed(() => (pipeline.value ? plural(total.value, "лид", "ли
 
         <CardBlock v-if="opened.invoices.length" :icon="Receipt" title="Счета" :count="opened.invoices.length">
           <InvoiceList :rows="opened.invoices" />
+        </CardBlock>
+
+        <CardBlock v-if="opened.smart.length" :icon="Layers" title="Договоры и процессы" :count="opened.smart.length">
+          <SmartList :rows="opened.smart" />
         </CardBlock>
 
         <CardBlock v-if="opened.documents.length" :icon="FileText" title="Документы" :count="opened.documents.length">
