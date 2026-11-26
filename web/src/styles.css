@@ -246,27 +246,32 @@ body {
    и наклона, плитка бесшовная). Узор — маска, поэтому его цвет задаётся
    здесь и меняется с темой. */
 .chat-wall {
-  --wall-ink: oklch(0.4 0.05 170 / 0.13);
+  position: relative;
+  isolation: isolate;
+  --wall-ink: oklch(0.3 0.04 200 / 0.14);
   background:
-    radial-gradient(120% 90% at 0% 0%, oklch(0.935 0.035 215), transparent 60%),
-    radial-gradient(110% 90% at 100% 100%, oklch(0.94 0.045 130), transparent 65%),
-    linear-gradient(160deg, oklch(0.95 0.03 165), oklch(0.94 0.03 200));
+    radial-gradient(120% 90% at 0% 0%, oklch(0.84 0.04 215), transparent 62%),
+    radial-gradient(110% 90% at 100% 100%, oklch(0.83 0.045 150), transparent 65%),
+    linear-gradient(160deg, oklch(0.85 0.035 185), oklch(0.81 0.04 230));
 }
 .chat-wall::before {
   content: "";
   position: absolute;
   inset: 0;
+  z-index: -1;
   pointer-events: none;
   background: var(--wall-ink);
   -webkit-mask: url("./chat-pattern.svg") 0 0 / 520px 520px repeat;
   mask: url("./chat-pattern.svg") 0 0 / 520px 520px repeat;
 }
 .dark .chat-wall {
-  --wall-ink: oklch(0.85 0.04 240 / 0.07);
+  position: relative;
+  isolation: isolate;
+  --wall-ink: oklch(0.85 0.04 240 / 0.065);
   background:
-    radial-gradient(120% 90% at 0% 0%, oklch(0.25 0.04 250), transparent 60%),
-    radial-gradient(110% 90% at 100% 100%, oklch(0.23 0.045 200), transparent 65%),
-    linear-gradient(160deg, oklch(0.19 0.025 262), oklch(0.17 0.02 240));
+    radial-gradient(120% 90% at 0% 0%, oklch(0.23 0.04 250), transparent 60%),
+    radial-gradient(110% 90% at 100% 100%, oklch(0.21 0.04 200), transparent 65%),
+    linear-gradient(160deg, oklch(0.17 0.022 262), oklch(0.15 0.018 240));
 }
 .bubble-mine {
   background: oklch(0.955 0.05 135);
@@ -314,3 +319,33 @@ body {
 .bubble-mine .text-muted { color: oklch(0.5 0.06 145); }
 .dark .bubble-mine .text-accent { color: oklch(0.88 0.08 225); }
 .dark .bubble-mine .text-muted { color: oklch(0.82 0.04 245); }
+
+/* Кнопки полосы ввода сообщения: все 40×40, по центру строки. */
+.composer-btn {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  color: var(--muted);
+  transition: color 120ms, background-color 120ms, opacity 120ms;
+}
+.composer-btn:hover {
+  color: var(--foreground);
+  background: var(--default);
+}
+.composer-btn--send {
+  color: var(--accent);
+}
+.composer-btn--send:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.composer-btn--send:disabled {
+  color: var(--muted);
+  opacity: 0.45;
+  background: transparent;
+  cursor: default;
+}

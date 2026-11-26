@@ -3,7 +3,7 @@
      ответ на сообщение или правка своего. -->
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from "vue";
-import { Paperclip, Smile, SendHorizontal, X, Reply, Pencil, FileText } from "@lucide/vue";
+import { Paperclip, Smile, SendHorizontal, X, Reply, Pencil, FileText, Check } from "@lucide/vue";
 import Popover from "../Popover.vue";
 import EmojiPicker from "./EmojiPicker.vue";
 import { person, fileSize, type ChatMessage } from "../../lib/messenger";
@@ -118,8 +118,8 @@ function onPick(event: Event) {
 </script>
 
 <template>
-  <div class="border-t border-separator bg-surface px-3 pt-2 pb-3">
-    <div v-if="editing || replyTo" class="mb-2 flex items-center gap-2 rounded-xl bg-surface-secondary px-3 py-2 text-sm">
+  <div class="border-t border-separator bg-surface px-2 py-1.5" @click.self="box?.focus()">
+    <div v-if="editing || replyTo" class="mx-1 mt-0.5 mb-1.5 flex items-center gap-2 rounded-xl bg-surface-secondary px-3 py-2 text-sm">
       <Pencil v-if="editing" class="size-4 shrink-0 text-accent" />
       <Reply v-else class="size-4 shrink-0 text-accent" />
       <div class="min-w-0 flex-1 border-l-2 border-accent pl-2">
@@ -129,7 +129,7 @@ function onPick(event: Event) {
       <button type="button" class="button button--ghost button--sm button--icon-only" aria-label="Отменить" @click="emit('cancel')"><X class="size-4" /></button>
     </div>
 
-    <div v-if="files.length" class="mb-2 flex gap-2 overflow-x-auto pb-1 thin-scroll">
+    <div v-if="files.length" class="mx-1 mt-1 mb-1 flex gap-2 overflow-x-auto pb-1 thin-scroll">
       <div v-for="(one, i) in previews" :key="i" class="group relative flex h-16 shrink-0 items-center gap-2 overflow-hidden rounded-xl border border-separator bg-surface-secondary" :class="one.url ? 'w-16' : 'max-w-56 px-3'">
         <img v-if="one.url" :src="one.url" alt="" class="size-full object-cover" />
         <template v-else>
@@ -140,28 +140,29 @@ function onPick(event: Event) {
       </div>
     </div>
 
-    <div class="flex items-end gap-1.5">
-      <button v-if="!editing" type="button" class="button button--ghost button--icon-only shrink-0" aria-label="Прикрепить файл" title="Прикрепить файл" @click="input?.click()"><Paperclip class="size-5" /></button>
+    <!-- Вся полоса — поле ввода, как в Telegram: кнопки по 40 px по краям,
+         текст растёт вверх, кнопки остаются на уровне последней строки. -->
+    <div class="flex cursor-text items-end gap-1" @click.self="box?.focus()">
+      <button v-if="!editing" type="button" class="composer-btn" aria-label="Прикрепить файл" title="Прикрепить файл" @click="input?.click()"><Paperclip class="size-[22px]" /></button>
       <input ref="input" type="file" multiple class="hidden" @change="onPick" />
-      <div class="flex min-h-10 min-w-0 flex-1 items-end rounded-2xl border border-separator bg-field px-3 focus-within:border-accent">
-        <textarea
-          ref="box"
-          v-model="text"
-          rows="1"
-          class="max-h-[200px] min-h-10 w-full resize-none bg-transparent py-2.5 text-[15px] leading-5 outline-none placeholder:text-muted"
-          placeholder="Напишите сообщение…"
-          aria-label="Сообщение"
-          @keydown="onKey"
-          @paste="onPaste"
-        />
-        <Popover align="right" up width="w-auto" class="shrink-0 self-end pb-1.5">
-          <template #trigger="{ toggle }">
-            <button type="button" class="flex size-7 items-center justify-center rounded-lg text-muted hover:text-foreground" aria-label="Смайлики" title="Смайлики" @click="toggle"><Smile class="size-5" /></button>
-          </template>
-          <EmojiPicker @pick="insertEmoji" />
-        </Popover>
-      </div>
-      <button type="button" class="button button--primary button--icon-only shrink-0 rounded-full" :disabled="!canSend" :aria-label="editing ? 'Сохранить' : 'Отправить'" @click="submit"><SendHorizontal class="size-5" /></button>
+      <textarea
+        ref="box"
+        v-model="text"
+        rows="1"
+        class="thin-scroll block max-h-[200px] min-h-10 min-w-0 flex-1 resize-none bg-transparent px-1 py-2.5 text-[15px] leading-5 outline-none placeholder:text-muted"
+        :class="editing ? 'pl-3' : ''"
+        placeholder="Напишите сообщение…"
+        aria-label="Сообщение"
+        @keydown="onKey"
+        @paste="onPaste"
+      />
+      <Popover align="right" up width="w-auto" class="flex shrink-0">
+        <template #trigger="{ toggle }">
+          <button type="button" class="composer-btn" aria-label="Смайлики" title="Смайлики" @click="toggle"><Smile class="size-[22px]" /></button>
+        </template>
+        <EmojiPicker @pick="insertEmoji" />
+      </Popover>
+      <button type="button" class="composer-btn composer-btn--send" :disabled="!canSend" :aria-label="editing ? 'Сохранить' : 'Отправить'" :title="editing ? 'Сохранить' : 'Отправить'" @click="submit"><Check v-if="editing" class="size-[22px]" /><SendHorizontal v-else class="size-[22px]" /></button>
     </div>
   </div>
 </template>
