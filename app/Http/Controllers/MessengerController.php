@@ -8,6 +8,7 @@ use App\Models\Message;
 use App\Models\MessageFile;
 use App\Models\MessageReaction;
 use App\Models\User;
+use App\Support\Gifs;
 use App\Support\Realtime;
 use App\Support\TaskMentions;
 use Illuminate\Http\JsonResponse;
@@ -381,6 +382,7 @@ class MessengerController extends Controller
             'body' => ['nullable', 'string', 'max:10000'],
             'reply_to_id' => ['nullable', 'integer'],
             'client_id' => ['nullable', 'string', 'max:64'],
+            'gif' => ['nullable', 'array'],
             'files' => ['array', 'max:'.self::FILES],
             'files.*' => ['file', 'max:'.self::FILE_KB],
         ], [
@@ -391,15 +393,23 @@ class MessengerController extends Controller
         $body = trim((string) $request->input('body', ''));
         /** @var UploadedFile[] $files */
         $files = $request->file('files', []);
-        if ($body === '' && ! $files) {
+        /* GIF или стикер из пикера — отдельным сообщением, без текста и файлов. */
+        $gif = $request->filled('gif') ? Gifs::clean($request->input('gif')) : null;
+        if ($request->filled('gif') && ! $gif) {
+            throw ValidationException::withMessages(['gif' => 'Это не GIF и не стикер']);
+        }
+        if ($gif) {
+            [$body, $files] = ['', []];
+        }
+        if ($body === '' && ! $files && ! $gif) {
             throw ValidationException::withMessages(['body' => 'Пустое сообщение']);
         }
         $replyTo = $request->filled('reply_to_id')
             ? $chat->messages()->where('kind', 'text')->whereKey((int) $request->input('reply_to_id'))->value('id')
             : null;
 
-        $message = DB::transaction(function () use ($chat, $me, $body, $files, $replyTo, $member) {
-            $message = $chat->messages()->create(['user_id' => $me->id, 'body' => $body === '' ? null : $body, 'reply_to_id' => $replyTo]);
+        $message = DB::transaction(function () use ($chat, $me, $body, $files, $replyTo, $member, $gif) {
+            $message = $chat->messages()->create(['user_id' => $me->id, 'body' => $body === '' ? null : $body, 'reply_to_id' => $replyTo, 'meta' => $gif ? ['gif' => $gif] : null]);
             foreach ($files as $file) {
                 $mime = $file->getMimeType() ?: 'application/octet-stream';
                 $size = in_array($mime, MessageFile::IMAGES, true) ? @getimagesize($file->getRealPath()) : false;
@@ -438,6 +448,7 @@ class MessengerController extends Controller
         $me = $this->me($request);
         $this->membership($message->chat, $me);
         abort_unless($message->user_id === $me->id && $message->kind === 'text', 403, 'Править можно только свои сообщения');
+        abort_if(isset($message->meta['gif']), 422, 'GIF не правится');
         $data = $request->validate(['body' => ['nullable', 'string', 'max:10000']]);
         $body = trim((string) ($data['body'] ?? ''));
         if ($body === '' && ! $message->files()->exists()) {
@@ -486,7 +497,7 @@ class MessengerController extends Controller
 
         foreach ($targets as $chat) {
             $copy = DB::transaction(function () use ($chat, $me, $message, $origin) {
-                $copy = $chat->messages()->create(['user_id' => $me->id, 'body' => $message->body, 'meta' => ['forwarded_from' => $origin]]);
+                $copy = $chat->messages()->create(['user_id' => $me->id, 'body' => $message->body, 'meta' => ['forwarded_from' => $origin] + (isset($message->meta['gif']) ? ['gif' => $message->meta['gif']] : [])]);
                 foreach ($message->files as $file) {
                     $path = 'messenger/'.$chat->id.'/'.Str::random(40).'.'.(pathinfo($file->path, PATHINFO_EXTENSION) ?: 'bin');
                     if (Storage::disk('local')->copy($file->path, $path)) {
@@ -708,6 +719,7 @@ class MessengerController extends Controller
             'meta' => $message->kind === 'system' ? $message->meta : null,
             'forwardedFrom' => $message->kind === 'text' && isset($message->meta['forwarded_from']) ? (int) $message->meta['forwarded_from'] : null,
             'body' => $deleted ? null : $message->body,
+            'gif' => ! $deleted && ($message->kind ?? 'text') === 'text' ? ($message->meta['gif'] ?? null) : null,
             'deleted' => $deleted,
             'replyTo' => ! $deleted && $message->replyTo ? [
                 'id' => $message->replyTo->id,
@@ -751,7 +763,9 @@ class MessengerController extends Controller
             return 'Сообщение удалено';
         }
         $text = trim(preg_replace('/\s+/u', ' ', (string) $message->body));
-        if ($text === '' && $message->relationLoaded('files') && $message->files->isNotEmpty()) {
+        if ($text === '' && isset($message->meta['gif'])) {
+            $text = ($message->meta['gif']['type'] ?? 'gif') === 'sticker' ? 'Стикер' : 'GIF';
+        } elseif ($text === '' && $message->relationLoaded('files') && $message->files->isNotEmpty()) {
             $text = $message->files->every->isImage() ? '🖼 Картинка' : '📎 '.$message->files->first()->name;
         } elseif ($text === '') {
             $text = '📎 Файл';

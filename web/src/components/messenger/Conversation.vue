@@ -10,16 +10,18 @@ import EmojiPicker from "./EmojiPicker.vue";
 import ChatInfo from "./ChatInfo.vue";
 import SystemLine from "./SystemLine.vue";
 import MessageMenu from "./MessageMenu.vue";
+import GifView from "./GifView.vue";
 import ForwardDialog from "./ForwardDialog.vue";
 import Popover from "../Popover.vue";
 import { apiUrl } from "../../lib/api";
 import { QUICK, remember } from "../../lib/emoji";
 import { plural } from "../../lib/format";
 import {
-  chatById, threadOf, openThread, loadOlder, sendMessage, editMessage, deleteMessage, toggleReaction, markRead, togglePin, dropFailed,
+  chatById, threadOf, openThread, loadOlder, sendMessage, sendGif, editMessage, deleteMessage, toggleReaction, markRead, togglePin, dropFailed,
   typingIn, sendTyping, person, people, meId, focused, clock, dayLabel, fileSize, type ChatMessage, type ChatFile, type ChatUser,
 } from "../../lib/messenger";
 import { toast } from "../../lib/toast";
+import type { GifItem } from "../../lib/gifs";
 import { auth } from "../../lib/session";
 
 /* closeTab — крестик закрытия рисует сама панель снаружи (ярлычок), в шапке его нет. */
@@ -184,6 +186,13 @@ function send(body: string, files: File[]) {
   unreadMark.value = null;
   atBottom.value = true;
   sendMessage(props.chatId, body, files, reply);
+}
+function sendGifHere(item: GifItem) {
+  const reply = replyTo.value;
+  replyTo.value = null;
+  unreadMark.value = null;
+  atBottom.value = true;
+  sendGif(props.chatId, item, reply);
 }
 function save(body: string) {
   const message = editing.value;
@@ -377,6 +386,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
                 :class="[
                   row.message.deleted ? 'bg-surface-secondary text-muted italic' : row.message.userId === meId ? 'bubble-mine' : 'bg-surface',
                   onlyEmoji(row.message.body) && !row.message.files.length && !row.message.replyTo ? '!bg-transparent !shadow-none text-[40px] leading-tight px-0' : '',
+                  row.message.gif && !row.message.deleted && !row.message.replyTo && !row.message.forwardedFrom ? '!bg-transparent !shadow-none !p-0' : '',
                   row.message.failed ? 'ring-2 ring-danger/50' : '',
                 ]"
               >
@@ -390,6 +400,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
                     <span class="block font-semibold text-accent">{{ person(row.message.replyTo.userId)?.name ?? "Сотрудник" }}</span>
                     <span class="block truncate text-muted">{{ row.message.replyTo.text }}</span>
                   </button>
+                  <GifView v-if="row.message.gif" :gif="row.message.gif" class="my-0.5" @load="atBottom && jumpToBottom()" />
 
                   <div v-if="row.message.files.some((f) => f.image)" class="my-1 grid gap-1" :class="row.message.files.filter((f) => f.image).length > 1 ? 'grid-cols-2' : ''">
                     <button v-for="file in row.message.files.filter((f) => f.image)" :key="file.id" type="button" class="block max-w-[320px] overflow-hidden rounded-xl bg-black/5" :style="imageBox(file, row.message.files.filter((f) => f.image).length > 1)" @click.stop="viewer = file">
@@ -500,7 +511,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
         </p>
       </Transition>
     </div>
-    <Composer class="relative z-10 mx-1.5 mb-1.5" ref="composer" :draft-key="chatId" :reply-to="replyTo" :editing="editing" @send="send" @typing="sendTyping(chatId)" @save="save" @cancel="replyTo = null; editing = null" />
+    <Composer class="relative z-10 mx-1.5 mb-1.5" ref="composer" :draft-key="chatId" :reply-to="replyTo" :editing="editing" @send="send" @gif="sendGifHere" @typing="sendTyping(chatId)" @save="save" @cancel="replyTo = null; editing = null" />
     </div>
 
     <button v-if="!atBottom" type="button" class="absolute right-5 bottom-24 z-20 flex size-10 items-center justify-center rounded-full bg-overlay shadow-overlay" aria-label="К последним сообщениям" @click="toBottom(true)">

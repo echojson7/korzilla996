@@ -6,12 +6,14 @@ import { computed, nextTick, ref, watch } from "vue";
 import { Paperclip, Smile, SendHorizontal, X, Reply, Pencil, FileText, Check } from "@lucide/vue";
 import Popover from "../Popover.vue";
 import EmojiPicker from "./EmojiPicker.vue";
+import GifPicker from "./GifPicker.vue";
+import type { GifItem } from "../../lib/gifs";
 import { person, people, meId, fileSize, type ChatMessage } from "../../lib/messenger";
 import ChatFace from "./ChatFace.vue";
 import { toast } from "../../lib/toast";
 
 const props = defineProps<{ replyTo: ChatMessage | null; editing: ChatMessage | null; draftKey: number }>();
-const emit = defineEmits<{ send: [body: string, files: File[]]; save: [body: string]; cancel: []; typing: [] }>();
+const emit = defineEmits<{ send: [body: string, files: File[]]; gif: [item: GifItem]; save: [body: string]; cancel: []; typing: [] }>();
 
 const MAX_FILES = 10;
 const MAX_SIZE = 50 * 1024 * 1024;
@@ -235,6 +237,12 @@ function onPick(event: Event) {
         @blur="mention = null"
         @paste="onPaste"
       />
+      <Popover v-if="!editing" align="right" up width="w-auto" class="flex shrink-0">
+        <template #trigger="{ toggle, open }">
+          <button type="button" class="composer-btn" :class="open ? 'text-accent' : ''" aria-label="GIF и стикеры" title="GIF и стикеры" @click="toggle"><span class="flex h-[18px] items-center rounded-[5px] border-2 border-current px-[3px] text-[10px] leading-none font-extrabold tracking-tight">GIF</span></button>
+        </template>
+        <template #default="{ close }"><GifPicker @pick="(item) => { close(); emit('gif', item); }" /></template>
+      </Popover>
       <Popover align="right" up width="w-auto" class="flex shrink-0">
         <template #trigger="{ toggle }">
           <button type="button" class="composer-btn" aria-label="Смайлики" title="Смайлики" @click="toggle"><Smile class="size-[22px]" /></button>

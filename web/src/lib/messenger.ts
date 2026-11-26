@@ -7,6 +7,7 @@ import { on, startRealtime, live as rtLive } from "./realtime";
 import { api, upload, ApiError } from "./api";
 import { auth } from "./session";
 import { toast } from "./toast";
+import type { GifItem } from "./gifs";
 
 export interface ChatUser {
   id: number;
@@ -59,6 +60,8 @@ export interface ChatMessage {
   /* Переслано: id автора оригинала. */
   forwardedFrom?: number | null;
   body: string | null;
+  /* GIF или стикер из пикера (lib/gifs.ts). */
+  gif?: GifItem | null;
   deleted: boolean;
   replyTo: { id: number; userId: number | null; text: string } | null;
   files: ChatFile[];
@@ -365,7 +368,7 @@ function notify(chat: ChatItem, text: string, userId: number | null) {
 }
 
 const previewOf = (message: ChatMessage) =>
-  message.deleted ? "Сообщение удалено" : message.body?.replace(/\s+/g, " ").trim() || (message.files.length && message.files.every((f) => f.image) ? "🖼 Картинка" : `📎 ${message.files[0]?.name ?? "Файл"}`);
+  message.deleted ? "Сообщение удалено" : message.gif ? (message.gif.type === "sticker" ? "Стикер" : "GIF") : message.body?.replace(/\s+/g, " ").trim() || (message.files.length && message.files.every((f) => f.image) ? "🖼 Картинка" : `📎 ${message.files[0]?.name ?? "Файл"}`);
 
 /* ---------- Сообщения ---------- */
 
@@ -464,6 +467,29 @@ export async function sendMessage(chatId: number, body: string, files: File[], r
     const row = find();
     if (row) row.failed = true;
     toast(error instanceof ApiError ? error.first : "Сообщение не отправилось", "danger");
+  }
+}
+
+/* GIF или стикер — отдельным сообщением, сразу видно в ленте. */
+export async function sendGif(chatId: number, gif: GifItem, replyTo: ChatMessage | null) {
+  const one = thread(chatId);
+  const temp: ChatMessage = {
+    id: tempId--, chatId, userId: meId.value, body: null, gif, deleted: false,
+    replyTo: replyTo ? { id: replyTo.id, userId: replyTo.userId, text: replyTo.body ?? "Файл" } : null,
+    files: [], reactions: [], editedAt: null, at: new Date().toISOString(), pending: true,
+    clientId: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`,
+  };
+  one.messages.push(temp);
+  try {
+    const saved = await api<ChatMessage>("POST", `messenger/chats/${chatId}/messages`, { gif, reply_to_id: replyTo?.id ?? null, client_id: temp.clientId });
+    const at = one.messages.findIndex((m) => m.id === temp.id);
+    if (at >= 0) one.messages.splice(at, 1);
+    merge(one, [saved]);
+    bumpChat(chatId, saved);
+  } catch (error) {
+    const row = one.messages.find((m) => m.id === temp.id);
+    if (row) row.failed = true;
+    toast(error instanceof ApiError ? error.first : "GIF не отправился", "danger");
   }
 }
 

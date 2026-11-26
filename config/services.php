@@ -44,4 +44,15 @@ return [
         'public_url' => env('MERCURE_PUBLIC_URL', '/.well-known/mercure'),
     ],
 
+    /* Поиск GIF и стикеров в чатах. Запросы идут через сервер портала, ключ
+       в браузер не попадает. provider: klipy | giphy; пусто — какой ключ есть
+       (сначала KLIPY). Ключ KLIPY — partner.klipy.com, GIPHY — developers.giphy.com. */
+    'gifs' => [
+        'provider' => env('GIF_PROVIDER'),
+        'klipy_key' => env('KLIPY_API_KEY'),
+        'giphy_key' => env('GIPHY_API_KEY'),
+        'locale' => env('GIF_LOCALE', 'ru'),
+        'rating' => env('GIF_RATING', 'pg-13'),
+    ],
+
 ];

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\GifController;
 use App\Http\Controllers\MessengerController;
 use App\Http\Controllers\RealtimeController;
 use App\Http\Controllers\TaskController;
@@ -47,6 +48,14 @@ Route::prefix('api')->group(function () {
         Route::post('messages/{message}/forward', 'forward');
         Route::get('messages/{message}/views', 'views');
         Route::get('files/{file}', 'file');
+    });
+
+    /* GIF и стикеры для чатов: поиск через сервис и избранное. */
+    Route::middleware('auth')->controller(GifController::class)->group(function () {
+        Route::get('gifs', 'search')->middleware('throttle:60,1');
+        Route::get('gifs/favorites', 'favorites');
+        Route::post('gifs/favorites', 'addFavorite');
+        Route::delete('gifs/favorites', 'removeFavorite');
     });
 
     /* Задачи: только для вошедших. */
