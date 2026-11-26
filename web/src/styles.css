@@ -581,10 +581,11 @@ body {
   align-items: center;
   justify-content: center;
   border-radius: 9999px;
-  background: color-mix(in oklab, var(--surface) 85%, transparent);
+  /* Без backdrop-filter: кнопки две у каждого сообщения, размытие под
+     каждой — заметная цена при прокрутке ленты. */
+  background: color-mix(in oklab, var(--surface) 94%, transparent);
   color: var(--muted);
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
-  backdrop-filter: blur(8px);
   transition: color 0.15s, background-color 0.15s;
 }
 .msg-side-btn:hover,

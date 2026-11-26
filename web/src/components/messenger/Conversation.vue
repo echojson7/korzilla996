@@ -4,23 +4,21 @@
 <script setup lang="ts">
 import { backdrop } from "../../lib/backdrop";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { ArrowLeft, Info, Pin, PinOff, X, Smile, ExternalLink, MoreHorizontal, Forward, Check, CheckCheck, Clock, AlertCircle, Download, FileText, ChevronDown, Upload } from "@lucide/vue";
+import { ArrowLeft, Info, Pin, PinOff, X, ExternalLink, Download, ChevronDown, Upload } from "@lucide/vue";
 import ChatFace from "./ChatFace.vue";
 import { href } from "../../lib/router";
 import Composer from "./Composer.vue";
-import EmojiPicker from "./EmojiPicker.vue";
 import ChatInfo from "./ChatInfo.vue";
 import SystemLine from "./SystemLine.vue";
 import MessageMenu from "./MessageMenu.vue";
-import GifView from "./GifView.vue";
+import MessageRow from "./MessageRow.vue";
 import ForwardDialog from "./ForwardDialog.vue";
-import Popover from "../Popover.vue";
 import { apiUrl } from "../../lib/api";
-import { QUICK, remember } from "../../lib/emoji";
+import { remember } from "../../lib/emoji";
 import { plural } from "../../lib/format";
 import {
   chatById, threadOf, openThread, loadOlder, sendMessage, sendGif, editMessage, deleteMessage, toggleReaction, markRead, togglePin, dropFailed,
-  typingIn, sendTyping, person, people, meId, focused, clock, dayLabel, fileSize, type ChatMessage, type ChatFile, type ChatUser,
+  typingIn, sendTyping, person, meId, focused, dayLabel, fileSize, type ChatMessage, type ChatFile, type ChatUser,
 } from "../../lib/messenger";
 import { toast } from "../../lib/toast";
 import { entityOf, entityTitle } from "../../lib/entities";
@@ -86,17 +84,27 @@ const readersAt = computed(() => {
 const seenCount = (message: ChatMessage) => Object.entries(chat.value?.reads ?? {}).filter(([id, upto]) => upto >= message.id && Number(id) !== message.userId).length;
 const readUpTo = computed(() => Math.max(thread.value.readUpTo, chat.value?.readUpTo ?? 0));
 
+/* В ленте рисуем только последние WINDOW сообщений: длинная переписка
+   целиком — это десятки тысяч узлов, и любое обновление (кто печатает,
+   реакция, наведение) пересчитывает всю ленту. Выше — по прокрутке:
+   сначала из уже загруженных, потом с сервера. Вернулись вниз — окно
+   снова короткое. */
+const WINDOW = 120;
+const shown = ref(WINDOW);
+const start = computed(() => Math.max(0, thread.value.messages.length - shown.value));
+
 /* Лента: разделители дней и «шапка» у первого сообщения серии. */
 const rows = computed(() => {
   const out: { message: ChatMessage; day: string | null; head: boolean; tail: boolean }[] = [];
   const list = thread.value.messages;
-  list.forEach((message, i) => {
+  for (let i = start.value; i < list.length; i++) {
+    const message = list[i];
     const prev = list[i - 1];
     const next = list[i + 1];
     const day = !prev || new Date(prev.at).toDateString() !== new Date(message.at).toDateString() ? dayLabel(message.at) : null;
     const near = (a?: ChatMessage, b?: ChatMessage) => !!a && !!b && a.userId === b.userId && !a.deleted && a.kind !== "system" && b.kind !== "system" && Math.abs(Date.parse(b.at) - Date.parse(a.at)) < 5 * 60_000 && new Date(a.at).toDateString() === new Date(b.at).toDateString();
     out.push({ message, day, head: !!day || !near(prev, message), tail: !near(message, next) });
-  });
+  }
   return out;
 });
 /* Серии для ленты: новая — у нового автора, дня, системного сообщения и
@@ -132,6 +140,7 @@ async function load() {
   replyTo.value = null;
   editing.value = null;
   active.value = null;
+  shown.value = WINDOW;
   focused.value = props.chatId;
   const known = thread.value.loaded;
   loading.value = !known;
@@ -167,23 +176,35 @@ function read() {
   if (!document.hidden && atBottom.value && focused.value === props.chatId) markRead(props.chatId);
 }
 
+let growing = false;
 async function onScroll() {
   const el = scroller.value;
   if (!el) return;
   atBottom.value = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
-  if (atBottom.value) read();
-  if (el.scrollTop < 120 && thread.value.hasMore && !thread.value.loadingOlder) {
-    const before = el.scrollHeight;
-    await loadOlder(props.chatId).catch(() => toast("Не получилось загрузить старые сообщения", "danger"));
-    await nextTick();
-    el.scrollTop += el.scrollHeight - before;
+  if (atBottom.value) {
+    read();
+    if (shown.value > WINDOW && !settling) shown.value = WINDOW;
   }
+  if (el.scrollTop >= 120 || growing) return;
+  const before = el.scrollHeight;
+  if (start.value > 0) shown.value += 80;
+  else if (thread.value.hasMore && !thread.value.loadingOlder) {
+    const was = thread.value.messages.length;
+    growing = true;
+    await loadOlder(props.chatId).catch(() => toast("Не получилось загрузить старые сообщения", "danger"));
+    growing = false;
+    shown.value += thread.value.messages.length - was;
+  } else return;
+  await nextTick();
+  el.scrollTop += el.scrollHeight - before;
 }
 
 /* Плавно — только к новому сообщению в уже открытом чате. */
 watch(() => [props.chatId, thread.value.messages.length] as const, ([id, now], [wasId, was]) => {
   const last = thread.value.messages.at(-1);
   if (!last || settling || id !== wasId || !was) return;
+  /* Читают выше — новые снизу не должны сдвигать окно ленты. */
+  if (!atBottom.value && now > was) shown.value += now - was;
   if (atBottom.value || (last.userId === meId.value && now > was)) toBottom(true);
   read();
 });
@@ -296,7 +317,12 @@ function forwarded(ids: number[]) {
   toast(ids.length === 1 ? "Сообщение переслано" : `Переслано в ${ids.length} чата`, "success");
 }
 
-function jump(id: number) {
+async function jump(id: number) {
+  const at = thread.value.messages.findIndex((m) => m.id === id);
+  if (at >= 0 && at < start.value) {
+    shown.value = thread.value.messages.length - at + 10;
+    await nextTick();
+  }
   const el = scroller.value?.querySelector<HTMLElement>(`[data-id="${id}"]`);
   if (!el) return toast("Сообщение выше, прокрутите ленту");
   el.scrollIntoView({ block: "center", behavior: "smooth" });
@@ -322,28 +348,6 @@ function onDrop(event: DragEvent) {
   composer.value?.addFiles(event.dataTransfer?.files);
 }
 
-/* Текст со ссылками — без v-html. */
-const URL_RE = /(https?:\/\/[^\s<>"']+[^\s<>"'.,;:!?)\]])/g;
-/* @Имя сотрудника — подсвечено, длинные имена проверяются первыми. */
-const MENTION_RE = computed(() => {
-  const names = [...people.values()].map((one) => one.name.trim()).filter(Boolean).sort((a, b) => b.length - a.length);
-  return names.length ? new RegExp(`(@(?:${names.map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")}))(?![\\p{L}\\p{N}])`, "giu") : null;
-});
-function parts(text: string) {
-  const out: { text: string; link?: boolean; mention?: boolean }[] = [];
-  text.split(URL_RE).forEach((chunk, i) => {
-    if (i % 2 === 1 || !MENTION_RE.value || !chunk.includes("@")) return out.push({ text: chunk, link: i % 2 === 1 });
-    chunk.split(MENTION_RE.value).forEach((piece, j) => out.push({ text: piece, mention: j % 2 === 1 }));
-  });
-  return out;
-}
-const onlyEmoji = (text: string | null) => !!text && text.length <= 12 && /^(\p{Extended_Pictographic}|\p{Emoji_Component}|\s|‍|️)+$/u.test(text) && !/^[\d#*\s]+$/.test(text);
-
-function imageBox(file: ChatFile, many: boolean) {
-  if (many || !file.width || !file.height) return {};
-  const width = Math.min(320, file.width);
-  return { width: `${width}px`, aspectRatio: `${file.width} / ${file.height}` };
-}
 const onKey = (event: KeyboardEvent) => {
   if (event.key === "Escape" && viewer.value) viewer.value = null;
 };
@@ -385,7 +389,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
       </div>
       <template v-else>
         <p v-if="thread.loadingOlder" class="py-2 text-center text-xs text-muted">Загружаем…</p>
-        <p v-else-if="!thread.hasMore && thread.messages.length" class="py-3 text-center text-xs text-muted">Начало переписки</p>
+        <p v-else-if="!thread.hasMore && !start && thread.messages.length" class="py-3 text-center text-xs text-muted">Начало переписки</p>
         <div v-if="!thread.messages.length" class="flex h-full flex-col items-center justify-center text-center text-sm text-muted">
           <ChatFace v-if="chat" :chat="chat" size="xl" />
           <p class="mt-3 font-medium text-foreground">Сообщений пока нет</p>
@@ -409,137 +413,27 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
               <a v-if="group.rows[0].message.userId" :href="href('/profile', { id: group.rows[0].message.userId })" class="sticky bottom-1 rounded-full" :aria-label="`Профиль: ${person(group.rows[0].message.userId)?.name ?? ''}`" @click.stop><ChatFace :user="person(group.rows[0].message.userId)" size="sm" /></a>
             </div>
             <div class="min-w-0 flex-1">
-          <div
+          <MessageRow
             v-for="row in group.rows"
             :key="row.message.id"
-            :data-id="row.message.id"
-            class="group/msg relative flex gap-2 rounded-xl transition-colors"
-            :class="[onRight(row.message) ? 'flex-row-reverse' : '', row.head ? '' : 'mt-0.5']"
-            @click="tap(row.message, $event)"
-            @dblclick="quickReply(row.message, $event)"
-            @pointerleave="(event) => event.pointerType === 'mouse' && active === row.message.id && (active = null)"
-            @contextmenu="!row.message.deleted && !row.message.pending && openMenu(row.message, $event)"
-          >
-            <div class="flex max-w-[min(540px,82%)] min-w-0 flex-col" :class="onRight(row.message) ? 'items-end' : 'items-start'">
-              <div
-                class="relative min-w-0 rounded-2xl px-3 py-1.5 text-[15px] leading-snug shadow-sm"
-                :class="[
-                  row.message.deleted ? 'bg-surface-secondary text-muted italic' : row.message.userId === meId ? 'bubble-mine' : 'bg-surface',
-                  onlyEmoji(row.message.body) && !row.message.files.length && !row.message.replyTo ? '!bg-transparent !shadow-none text-[40px] leading-tight px-0' : '',
-                  row.message.gif && !row.message.deleted && !row.message.replyTo && !row.message.forwardedFrom ? '!bg-transparent !shadow-none !p-0' : '',
-                  row.message.failed ? 'ring-2 ring-danger/50' : '',
-                ]"
-              >
-                <p v-if="row.head && withAuthor(row.message) && !row.message.deleted" class="text-[13px] font-semibold" :style="{ color: `oklch(0.55 0.14 ${person(row.message.userId)?.hue ?? 220})` }">
-                  {{ person(row.message.userId)?.name ?? "Сотрудник" }}
-                </p>
-                <template v-if="row.message.deleted">Сообщение удалено</template>
-                <template v-else>
-                  <p v-if="row.message.forwardedFrom" class="mb-0.5 flex items-center gap-1 text-[13px] text-accent"><Forward class="size-3.5" />Переслано от <b class="font-semibold">{{ person(row.message.forwardedFrom)?.name ?? "сотрудника" }}</b></p>
-                  <button v-if="row.message.replyTo" type="button" class="my-1 block w-full max-w-72 rounded-lg border-l-2 border-accent bg-black/5 px-2 py-1 text-left text-[13px] dark:bg-white/5" @click.stop="jump(row.message.replyTo.id)">
-                    <span class="block font-semibold text-accent">{{ person(row.message.replyTo.userId)?.name ?? "Сотрудник" }}</span>
-                    <span class="block truncate text-muted">{{ row.message.replyTo.text }}</span>
-                  </button>
-                  <GifView v-if="row.message.gif" :gif="row.message.gif" class="my-0.5" @load="atBottom && jumpToBottom()" />
-
-                  <div v-if="row.message.files.some((f) => f.image)" class="my-1 grid gap-1" :class="row.message.files.filter((f) => f.image).length > 1 ? 'grid-cols-2' : ''">
-                    <button v-for="file in row.message.files.filter((f) => f.image)" :key="file.id" type="button" class="block max-w-[320px] overflow-hidden rounded-xl bg-black/5" :style="imageBox(file, row.message.files.filter((f) => f.image).length > 1)" @click.stop="viewer = file">
-                      <img :src="apiUrl(file.url)" :alt="file.name" class="size-full max-h-[360px] object-cover" :class="row.message.files.filter((f) => f.image).length > 1 ? 'aspect-square' : ''" loading="lazy" @load="atBottom && jumpToBottom()" />
-                    </button>
-                  </div>
-                  <component
-                    :is="row.message.pending ? 'div' : 'a'"
-                    v-for="file in row.message.files.filter((f) => !f.image || row.message.pending)"
-                    :key="file.id"
-                    :href="row.message.pending ? undefined : `${apiUrl(file.url)}?download=1`"
-                    class="my-1 flex max-w-72 items-center gap-2.5 rounded-xl bg-black/5 px-2.5 py-2 dark:bg-white/5"
-                    :class="row.message.pending ? '' : 'hover:bg-black/10'"
-                    @click.stop
-                  >
-                    <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground"><FileText class="size-5" /></span>
-                    <span class="min-w-0 flex-1 text-[13px]"><span class="block truncate font-medium">{{ file.name }}</span><span class="text-muted">{{ fileSize(file.size) }}</span></span>
-                    <Download v-if="!row.message.pending" class="size-4 shrink-0 text-muted" />
-                  </component>
-                  <div v-if="row.message.pending && row.message.files.length && !row.message.failed" class="my-1 h-1 overflow-hidden rounded-full bg-black/10"><div class="h-full bg-accent transition-[width]" :style="{ width: `${Math.round((row.message.progress ?? 0) * 100)}%` }" /></div>
-
-                  <p v-if="row.message.body" class="break-words whitespace-pre-wrap">
-                    <template v-for="(part, i) in parts(row.message.body)" :key="i"><a v-if="part.link" :href="part.text" target="_blank" rel="noopener noreferrer" class="link break-all" @click.stop>{{ part.text }}</a><span v-else-if="part.mention" class="font-medium text-accent">{{ part.text }}</span><template v-else>{{ part.text }}</template></template>
-                  </p>
-                </template>
-                <span class="float-right mt-1 ml-2 flex items-center gap-1 text-[11px] leading-4 text-muted not-italic select-none" :class="onlyEmoji(row.message.body) ? 'text-xs' : ''">
-                  <span v-if="row.message.editedAt && !row.message.deleted">изм.</span>
-                  {{ clock(row.message.at) }}
-                  <template v-if="row.message.userId === meId && !row.message.deleted">
-                    <AlertCircle v-if="row.message.failed" class="size-3.5 text-danger" />
-                    <Clock v-else-if="row.message.pending" class="size-3" />
-                    <CheckCheck v-else-if="readUpTo >= row.message.id" class="size-4 text-sky-500 dark:text-sky-400" aria-label="Прочитано" />
-                    <Check v-else class="size-3.5" aria-label="Доставлено" />
-                  </template>
-                </span>
-                <!-- Реакция — кружок в нижнем углу пузыря, только при наведении. -->
-                <template v-if="!row.message.deleted && !row.message.pending">
-                <Popover class="!absolute -bottom-2.5 z-10 transition-opacity" :class="[onRight(row.message) ? '-left-3' : '-right-3', active === row.message.id ? 'opacity-100' : 'opacity-0 group-hover/msg:opacity-100 has-[[aria-expanded=true]]:opacity-100']" :align="onRight(row.message) ? 'right' : 'left'" up width="w-auto">
-                  <template #trigger="{ toggle, open }">
-                    <button type="button" class="msg-side-btn !size-7" aria-label="Поставить реакцию" title="Реакция" :aria-expanded="open" @click="toggle"><Smile class="size-4" /></button>
-                  </template>
-                  <template #default="{ close }">
-                    <div class="flex items-center gap-0.5 px-1 pb-1">
-                      <button v-for="emoji in QUICK.slice(0, 7)" :key="emoji" type="button" class="flex size-9 items-center justify-center rounded-full text-[22px] leading-none transition hover:scale-125 hover:bg-default" :aria-label="`Реакция ${emoji}`" @click="close(); react(row.message, emoji)">{{ emoji }}</button>
-                    </div>
-                    <EmojiPicker @pick="(emoji) => { close(); react(row.message, emoji); }" />
-                  </template>
-                </Popover>
-                </template>
-              </div>
-
-              <p v-if="row.message.failed" class="mt-1 text-xs text-danger">
-                Не отправлено · <button type="button" class="underline" @click.stop="dropFailed(chatId, row.message.id)">убрать</button>
-              </p>
-
-              <div v-if="row.message.reactions.length" class="mt-1 flex flex-wrap gap-1">
-                <button
-                  v-for="one in row.message.reactions"
-                  :key="one.emoji"
-                  type="button"
-                  class="flex h-6 items-center gap-1 rounded-full border px-1.5 text-sm transition"
-                  :class="one.users.includes(meId) ? 'border-accent bg-accent-soft text-accent-soft-foreground' : 'border-separator bg-surface hover:border-accent/50'"
-                  :title="one.users.map((id) => person(id)?.name ?? 'Сотрудник').join(', ')"
-                  @click.stop="react(row.message, one.emoji)"
-                >
-                  <span class="leading-none">{{ one.emoji }}</span><span class="text-xs font-medium tabular-nums">{{ one.users.length }}</span>
-                </button>
-              </div>
-              <!-- Кто дочитал до этого сообщения. -->
-              <button
-                v-if="readersAt.get(row.message.id)?.length"
-                type="button"
-                class="mt-1 flex items-center -space-x-1.5 rounded-full p-0.5 transition hover:bg-black/5"
-                :title="`Просмотрели: ${readersAt.get(row.message.id)!.map((one) => one.name).join(', ')}`"
-                @click.stop="openMenu(row.message, $event, true)"
-              >
-                <ChatFace v-for="one in readersAt.get(row.message.id)!.slice(0, 3)" :key="one.id" :user="one" size="xs" class="!size-[18px] !text-[8px] ring-2 ring-[var(--surface-secondary)]" />
-                <span v-if="readersAt.get(row.message.id)!.length > 3" class="relative flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-default px-1 text-[10px] font-semibold text-muted ring-2 ring-[var(--surface-secondary)]">+{{ readersAt.get(row.message.id)!.length - 3 }}</span>
-              </button>
-            </div>
-
-            <!-- Сбоку пузыря при наведении: «⋯» — все действия (то же — правый
-                 щелчок). Ответ — двойной щелчок по сообщению. -->
-            <div
-              v-if="!row.message.deleted && !row.message.pending"
-              class="flex shrink-0 flex-col pt-0.5 transition-opacity"
-              :class="active === row.message.id || menu?.message.id === row.message.id ? 'opacity-100' : 'opacity-0 group-hover/msg:opacity-100 focus-within:opacity-100'"
-              @click.stop
-              @dblclick.stop
-            >
-              <button
-                type="button"
-                class="msg-side-btn"
-                aria-label="Действия с сообщением"
-                title="Действия"
-                @click="openMenu(row.message, $event)"
-              ><MoreHorizontal class="size-[18px]" /></button>
-            </div>
-          </div>
+            :message="row.message"
+            :head="row.head"
+            :right="onRight(row.message)"
+            :author="withAuthor(row.message)"
+            :active="active === row.message.id"
+            :menu-open="menu?.message.id === row.message.id"
+            :read="readUpTo >= row.message.id"
+            :readers="readersAt.get(row.message.id)"
+            @tap="(event) => tap(row.message, event)"
+            @quick="(event) => quickReply(row.message, event)"
+            @leave="active = null"
+            @menu="(event, views) => openMenu(row.message, event, views)"
+            @react="(emoji) => react(row.message, emoji)"
+            @jump="jump"
+            @view="(file) => (viewer = file)"
+            @media="atBottom && jumpToBottom()"
+            @drop="dropFailed(chatId, row.message.id)"
+          />
             </div>
           </div>
         </template>
