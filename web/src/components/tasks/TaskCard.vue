@@ -11,6 +11,7 @@ import {
   Paperclip, Download, FileText, ListChecks, GitBranch, Link2, MoreHorizontal, ChevronRight, CircleSlash,
 } from "@lucide/vue";
 import Popover from "../Popover.vue";
+import Checkbox from "../Checkbox.vue";
 import HueChip from "../HueChip.vue";
 import ChatFace from "../messenger/ChatFace.vue";
 import MarkdownField from "../editor/MarkdownField.vue";
@@ -536,13 +537,16 @@ defineExpose({ create });
 
         <dt>Приоритет</dt>
         <dd>
-          <div v-if="canEdit" class="flex gap-1">
+          <div v-if="canEdit" class="toggle-button-group toggle-button-group--horizontal" role="radiogroup" aria-label="Приоритет">
             <button
               v-for="one in PRIORITIES"
               :key="one.id"
               type="button"
-              class="inline-flex h-7 items-center gap-1 rounded-lg px-2.5 text-sm transition"
-              :class="v.priority === one.id ? (one.id === 'high' ? 'bg-danger-soft text-danger-soft-foreground font-medium' : 'bg-default font-medium') : 'text-muted hover:bg-default'"
+              role="radio"
+              class="toggle-button toggle-button--sm gap-1"
+              :class="{ 'prio-high': one.id === 'high' && v.priority === 'high' }"
+              :aria-checked="v.priority === one.id"
+              :data-selected="v.priority === one.id ? 'true' : undefined"
               @click="patch({ priority: one.id })"
             >
               <Flame v-if="one.id === 'high'" class="size-3.5" />{{ one.label }}
@@ -551,7 +555,10 @@ defineExpose({ create });
           <span v-else>{{ priorityLabel(v.priority) }}</span>
         </dd>
 
-        <div class="props-gap" aria-hidden="true" />
+      </dl>
+    </section>
+    <section class="card card--default p-0">
+      <dl class="props">
         <dt>Постановщик</dt>
         <dd><span class="person"><ChatFace :user="person(v.creatorId)" size="xs" />{{ nameOf(v.creatorId) }}</span></dd>
 
@@ -568,14 +575,14 @@ defineExpose({ create });
 
         <template v-for="role in (['accomplices', 'auditors'] as const)" :key="role">
           <dt>{{ role === "accomplices" ? "Соисполнители" : "Наблюдатели" }}</dt>
-          <dd class="flex flex-wrap items-center gap-1.5">
+          <dd class="flex flex-wrap items-center gap-2">
             <span v-for="id in v[role]" :key="id" class="person chip-person">
               <ChatFace :user="person(id)" size="xs" />{{ nameOf(id) }}
-              <button v-if="canEdit" type="button" class="text-muted hover:text-foreground" :aria-label="`Убрать ${nameOf(id)}`" @click="patch({ [role]: v[role].filter((one) => one !== id) })"><X class="size-3.5" /></button>
+              <button v-if="canEdit" type="button" class="flex size-5 items-center justify-center rounded-full text-muted hover:bg-black/5 hover:text-foreground" :aria-label="`Убрать ${nameOf(id)}`" @click="patch({ [role]: v[role].filter((one) => one !== id) })"><X class="size-3.5" /></button>
             </span>
             <Popover v-if="canEdit" :ref="setPicker(role)" align="left" width="w-72">
               <template #trigger="{ toggle }">
-                <button type="button" class="value text-muted" @click="toggle"><Plus class="size-3.5" />{{ v[role].length ? "" : "Добавить" }}</button>
+                <button type="button" class="add-btn" :aria-label="role === 'accomplices' ? 'Добавить соисполнителя' : 'Добавить наблюдателя'" @click="toggle"><Plus class="size-4" />{{ v[role].length ? "" : "Добавить" }}</button>
               </template>
               <UserPick :model-value="v[role]" @update:model-value="(ids) => patch({ [role]: ids })" />
             </Popover>
@@ -583,11 +590,14 @@ defineExpose({ create });
           </dd>
         </template>
 
-        <div class="props-gap" aria-hidden="true" />
+      </dl>
+    </section>
+    <section class="card card--default p-0">
+      <dl class="props">
         <dt>Проект</dt>
         <dd>
           <template v-if="canEdit">
-            <input v-model="projectText" list="task-projects" class="value-input" placeholder="Без проекта" @change="saveProject" @keydown.enter="($event.target as HTMLInputElement).blur()" />
+            <input v-model="projectText" list="task-projects" class="value-input w-full" placeholder="Без проекта" @change="saveProject" @keydown.enter="($event.target as HTMLInputElement).blur()" />
             <datalist id="task-projects"><option v-for="one in taskStore.projects" :key="one" :value="one" /></datalist>
           </template>
           <span v-else>{{ v.project || "—" }}</span>
@@ -618,13 +628,13 @@ defineExpose({ create });
         </dd>
 
         <dt>Теги</dt>
-        <dd class="flex flex-wrap items-center gap-1.5">
-          <span v-for="one in v.tags" :key="one" class="inline-flex h-6 items-center gap-1 rounded-md bg-default px-2 text-xs">
-            <Hash class="size-3 text-muted" />{{ one }}
-            <button v-if="canEdit" type="button" class="text-muted hover:text-foreground" :aria-label="`Убрать тег ${one}`" @click="dropTag(one)"><X class="size-3" /></button>
+        <dd class="flex flex-wrap items-center gap-2">
+          <span v-for="one in v.tags" :key="one" class="inline-flex h-8 items-center gap-1 rounded-lg bg-default px-2.5 text-sm">
+            <Hash class="size-3.5 text-muted" />{{ one }}
+            <button v-if="canEdit" type="button" class="-mr-1 flex size-5 items-center justify-center rounded-md text-muted hover:bg-black/5 hover:text-foreground" :aria-label="`Убрать тег ${one}`" @click="dropTag(one)"><X class="size-3.5" /></button>
           </span>
           <template v-if="canEdit">
-            <input v-model="tagText" list="task-tags" class="value-input w-32" placeholder="+ тег" @keydown.enter.prevent="addTag" @change="addTag" />
+            <input v-model="tagText" list="task-tags" class="add-input h-8! w-36" placeholder="+ Добавить тег" @keydown.enter.prevent="addTag" @change="addTag" />
             <datalist id="task-tags"><option v-for="one in taskStore.tags.filter((t) => !v.tags.includes(t))" :key="one" :value="one" /></datalist>
           </template>
           <span v-else-if="!v.tags.length" class="text-muted">—</span>
@@ -653,20 +663,20 @@ defineExpose({ create });
           </div>
         </dd>
 
-        <div class="props-gap" aria-hidden="true" />
+      </dl>
+    </section>
+    <section class="card card--default p-0">
+      <dl class="props">
         <dt>Контроль</dt>
         <dd>
-          <label class="inline-flex items-center gap-2 text-sm" :class="canEdit ? 'cursor-pointer' : ''">
-            <input type="checkbox" class="size-4 accent-[var(--accent)]" :checked="v.needsReview" :disabled="!canEdit" @change="patch({ needs_review: ($event.target as HTMLInputElement).checked })" />
-            Принять работу после завершения
-          </label>
+          <Checkbox :model-value="v.needsReview" :disabled="!canEdit" @update:model-value="(on) => patch({ needs_review: on })"><span class="text-sm">Принять работу после завершения</span></Checkbox>
         </dd>
 
         <dt>Время</dt>
-        <dd class="flex flex-wrap items-center gap-x-4 gap-y-1">
-          <span class="inline-flex items-center gap-1.5">
+        <dd class="flex flex-wrap items-center gap-x-5 gap-y-1">
+          <span class="inline-flex items-center gap-2">
             <span class="text-muted">план</span>
-            <input v-if="canEdit" v-model="estimateText" class="value-input w-24" placeholder="не задан" @change="saveEstimate" @keydown.enter="($event.target as HTMLInputElement).blur()" />
+            <input v-if="canEdit" v-model="estimateText" class="value-input w-28" placeholder="не задан" @change="saveEstimate" @keydown.enter="($event.target as HTMLInputElement).blur()" />
             <span v-else>{{ v.estimate ? duration(v.estimate * 60) : "—" }}</span>
           </span>
           <span v-if="task" class="inline-flex items-center gap-1.5">
@@ -683,7 +693,7 @@ defineExpose({ create });
     </section>
 
     <!-- Чек-лист -->
-    <section class="card card--default gap-2 p-4">
+    <section class="card card--default gap-3 p-4">
       <h3 class="flex items-center gap-2 text-sm font-semibold">
         <ListChecks class="size-4 text-muted" />Чек-лист
         <span v-if="checklist.length" class="font-normal text-muted tabular-nums">{{ checkDone }} из {{ checklist.length }}</span>
@@ -692,8 +702,8 @@ defineExpose({ create });
         <div class="h-full rounded-full bg-success transition-all" :style="{ width: `${(checkDone / checklist.length) * 100}%` }" />
       </div>
       <ul class="flex flex-col">
-        <li v-for="one in checklist" :key="one.id" class="group flex items-center gap-2.5 rounded-lg px-1 py-1 hover:bg-default/60">
-          <input type="checkbox" class="size-4 shrink-0 cursor-pointer accent-[var(--accent)]" :checked="one.done" :disabled="!canWork || draft" @change="toggleCheck(one.id, ($event.target as HTMLInputElement).checked)" />
+        <li v-for="one in checklist" :key="one.id" class="group -mx-2 flex min-h-10 items-center gap-3 rounded-xl px-2 py-1.5 hover:bg-default/60">
+          <Checkbox :model-value="one.done" :disabled="!canWork || draft" :label="one.title" @update:model-value="(on) => toggleCheck(one.id, on)" />
           <input
             v-if="checkEdit === one.id"
             v-model="checkEditText"
@@ -704,10 +714,10 @@ defineExpose({ create });
             @blur="renameCheck(one.id)"
           />
           <span v-else class="min-w-0 flex-1 text-sm" :class="{ 'text-muted line-through': one.done, 'cursor-text': canWork }" @click="canWork && ((checkEdit = one.id), (checkEditText = one.title))">{{ one.title }}</span>
-          <button v-if="canWork" type="button" class="hidden text-muted group-hover:block hover:text-danger" aria-label="Удалить пункт" @click="removeCheck(one.id)"><X class="size-4" /></button>
+          <button v-if="canWork" type="button" class="flex size-7 items-center justify-center rounded-lg text-muted opacity-0 group-hover:opacity-100 hover:bg-default hover:text-danger focus:opacity-100" aria-label="Удалить пункт" @click="removeCheck(one.id)"><X class="size-4" /></button>
         </li>
       </ul>
-      <input v-if="canWork" v-model="checkText" class="value-input" placeholder="+ Добавить пункт и Enter" @keydown.enter.prevent="addCheckItem" />
+      <input v-if="canWork" v-model="checkText" class="add-input w-full" placeholder="+ Добавить пункт и Enter" @keydown.enter.prevent="addCheckItem" />
     </section>
 
     <!-- Подзадачи -->
@@ -724,7 +734,7 @@ defineExpose({ create });
           </button>
         </li>
       </ul>
-      <input v-if="task.can.edit || task.can.work" ref="childInput" v-model="childText" class="value-input" placeholder="+ Подзадача: название и Enter" @keydown.enter.prevent="addChild" />
+      <input v-if="task.can.edit || task.can.work" ref="childInput" v-model="childText" class="add-input w-full" placeholder="+ Подзадача: название и Enter" @keydown.enter.prevent="addChild" />
     </section>
 
     <!-- Файлы -->
@@ -777,69 +787,106 @@ defineExpose({ create });
 /* Свойства: подпись слева, значение справа, строки через черту. */
 .props {
   display: grid;
-  grid-template-columns: minmax(108px, 150px) minmax(0, 1fr);
+  grid-template-columns: minmax(112px, 150px) minmax(0, 1fr);
+  padding: 0.25rem 0;
 }
+/* Строка: подпись слева, значение справа. Разделитель — с отступами от
+   краёв блока: черта у подписи начинается с отступа, у значения — кончается. */
 .props > dt,
 .props > dd {
   display: flex;
   align-items: center;
-  min-height: 2.625rem;
-  padding: 0.375rem 1rem;
+  min-height: 3.25rem;
+  padding-block: 0.625rem;
   font-size: 0.875rem;
   border-top: 1px solid var(--separator);
 }
 .props > dt {
-  padding-right: 0.5rem;
+  margin-left: 1rem;
+  padding-right: 0.75rem;
   color: var(--muted);
   font-size: 0.8125rem;
 }
 .props > dd {
   min-width: 0;
-  padding-left: 0.5rem;
+  margin-right: 1rem;
 }
 .props > dt:first-of-type,
-.props > dt:first-of-type + dd,
-.props-gap + dt,
-.props-gap + dt + dd {
+.props > dt:first-of-type + dd {
   border-top: 0;
 }
-/* Разрыв между группами полей: срок и статус, люди, связи, время. */
-.props-gap {
-  grid-column: 1 / -1;
-  height: 0.5rem;
-  background: var(--background);
-  border-top: 1px solid var(--separator);
-  border-bottom: 1px solid var(--separator);
-}
+/* Значение, которое меняется щелчком: как «призрачная» кнопка HeroUI. */
 .value {
   display: inline-flex;
   align-items: center;
-  gap: 0.375rem;
-  min-height: 1.75rem;
-  margin-left: -0.375rem;
-  padding: 0 0.375rem;
-  border-radius: 0.5rem;
+  gap: 0.5rem;
+  min-height: 2rem;
+  margin-left: -0.5rem;
+  padding: 0 0.5rem;
+  border-radius: 0.625rem;
   font-size: 0.875rem;
+  transition: background-color 120ms;
 }
 .value:hover {
   background: var(--default);
 }
 .value-input {
   min-width: 0;
-  height: 1.75rem;
-  margin-left: -0.375rem;
-  padding: 0 0.375rem;
-  border-radius: 0.5rem;
+  height: 2rem;
+  margin-left: -0.5rem;
+  padding: 0 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 0.625rem;
   background: transparent;
   font-size: 0.875rem;
   outline: none;
+  transition: background-color 120ms, border-color 120ms;
 }
 .value-input:hover {
   background: var(--default);
 }
 .value-input:focus {
+  background: var(--field-background, var(--surface));
+  border-color: var(--accent);
+}
+/* Добавить: кнопка и поле с пунктирной рамкой. */
+.add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  height: 2rem;
+  padding: 0 0.625rem;
+  border: 1px dashed var(--border);
+  border-radius: 0.625rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+  transition: background-color 120ms, color 120ms, border-color 120ms;
+}
+.add-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.add-input {
+  min-width: 0;
+  height: 2.25rem;
+  padding: 0 0.75rem;
+  border: 1px dashed var(--border);
+  border-radius: 0.75rem;
+  background: transparent;
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 120ms, background-color 120ms;
+}
+.add-input:hover {
+  border-color: color-mix(in oklab, var(--accent) 50%, var(--border));
+}
+.add-input:focus {
+  border-style: solid;
+  border-color: var(--accent);
   background: var(--surface);
-  box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent) 40%, transparent);
+}
+.prio-high[data-selected="true"] {
+  color: var(--danger);
 }
 .person {
   display: inline-flex;
@@ -848,8 +895,9 @@ defineExpose({ create });
   min-width: 0;
 }
 .chip-person {
-  height: 1.75rem;
-  padding: 0 0.5rem 0 0.125rem;
+  height: 2rem;
+  gap: 0.5rem;
+  padding: 0 0.375rem 0 0.25rem;
   border-radius: 999px;
   background: var(--default);
   font-size: 0.8125rem;

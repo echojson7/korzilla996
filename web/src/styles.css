@@ -9,6 +9,7 @@
 @import "@heroui/styles/components/avatar.css" layer(components);
 @import "@heroui/styles/components/button.css" layer(components);
 @import "@heroui/styles/components/card.css" layer(components);
+@import "@heroui/styles/components/checkbox.css" layer(components);
 @import "@heroui/styles/components/chip.css" layer(components);
 @import "@heroui/styles/components/input.css" layer(components);
 @import "@heroui/styles/components/textarea.css" layer(components);
@@ -516,3 +517,9 @@ body {
 .md-card:focus-within { box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent) 45%, transparent); }
 .md-card .ProseMirror, .md-card .ProseMirror:focus, .md-card .ProseMirror:focus-visible { outline: none; }
 .md-fill .tiptap, .md-fill .ProseMirror { min-height: 100%; }
+
+/* Флажок HeroUI: фокус с клавиатуры — по скрытому input. */
+.ui-check { flex-direction: row; align-items: center; }
+.ui-check:has(input:focus-visible) .checkbox__control { outline: 2px solid var(--focus); outline-offset: 2px; }
+.ui-check:not([data-selected="true"]) .checkbox__control { border: 1.5px solid color-mix(in oklab, var(--foreground) 24%, transparent); }
+.ui-check:not([data-selected="true"]):hover .checkbox__control { border-color: var(--accent); }
