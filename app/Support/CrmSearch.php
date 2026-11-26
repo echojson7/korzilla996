@@ -15,7 +15,13 @@ class CrmSearch
         'crm_companies' => ['title', 'address', 'phones', 'emails', 'webs'],
         'crm_contacts' => ['name', 'post', 'phones', 'emails'],
         'crm_deals' => ['title', 'company', 'contact'],
+        'crm_leads' => ['title', 'name', 'company_title', 'phones', 'emails', 'webs'],
     ];
+
+    public static function has(string $table): bool
+    {
+        return isset(self::COLUMNS[$table]);
+    }
 
     /** Строка для колонки search по строке таблицы (массив колонок). */
     public static function of(string $table, array $row): string

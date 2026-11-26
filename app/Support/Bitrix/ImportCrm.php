@@ -37,6 +37,9 @@ class ImportCrm
 
     private array $contactNames = [];
 
+    /** Какие лиды: work — в работе и успешные, year — плюс провальные за год, all — все. */
+    public string $leads = 'year';
+
     public function __construct(private Client $bitrix, private string $portal, private bool $update = false, private ?\Closure $progress = null) {}
 
     public function run(array $only = ['companies', 'contacts', 'deals']): array
@@ -45,6 +48,8 @@ class ImportCrm
         in_array('companies', $only, true) && $this->companies();
         in_array('contacts', $only, true) && $this->contacts();
         in_array('deals', $only, true) && $this->deals();
+        in_array('leads', $only, true) && $this->leads();
+        in_array('products', $only, true) && $this->products();
 
         return $this->report;
     }
@@ -151,13 +156,157 @@ class ImportCrm
         });
     }
 
+    private function leads(): void
+    {
+        $this->companies = $this->companies ?: DB::table('crm_companies')->whereNotNull('external_id')->pluck('id', 'external_id')->map(fn ($id) => (int) $id)->all();
+        $this->contacts = $this->contacts ?: DB::table('crm_contacts')->whereNotNull('external_id')->pluck('id', 'external_id')->map(fn ($id) => (int) $id)->all();
+        $pipeline = (int) DB::table('crm_pipelines')->where('entity', 'lead')->value('id');
+        if (! $pipeline) {
+            throw new \RuntimeException('Нет статусов лидов: сначала bitrix:lead-settings');
+        }
+        $stages = DB::table('crm_stages')->where('pipeline_id', $pipeline)->orderBy('sort')->pluck('id', 'external_id')->all();
+        $first = (int) reset($stages);
+        $fields = CrmField::query()->where('entity', 'lead')->whereNotNull('external_code')->get()->keyBy('external_code');
+        $select = ['*', 'UF_*', 'PHONE', 'EMAIL', 'WEB'];
+        $filters = match ($this->leads) {
+            'all' => [[]],
+            'work' => [['STATUS_SEMANTIC_ID' => ['P', 'S']]],
+            default => [['STATUS_SEMANTIC_ID' => ['P', 'S']], ['STATUS_SEMANTIC_ID' => 'F', '>=DATE_MODIFY' => now()->subYear()->format('Y-m-d')]],
+        };
+        $map = function (array $row) use ($pipeline, $stages, $first, $fields) {
+            $values = [];
+            foreach ($fields as $external => $field) {
+                $value = $this->value($field, $row[$external] ?? null);
+                if ($value !== null) {
+                    $values[$field->code] = $value;
+                }
+            }
+            $firstName = $this->cut($row['NAME'] ?? '', 100);
+            $last = $this->cut($row['LAST_NAME'] ?? '', 100);
+            $second = $this->cut($row['SECOND_NAME'] ?? '', 100);
+            $common = $this->common($row);
+            unset($common['fields']);
+
+            return [
+                'pipeline_id' => $pipeline,
+                'stage_id' => $stages[(string) ($row['STATUS_ID'] ?? '')] ?? $first,
+                'title' => $this->cut($row['TITLE'] ?? '', 250) ?: 'Лид №'.$row['ID'],
+                'name' => $this->cut(trim(preg_replace('/\s+/u', ' ', "{$last} {$firstName} {$second}")), 250) ?: null,
+                'first_name' => $firstName ?: null,
+                'last_name' => $last ?: null,
+                'second_name' => $second ?: null,
+                'post' => $this->cut($row['POST'] ?? '', 200) ?: null,
+                'company_title' => $this->cut($row['COMPANY_TITLE'] ?? '', 250) ?: null,
+                'phones' => $this->multi($row['PHONE'] ?? null),
+                'emails' => $this->multi($row['EMAIL'] ?? null),
+                'webs' => $this->multi($row['WEB'] ?? null),
+                'address' => $this->cut(implode(', ', array_filter([$row['ADDRESS'] ?? null, $row['ADDRESS_CITY'] ?? null])), 500) ?: null,
+                'amount' => round((float) ($row['OPPORTUNITY'] ?? 0), 2),
+                'currency' => $this->cut($row['CURRENCY_ID'] ?? '', 3) ?: 'RUB',
+                'contact_id' => $this->contacts[(string) ($row['CONTACT_ID'] ?? '')] ?? null,
+                'company_id' => $this->companies[(string) ($row['COMPANY_ID'] ?? '')] ?? null,
+                'comments' => self::comments($row['COMMENTS'] ?? null),
+                'fields' => $values ? json_encode($values, JSON_UNESCAPED_UNICODE) : null,
+                'closed' => in_array($row['STATUS_SEMANTIC_ID'] ?? 'P', ['S', 'F'], true),
+                'stage_changed_at' => $this->time($row['MOVED_TIME'] ?? $row['DATE_CLOSED'] ?? null) ?? $common['updated_at'],
+                'sort' => -(float) $row['ID'],
+            ] + $common;
+        };
+        foreach ($filters as $filter) {
+            $this->each('leads', 'crm.lead.list', ['select' => $select, 'filter' => $filter], 'crm_leads', $map, ! empty($this->report['leads']));
+        }
+        $this->leadContacts();
+    }
+
+    /** Все контакты лидов (у лида их может быть несколько): batch по 50 лидов. */
+    private function leadContacts(): void
+    {
+        $this->contacts = $this->contacts ?: DB::table('crm_contacts')->whereNotNull('external_id')->pluck('id', 'external_id')->map(fn ($id) => (int) $id)->all();
+        $leads = DB::table('crm_leads')->whereNotNull('external_id')
+            ->whereNotExists(fn ($q) => $q->from('crm_lead_contacts')->whereColumn('crm_lead_contacts.lead_id', 'crm_leads.id'))
+            ->whereNotNull('contact_id')->pluck('id', 'external_id')->all();
+        $this->report['lead_contacts'] = 0;
+        $done = 0;
+        foreach (array_chunk($leads, 50, true) as $chunk) {
+            $cmd = [];
+            foreach ($chunk as $external => $id) {
+                $cmd['l'.$external] = 'crm.lead.contact.items.get?'.http_build_query(['id' => $external]);
+            }
+            $body = $this->bitrix->call('batch', ['halt' => 0, 'cmd' => $cmd]);
+            $rows = [];
+            foreach ($chunk as $external => $id) {
+                foreach ((array) ($body['result']['result']['l'.$external] ?? []) as $i => $item) {
+                    $contact = $this->contacts[(string) ($item['CONTACT_ID'] ?? '')] ?? null;
+                    if ($contact) {
+                        $rows[] = ['lead_id' => $id, 'contact_id' => $contact, 'sort' => (int) ($item['SORT'] ?? $i)];
+                    }
+                }
+            }
+            $rows && DB::table('crm_lead_contacts')->insertOrIgnore($rows);
+            $this->report['lead_contacts'] += count($rows);
+            $done += count($chunk);
+            $this->progress && ($this->progress)('lead_contacts', $done, count($leads));
+        }
+    }
+
+    /** Каталог товаров и товары в сделках и лидах. */
+    private function products(): void
+    {
+        $this->each('products', 'crm.product.list', ['select' => ['ID', 'NAME', 'PRICE', 'CURRENCY_ID', 'DESCRIPTION', 'ACTIVE', 'MEASURE', 'DATE_CREATE', 'TIMESTAMP_X']], 'crm_products', fn (array $row) => [
+            'name' => $this->cut($row['NAME'] ?? '', 500) ?: 'Товар №'.$row['ID'],
+            'price' => round((float) ($row['PRICE'] ?? 0), 2),
+            'currency' => $this->cut($row['CURRENCY_ID'] ?? '', 3) ?: 'RUB',
+            'description' => self::comments($row['DESCRIPTION'] ?? null),
+            'active' => ($row['ACTIVE'] ?? 'Y') === 'Y',
+            'created_at' => $this->time($row['DATE_CREATE'] ?? null) ?? now()->toDateTimeString(),
+            'updated_at' => $this->time($row['TIMESTAMP_X'] ?? null) ?? now()->toDateTimeString(),
+        ]);
+        $catalog = DB::table('crm_products')->whereNotNull('external_id')->pluck('id', 'external_id')->all();
+        $this->report['product_rows'] = 0;
+        foreach (['deal' => ['D', 'crm_deals'], 'lead' => ['L', 'crm_leads']] as $type => [$letter, $table]) {
+            $owners = DB::table($table)->whereNotNull('external_id')->pluck('id', 'external_id')->all();
+            $done = 0;
+            foreach (array_chunk(array_keys($owners), 50) as $chunk) {
+                $start = 0;
+                do {
+                    $body = $this->bitrix->call('crm.item.productrow.list', ['filter' => ['=ownerType' => $letter, '@ownerId' => $chunk], 'start' => $start]);
+                    $rows = [];
+                    foreach ((array) ($body['result']['productRows'] ?? []) as $row) {
+                        $owner = $owners[(string) ($row['ownerId'] ?? '')] ?? null;
+                        if (! $owner) {
+                            continue;
+                        }
+                        $rows[] = [
+                            'owner_type' => $type, 'owner_id' => $owner,
+                            'product_id' => $catalog[(string) ($row['productId'] ?? '')] ?? null,
+                            'name' => $this->cut($row['productName'] ?? '', 500) ?: 'Товар',
+                            'price' => round((float) ($row['price'] ?? 0), 2),
+                            'quantity' => (float) ($row['quantity'] ?? 1),
+                            'discount_sum' => round((float) ($row['discountSum'] ?? 0), 2),
+                            'tax_rate' => isset($row['taxRate']) && $row['taxRate'] !== null ? (float) $row['taxRate'] : null,
+                            'measure' => $this->cut($row['measureName'] ?? '', 30) ?: null,
+                            'sort' => (int) ($row['sort'] ?? 0),
+                            'external_id' => (string) $row['id'],
+                            'created_at' => now(), 'updated_at' => now(),
+                        ];
+                    }
+                    $rows && DB::table('crm_product_rows')->insertOrIgnore($rows);
+                    $this->report['product_rows'] += count($rows);
+                    $start = $body['next'] ?? null;
+                } while ($start !== null);
+                $done += count($chunk);
+                $this->progress && ($this->progress)('product_rows_'.$type, $done, count($owners));
+            }
+        }
+    }
+
     /**
      * Перенос одного списка: страница из Битрикса → одна транзакция.
      * $map возвращает колонки строки или null — пропустить.
      */
-    private function each(string $key, string $method, array $params, string $table, callable $map): void
+    private function each(string $key, string $method, array $params, string $table, callable $map, bool $append = false): void
     {
-        $this->report[$key] = ['new' => 0, 'updated' => 0, 'kept' => 0, 'total' => 0];
+        $append || $this->report[$key] = ['new' => 0, 'updated' => 0, 'kept' => 0, 'total' => 0];
         $progress = $this->progress ? fn ($done, $total) => ($this->progress)($key, $done, $total) : null;
         foreach ($this->bitrix->pages($method, $params, $progress) as $rows) {
             $this->report[$key]['total'] += count($rows);
@@ -177,7 +326,9 @@ class ImportCrm
                     continue;
                 }
                 $data['external_id'] = $external;
-                $data['search'] = \App\Support\CrmSearch::of($table, $data);
+                if (\App\Support\CrmSearch::has($table)) {
+                    $data['search'] = \App\Support\CrmSearch::of($table, $data);
+                }
                 if (isset($known[$external])) {
                     $update[$known[$external]] = $data;
                 } else {

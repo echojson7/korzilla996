@@ -184,23 +184,29 @@ Artisan::command('bitrix:users {--no-photos : без фото} {--dry : толь
 
 
 /* Компании, контакты и сделки из Битрикс24 по вебхуку (см. App\Support\Bitrix\ImportCrm). Сначала bitrix:users и crm:import-bitrix. */
-Artisan::command('bitrix:crm {--only=* : companies, contacts, deals (по умолчанию всё по порядку)} {--update : переписать уже перенесённые из Битрикса}', function () {
+Artisan::command('bitrix:crm {--only=* : companies, contacts, deals, leads, products (по умолчанию компании, контакты, сделки)} {--leads=all : all — все лиды, year — рабочие и провалы за год, work — рабочие} {--update : переписать уже перенесённые из Битрикса}', function () {
     ini_set('memory_limit', '512M');
     Illuminate\Support\Facades\DB::disableQueryLog();
     $webhook = (string) config('services.bitrix24.webhook');
     $parts = parse_url($webhook);
     $portal = ($parts['scheme'] ?? 'https').'://'.($parts['host'] ?? '');
-    $labels = ['companies' => 'Компании', 'contacts' => 'Контакты', 'deals' => 'Сделки'];
-    $only = $this->option('only') ?: array_keys($labels);
+    $labels = ['companies' => 'Компании', 'contacts' => 'Контакты', 'deals' => 'Сделки', 'leads' => 'Лиды', 'products' => 'Товары (каталог)',
+        'lead_contacts' => 'Контакты лидов', 'product_rows_deal' => 'Товары сделок', 'product_rows_lead' => 'Товары лидов'];
+    $only = $this->option('only') ?: ['companies', 'contacts', 'deals'];
     $started = microtime(true);
-    $report = (new App\Support\Bitrix\ImportCrm(App\Support\Bitrix\Client::fromConfig(), $portal, (bool) $this->option('update'), function ($key, $done, $total) use ($labels, $started) {
-        $this->line(sprintf('%s: %d из %d (%d с)', $labels[$key], $done, $total, microtime(true) - $started));
-    }))->run($only);
+    $import = new App\Support\Bitrix\ImportCrm(App\Support\Bitrix\Client::fromConfig(), $portal, (bool) $this->option('update'), function ($key, $done, $total) use ($labels, $started) {
+        $this->line(sprintf('%s: %d из %d (%d с)', $labels[$key] ?? $key, $done, $total, microtime(true) - $started));
+    });
+    $import->leads = (string) $this->option('leads');
+    $report = $import->run($only);
     foreach ($labels as $key => $label) {
-        if (isset($report[$key])) {
+        if (isset($report[$key]) && is_array($report[$key])) {
             $one = $report[$key];
             $this->info("{$label}: в Битриксе {$one['total']}, новых {$one['new']}, обновлено {$one['updated']}, уже были {$one['kept']}.");
         }
+    }
+    foreach (['lead_contacts' => 'Связей лид — контакт', 'product_rows' => 'Строк товаров'] as $key => $label) {
+        isset($report[$key]) && $this->info("{$label}: {$report[$key]}.");
     }
     if (! empty($report['deals_no_pipeline'])) {
         $this->warn("Сделок без известной воронки (не перенесены): {$report['deals_no_pipeline']}.");
@@ -218,3 +224,15 @@ Artisan::command('bitrix:tasks {--no-checklists : без чек-листов}', 
     }))->run();
     $this->info("Задачи: в Битриксе {$report['total']}, новых {$report['new']}, уже были {$report['kept']}. Участников {$report['members']}, со сделкой {$report['deals']}, подзадач {$report['parents']}, пунктов чек-листов {$report['checklists']}.");
 })->purpose('Перенести задачи из Битрикс24');
+
+/* Статусы и поля лидов из Битрикс24 по вебхуку (как crm:import-bitrix для сделок). */
+Artisan::command('bitrix:lead-settings', function () {
+    $bitrix = App\Support\Bitrix\Client::fromConfig();
+    $statuses = iterator_to_array($bitrix->each('crm.status.list', ['order' => ['SORT' => 'ASC']]), false);
+    $fields = $bitrix->call('crm.lead.fields')['result'] ?? [];
+    $report = (new App\Support\BitrixImport)->lead($statuses, $fields);
+    $this->info("Статусов лидов: +{$report['stages']}, полей: +{$report['fields']}.");
+    if ($report['skipped']) {
+        $this->line('Не перенесены: '.implode('; ', $report['skipped']));
+    }
+})->purpose('Перенести статусы и поля лидов из Битрикс24');

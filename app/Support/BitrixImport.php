@@ -48,6 +48,37 @@ class BitrixImport
 
     public array $report = ['pipelines' => 0, 'stages' => 0, 'fields' => 0, 'skipped' => []];
 
+    /** Сущность, чьи поля переносятся: deal или lead. */
+    private string $entity = 'deal';
+
+    /**
+     * Лиды: статусы (crm.status.list, ENTITY_ID = STATUS) — одна «воронка»
+     * лидов, поля — crm.lead.fields. Всё живьём из вебхука.
+     */
+    public function lead(array $statuses, array $fields): array
+    {
+        $this->entity = 'lead';
+        DB::transaction(function () use ($statuses, $fields) {
+            $pipeline = CrmPipeline::query()->firstOrNew(['entity' => 'lead', 'external_id' => 'STATUS']);
+            $this->report['pipelines'] += $pipeline->exists ? 0 : 1;
+            $pipeline->fill(['title' => 'Лиды', 'sort' => 100, 'is_default' => true])->save();
+            foreach (collect($statuses)->where('ENTITY_ID', 'STATUS')->sortBy(fn ($one) => (int) $one['SORT']) as $status) {
+                $semantic = $status['EXTRA']['SEMANTICS'] ?? $status['SEMANTICS'] ?? 'process';
+                $stage = CrmStage::query()->firstOrNew(['pipeline_id' => $pipeline->id, 'external_id' => $status['STATUS_ID']]);
+                $this->report['stages'] += $stage->exists ? 0 : 1;
+                $stage->fill([
+                    'title' => $status['NAME'],
+                    'color' => $this->color($status['COLOR'] ?? $status['EXTRA']['COLOR'] ?? null),
+                    'semantic' => match ($semantic) { 'success', 'S' => 'success', 'failure', 'apology', 'F' => 'failure', default => 'process' },
+                    'sort' => (int) $status['SORT'],
+                ])->save();
+            }
+            $this->fields($fields, $statuses);
+        });
+
+        return $this->report;
+    }
+
     public function run(array $stages, array $fields): array
     {
         DB::transaction(function () use ($stages, $fields) {
@@ -108,6 +139,10 @@ class BitrixImport
             'SOURCE_DESCRIPTION' => ['source_info', 'Дополнительно об источнике', 'text', null, true],
             'BEGINDATE' => ['begin_date', 'Дата начала', 'date', null, true],
             'PROBABILITY' => ['probability', 'Вероятность, %', 'number', null, false],
+            /* Только у лидов. */
+            'STATUS_DESCRIPTION' => ['status_info', 'Дополнительно о статусе', 'text', null, true],
+            'HONORIFIC' => ['honorific', 'Обращение', 'list', $list('HONORIFIC'), false],
+            'BIRTHDATE' => ['birthday', 'Дата рождения', 'date', null, true],
             'UTM_SOURCE' => ['utm_source', 'UTM: источник', 'string', null, false],
             'UTM_MEDIUM' => ['utm_medium', 'UTM: тип трафика', 'string', null, false],
             'UTM_CAMPAIGN' => ['utm_campaign', 'UTM: кампания', 'string', null, false],
@@ -121,7 +156,7 @@ class BitrixImport
             }
             $this->field($external, [
                 'code' => $code, 'title' => $title, 'type' => $type, 'options' => $options, 'active' => $active,
-                'section' => $external === 'UTM_SOURCE' || str_starts_with($external, 'UTM_') ? 'UTM-метки' : 'О сделке',
+                'section' => str_starts_with($external, 'UTM_') ? 'UTM-метки' : ($this->entity === 'lead' ? 'О лиде' : 'О сделке'),
                 'show_in_list' => $code === 'source', 'sort' => $sort += 10,
             ]);
         }
@@ -152,7 +187,7 @@ class BitrixImport
 
     private function field(string $external, array $data): void
     {
-        $field = CrmField::query()->where('entity', 'deal')->where('external_code', $external)->first();
+        $field = CrmField::query()->where('entity', $this->entity)->where('external_code', $external)->first();
         if ($field) {
             if ($data['type'] === 'list' && $data['options']) {
                 /* Новые варианты из Битрикса — в конец, свои не трогаем. */
@@ -163,7 +198,7 @@ class BitrixImport
 
             return;
         }
-        CrmField::query()->create($data + ['entity' => 'deal', 'external_code' => $external]);
+        CrmField::query()->create($data + ['entity' => $this->entity, 'external_code' => $external]);
         $this->report['fields']++;
     }
 
