@@ -349,3 +349,28 @@ body {
   background: transparent;
   cursor: default;
 }
+
+/* Строка фильтров над канбаном и таблицей — прямо на фото, без подложки:
+   у переключателей и поиска своя плотная подложка, чтобы читались. */
+.photo-toolbar .toggle-button-group {
+  height: 2.375rem;
+  padding: 0.1875rem;
+  gap: 0.125rem;
+  align-items: stretch;
+  border-radius: 0.75rem;
+  background: color-mix(in oklab, var(--surface) 88%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--surface-shadow);
+}
+.photo-toolbar .toggle-button-group .toggle-button {
+  height: auto;
+  border-radius: 0.5625rem;
+}
+.photo-toolbar .search-field__group {
+  height: 2.375rem;
+  border-radius: 0.75rem;
+  background: color-mix(in oklab, var(--surface) 92%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}

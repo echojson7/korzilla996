@@ -12,6 +12,6 @@ defineProps<{ title: string; sub?: string }>();
       </div>
       <div v-if="$slots.actions" class="flex items-center gap-2 [text-shadow:none]"><slot name="actions" /></div>
     </div>
-    <div v-if="$slots.toolbar" class="sheet mb-3 flex flex-wrap items-center gap-2 rounded-2xl p-2 shadow-surface"><slot name="toolbar" /></div>
+    <div v-if="$slots.toolbar" class="photo-toolbar mb-3 flex flex-wrap items-center gap-2"><slot name="toolbar" /></div>
   </div>
 </template>

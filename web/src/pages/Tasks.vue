@@ -128,8 +128,7 @@ const late = computed(() => tasks.filter(isOverdue).length);
       </template>
       <template #toolbar>
         <Segmented label="Задачи" :items="tabs" :model-value="tab" @update:model-value="(key) => setQuery({ tab: key === 'mine' ? null : key, open: null })" />
-        <SearchBox v-model="text" placeholder="Задача, сделка или сотрудник" class="w-full sm:w-72" />
-        <div class="flex-1" />
+        <SearchBox v-model="text" placeholder="Задача, сделка или сотрудник" class="w-full min-w-0 sm:w-auto sm:flex-1" />
         <div class="toggle-button-group toggle-button-group--horizontal" role="radiogroup" aria-label="Вид">
           <button
             v-for="one in VIEWS"

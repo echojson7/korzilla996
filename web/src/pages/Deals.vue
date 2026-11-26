@@ -67,8 +67,7 @@ const nextLabel = (at: number) => (at === 0 ? "сегодня" : at === 1 ? "з�
       </template>
       <template #toolbar>
         <Segmented label="Воронки" :items="tabs" :model-value="funnelId" @update:model-value="(funnel) => setQuery({ funnel, open: null })" />
-        <div class="flex-1" />
-        <SearchBox v-model="text" placeholder="Название, компания, ответственный" class="w-full sm:w-72" />
+        <SearchBox v-model="text" placeholder="Название, компания, ответственный" class="w-full min-w-0 sm:w-auto sm:flex-1" />
       </template>
     </PageHead>
 

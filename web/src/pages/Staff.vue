@@ -45,8 +45,7 @@ const theirDeals = computed(() => (opened.value ? deals.filter((one) => one.owne
     <PageHead title="Сотрудники" :sub="`${plural(STAFF.length, 'сотрудник', 'сотрудника', 'сотрудников')} в ${plural(DEPARTMENTS.length, 'отделе', 'отделах', 'отделах')}`">
       <template #toolbar>
         <Segmented label="Отделы" :items="tabs" :model-value="dept" @update:model-value="(key) => setQuery({ dept: key === 'all' ? null : key })" />
-        <div class="flex-1" />
-        <SearchBox v-model="text" placeholder="Имя, должность или телефон" class="w-full sm:w-64" />
+        <SearchBox v-model="text" placeholder="Имя, должность или телефон" class="w-full min-w-0 sm:w-auto sm:flex-1" />
         <div class="toggle-button-group toggle-button-group--horizontal" role="radiogroup" aria-label="Вид">
           <button type="button" role="radio" class="toggle-button toggle-button--sm toggle-button--icon-only" :aria-checked="view === 'cards'" :data-selected="view === 'cards' ? 'true' : undefined" aria-label="Карточки" @click="view = 'cards'"><LayoutGrid class="size-4" /></button>
           <button type="button" role="radio" class="toggle-button toggle-button--sm toggle-button--icon-only" :aria-checked="view === 'table'" :data-selected="view === 'table' ? 'true' : undefined" aria-label="Таблица" @click="view = 'table'"><Table2 class="size-4" /></button>

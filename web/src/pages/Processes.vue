@@ -38,8 +38,7 @@ const TABLE: Column<Process>[] = [
     <PageHead title="Бизнес-процессы" :sub="`${plural(PROCESSES.length, 'шаблон', 'шаблона', 'шаблонов')} из Битрикс24`">
       <template #toolbar>
         <Segmented label="Виды" :items="tabs" :model-value="kind" @update:model-value="(key) => setQuery({ kind: key === 'all' ? null : key })" />
-        <div class="flex-1" />
-        <SearchBox v-model="text" placeholder="Название шаблона" class="w-full sm:w-64" />
+        <SearchBox v-model="text" placeholder="Название шаблона" class="w-full min-w-0 sm:w-auto sm:flex-1" />
       </template>
     </PageHead>
     <div class="min-h-0 flex-1 overflow-y-auto px-3 pb-4 md:px-5 photo-scroll">
