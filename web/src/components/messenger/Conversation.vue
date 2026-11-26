@@ -37,6 +37,13 @@ const composer = ref<InstanceType<typeof Composer> | null>(null);
 const replyTo = ref<ChatMessage | null>(null);
 const editing = ref<ChatMessage | null>(null);
 const active = ref<number | null>(null);
+// Сообщение у верхнего края ленты: панель реакций ставим под пузырь, иначе её срежет.
+const barBelow = ref<number | null>(null);
+function aimBar(id: number, event: Event) {
+  const row = event.currentTarget as HTMLElement;
+  const top = scroller.value?.getBoundingClientRect().top ?? 0;
+  barBelow.value = row.getBoundingClientRect().top - top < 52 ? id : null;
+}
 const infoOpen = ref(false);
 const viewer = ref<ChatFile | null>(null);
 const dropping = ref(false);
@@ -371,6 +378,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
             class="group/msg relative flex gap-2 rounded-xl transition-colors"
             :class="[row.message.userId === meId ? 'flex-row-reverse' : '', row.head ? 'mt-2.5' : 'mt-0.5']"
             @click="tap(row.message, $event)"
+            @pointerenter="aimBar(row.message.id, $event)"
             @pointerleave="(event) => event.pointerType === 'mouse' && active === row.message.id && (active = null)"
             @contextmenu="!row.message.deleted && !row.message.pending && openMenu(row.message, $event)"
           >
@@ -483,8 +491,8 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
             <!-- Над пузырём при наведении: только реакции и «Ответить». -->
             <div
               v-if="!row.message.deleted && !row.message.pending"
-              class="absolute -top-11 z-20 items-center gap-0.5 rounded-full bg-overlay p-1 shadow-overlay"
-              :class="[row.message.userId === meId ? 'right-0' : chat?.type === 'group' ? 'left-10' : 'left-0', active === row.message.id ? 'flex' : 'hidden group-hover/msg:flex has-[[aria-expanded=true]]:flex']"
+              class="absolute z-20 items-center gap-0.5 rounded-full bg-overlay p-1 shadow-overlay"
+              :class="[barBelow === row.message.id ? 'top-full mt-1' : '-top-11', row.message.userId === meId ? 'right-0' : chat?.type === 'group' ? 'left-10' : 'left-0', active === row.message.id ? 'flex' : 'hidden group-hover/msg:flex has-[[aria-expanded=true]]:flex']"
               @click.stop
             >
               <button v-for="emoji in QUICK.slice(0, 6)" :key="emoji" type="button" class="flex size-9 items-center justify-center rounded-full text-[22px] leading-none transition hover:scale-125 hover:bg-default" :aria-label="`Реакция ${emoji}`" @click="react(row.message, emoji)">{{ emoji }}</button>
