@@ -14,7 +14,8 @@ const Conversation = defineAsyncComponent(() => import("./messenger/Conversation
 
 /* sideLabel и слот side — вторая вкладка правой области (например, история
    задачи): в шапке области переключатель «Чат / <sideLabel>». */
-const props = defineProps<{ open: boolean; title: string; sub?: string; chat?: { entity: string; title: string } | null; sideLabel?: string }>();
+/* wide — левая часть шире (карточка задачи: много полей). */
+const props = defineProps<{ open: boolean; title: string; sub?: string; chat?: { entity: string; title: string } | null; sideLabel?: string; wide?: boolean }>();
 const emit = defineEmits<{ close: [] }>();
 const shut = backdrop(() => emit("close"));
 const panel = ref<HTMLElement | null>(null);
@@ -66,7 +67,7 @@ watch(() => [props.open, props.chat?.entity, enabled.value] as const, async ([op
               data-card
               :aria-label="title"
               class="flex w-full min-w-0 shrink-0 flex-col outline-none"
-              :class="chat ? 'lg:w-[clamp(400px,38%,560px)] lg:border-r lg:border-separator' : ''"
+              :class="chat ? [wide ? 'lg:w-[clamp(460px,50%,780px)]' : 'lg:w-[clamp(400px,38%,560px)]', 'lg:border-r lg:border-separator'] : ''"
             >
               <header class="flex items-start gap-3 border-b border-separator bg-surface px-6 py-4">
                 <div class="min-w-0 flex-1">

@@ -9,6 +9,7 @@ import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from "vue";
 import {
   Play, Pause, Check, Pencil, RotateCcw, Timer, Square, CalendarClock, Flame, Briefcase, Hash, X, Plus, Trash2,
   Paperclip, Download, FileText, ListChecks, GitBranch, Link2, MoreHorizontal, ChevronRight, CircleSlash,
+  SlidersHorizontal, Users,
 } from "@lucide/vue";
 import Popover from "../Popover.vue";
 import Checkbox from "../Checkbox.vue";
@@ -18,6 +19,7 @@ import MarkdownField from "../editor/MarkdownField.vue";
 import UserPick from "./UserPick.vue";
 import DeadlinePick from "./DeadlinePick.vue";
 import TaskActivity from "./TaskActivity.vue";
+import CardBlock from "./CardBlock.vue";
 import {
   taskStore, person, nameOf, STATUSES, STATUS, PRIORITIES, getTask, createTask, updateTask, setStatus,
   deleteTask, toggleTimer, addCheck, updateCheck, deleteCheck, addFiles, deleteFile, upsert,
@@ -289,6 +291,7 @@ const checkEdit = ref<number | null>(null);
 const checkEditText = ref("");
 const checklist = computed(() => (task.value ? task.value.checklistItems : form.checklist.map((title, i) => ({ id: -i - 1, title, done: false, doneBy: null, sort: i }))));
 const checkDone = computed(() => checklist.value.filter((one) => one.done).length);
+const peopleCount = computed(() => new Set([v.value.creatorId, v.value.responsibleId, ...v.value.accomplices, ...v.value.auditors].filter(Boolean)).size);
 async function addCheckItem() {
   const title = checkText.value.trim();
   if (!title) return;
@@ -586,8 +589,8 @@ defineExpose({ create });
       <p v-else class="py-1 text-sm text-muted">Описания нет.</p>
     </section>
 
-    <!-- Свойства: поле слева, значение справа -->
-    <section class="card card--default p-0">
+    <!-- Свойства: группы в одинаковых блоках, поле слева, значение справа -->
+    <CardBlock :icon="SlidersHorizontal" title="Основное" flush>
       <dl class="props">
         <dt>Статус</dt>
         <dd>
@@ -635,9 +638,13 @@ defineExpose({ create });
           <span v-else>{{ priorityLabel(v.priority) }}</span>
         </dd>
 
+        <dt>Контроль</dt>
+        <dd>
+          <Checkbox :model-value="v.needsReview" :disabled="!canEdit" @update:model-value="(on) => patch({ needs_review: on })"><span class="text-sm">Принять работу после завершения</span></Checkbox>
+        </dd>
       </dl>
-    </section>
-    <section class="card card--default p-0">
+    </CardBlock>
+    <CardBlock :icon="Users" title="Участники" :count="peopleCount" flush>
       <dl class="props">
         <dt>Постановщик</dt>
         <dd><span class="person"><ChatFace :user="person(v.creatorId)" size="xs" />{{ nameOf(v.creatorId) }}</span></dd>
@@ -669,10 +676,9 @@ defineExpose({ create });
             <span v-else-if="!v[role].length" class="text-muted">—</span>
           </dd>
         </template>
-
       </dl>
-    </section>
-    <section class="card card--default p-0">
+    </CardBlock>
+    <CardBlock :icon="Link2" title="Связи" flush>
       <dl class="props">
         <dt>Проект</dt>
         <dd>
@@ -707,19 +713,6 @@ defineExpose({ create });
           </div>
         </dd>
 
-        <dt>Теги</dt>
-        <dd class="flex flex-wrap items-center gap-2">
-          <span v-for="one in v.tags" :key="one" class="inline-flex h-8 items-center gap-1 rounded-lg bg-default px-2.5 text-sm">
-            <Hash class="size-3.5 text-muted" />{{ one }}
-            <button v-if="canEdit" type="button" class="-mr-1 flex size-5 items-center justify-center rounded-md text-muted hover:bg-black/5 hover:text-foreground" :aria-label="`Убрать тег ${one}`" @click="dropTag(one)"><X class="size-3.5" /></button>
-          </span>
-          <template v-if="canEdit">
-            <input v-model="tagText" list="task-tags" class="add-input h-8! w-36" placeholder="+ Добавить тег" @keydown.enter.prevent="addTag" @change="addTag" />
-            <datalist id="task-tags"><option v-for="one in taskStore.tags.filter((t) => !v.tags.includes(t))" :key="one" :value="one" /></datalist>
-          </template>
-          <span v-else-if="!v.tags.length" class="text-muted">—</span>
-        </dd>
-
         <dt>Надзадача</dt>
         <dd>
           <div class="flex min-w-0 items-center gap-1.5">
@@ -743,29 +736,24 @@ defineExpose({ create });
           </div>
         </dd>
 
-      </dl>
-    </section>
-    <section class="card card--default p-0">
-      <dl class="props">
-        <dt>Контроль</dt>
-        <dd>
-          <Checkbox :model-value="v.needsReview" :disabled="!canEdit" @update:model-value="(on) => patch({ needs_review: on })"><span class="text-sm">Принять работу после завершения</span></Checkbox>
+        <dt>Теги</dt>
+        <dd class="flex flex-wrap items-center gap-2">
+          <span v-for="one in v.tags" :key="one" class="inline-flex h-8 items-center gap-1 rounded-lg bg-default px-2.5 text-sm">
+            <Hash class="size-3.5 text-muted" />{{ one }}
+            <button v-if="canEdit" type="button" class="-mr-1 flex size-5 items-center justify-center rounded-md text-muted hover:bg-black/5 hover:text-foreground" :aria-label="`Убрать тег ${one}`" @click="dropTag(one)"><X class="size-3.5" /></button>
+          </span>
+          <template v-if="canEdit">
+            <input v-model="tagText" list="task-tags" class="add-input h-8! w-36" placeholder="+ Добавить тег" @keydown.enter.prevent="addTag" @change="addTag" />
+            <datalist id="task-tags"><option v-for="one in taskStore.tags.filter((t) => !v.tags.includes(t))" :key="one" :value="one" /></datalist>
+          </template>
+          <span v-else-if="!v.tags.length" class="text-muted">—</span>
         </dd>
-
-        <template v-if="task">
-          <dt>Создана</dt>
-          <dd class="text-muted">{{ when(task.createdAt) }}<template v-if="task.completedAt"> · завершена {{ when(task.completedAt) }}</template></dd>
-        </template>
       </dl>
-    </section>
+    </CardBlock>
 
     <!-- Чек-лист -->
-    <section class="card card--default gap-3 p-4">
-      <h3 class="flex items-center gap-2 text-sm font-semibold">
-        <ListChecks class="size-4 text-muted" />Чек-лист
-        <span v-if="checklist.length" class="font-normal text-muted tabular-nums">{{ checkDone }} из {{ checklist.length }}</span>
-      </h3>
-      <div v-if="checklist.length" class="h-1 overflow-hidden rounded-full bg-default">
+    <CardBlock :icon="ListChecks" title="Чек-лист" :count="checklist.length ? `${checkDone} из ${checklist.length}` : null">
+      <div v-if="checklist.length" class="mb-2 h-1 overflow-hidden rounded-full bg-default">
         <div class="h-full rounded-full bg-success transition-all" :style="{ width: `${(checkDone / checklist.length) * 100}%` }" />
       </div>
       <ul class="flex flex-col">
@@ -784,13 +772,12 @@ defineExpose({ create });
           <button v-if="canWork" type="button" class="flex size-7 items-center justify-center rounded-lg text-muted opacity-0 group-hover:opacity-100 hover:bg-default hover:text-danger focus:opacity-100" aria-label="Удалить пункт" @click="removeCheck(one.id)"><X class="size-4" /></button>
         </li>
       </ul>
-      <input v-if="canWork" v-model="checkText" class="add-input w-full" placeholder="+ Добавить пункт и Enter" @keydown.enter.prevent="addCheckItem" />
-    </section>
+      <input v-if="canWork" v-model="checkText" class="add-input mt-1 w-full" placeholder="+ Добавить пункт и Enter" @keydown.enter.prevent="addCheckItem" />
+    </CardBlock>
 
     <!-- Подзадачи -->
-    <section v-if="task" class="card card--default gap-2 p-4">
-      <h3 class="flex items-center gap-2 text-sm font-semibold"><GitBranch class="size-4 text-muted" />Подзадачи<span v-if="task.childItems.length" class="font-normal text-muted">{{ task.childItems.filter((one) => one.status === "done").length }} из {{ task.childItems.length }}</span></h3>
-      <ul class="flex flex-col">
+    <CardBlock v-if="task" :icon="GitBranch" title="Подзадачи" :count="task.childItems.length ? `${task.childItems.filter((one) => one.status === 'done').length} из ${task.childItems.length}` : null">
+      <ul class="-mx-1 flex flex-col">
         <li v-for="one in task.childItems" :key="one.id">
           <button type="button" class="flex w-full items-center gap-2.5 rounded-lg px-1 py-1.5 text-left hover:bg-default/60" @click="emit('open', one.id)">
             <span class="size-2 shrink-0 rounded-full hue-bar" :style="{ '--hue': STATUS[one.status].hue }" :title="STATUS[one.status].label" />
@@ -801,25 +788,27 @@ defineExpose({ create });
           </button>
         </li>
       </ul>
-      <input v-if="task.can.edit || task.can.work" ref="childInput" v-model="childText" class="add-input w-full" placeholder="+ Подзадача: название и Enter" @keydown.enter.prevent="addChild" />
-    </section>
+      <input v-if="task.can.edit || task.can.work" ref="childInput" v-model="childText" class="add-input mt-1 w-full" placeholder="+ Подзадача: название и Enter" @keydown.enter.prevent="addChild" />
+    </CardBlock>
 
     <!-- Файлы -->
-    <section
+    <CardBlock
       v-if="task"
-      class="card card--default gap-2 p-4 transition"
+      :icon="Paperclip"
+      title="Файлы"
+      :count="task.fileItems.length || null"
+      class="transition"
       :class="{ 'ring-2 ring-accent': dropping }"
       @dragover.prevent="task.can.work && (dropping = true)"
       @dragleave="dropping = false"
       @drop.prevent="task.can.work && onDrop($event)"
     >
-      <h3 class="flex items-center gap-2 text-sm font-semibold">
-        <Paperclip class="size-4 text-muted" />Файлы<span v-if="task.fileItems.length" class="font-normal text-muted">{{ task.fileItems.length }}</span>
-        <button v-if="task.can.work" type="button" class="button button--ghost button--sm ml-auto" :disabled="uploading != null" @click="fileInput?.click()">
+      <template #actions>
+        <button v-if="task.can.work" type="button" class="button button--ghost button--sm -mr-2" :disabled="uploading != null" @click="fileInput?.click()">
           <Plus class="size-4" />{{ uploading != null ? `Загрузка ${Math.round(uploading * 100)}%` : "Прикрепить" }}
         </button>
         <input ref="fileInput" type="file" multiple class="hidden" @change="sendFiles(($event.target as HTMLInputElement).files); ($event.target as HTMLInputElement).value = ''" />
-      </h3>
+      </template>
       <ul v-if="task.fileItems.length" class="grid gap-2 sm:grid-cols-2">
         <li v-for="one in task.fileItems" :key="one.id" class="group flex items-center gap-2.5 rounded-xl border border-separator p-2">
           <a :href="apiUrl(one.url)" target="_blank" rel="noopener" class="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-default">
@@ -835,10 +824,11 @@ defineExpose({ create });
         </li>
       </ul>
       <p v-else class="text-sm text-muted">{{ task.can.work ? "Перетащите файлы сюда или нажмите «Прикрепить»." : "Файлов нет." }}</p>
-    </section>
+    </CardBlock>
 
     <!-- Комментарии, история, время -->
     <TaskActivity v-if="task" :task="task" mode="work" :spent="spentTotal" :running="timerHere" :timer-text="timerText" :can-plan="canEdit" @changed="onActivityChanged" @timer="timer" @plan="(minutes) => patch({ estimate: minutes })" />
+    <p v-if="task" class="px-1 pb-2 text-xs text-muted">Создана {{ when(task.createdAt) }}<template v-if="task.completedAt"> · завершена {{ when(task.completedAt) }}</template> · №{{ task.id }}</p>
 
     </template>
 
@@ -859,7 +849,7 @@ defineExpose({ create });
 .props {
   display: grid;
   grid-template-columns: minmax(112px, 150px) minmax(0, 1fr);
-  padding: 0.25rem 0;
+  padding: 0 0 0.25rem;
 }
 /* Строка: подпись слева, значение справа. Разделитель — с отступами от
    краёв блока: черта у подписи начинается с отступа, у значения — кончается. */
@@ -867,8 +857,8 @@ defineExpose({ create });
 .props > dd {
   display: flex;
   align-items: center;
-  min-height: 3.25rem;
-  padding-block: 0.625rem;
+  min-height: 3rem;
+  padding-block: 0.5rem;
   font-size: 0.875rem;
   border-top: 1px solid var(--separator);
 }

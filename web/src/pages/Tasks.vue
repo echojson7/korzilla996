@@ -284,6 +284,7 @@ const due = (one: TaskBrief) => dueLook(one.status, one.deadline);
 
     <SidePanel
       :open="isNew || openedId != null"
+      wide
       side-label="История"
       :chat="opened ? { entity: `task:${opened.id}`, title: `Задача: ${opened.title}` } : null"
       :title="isNew ? 'Новая задача' : opened?.title ?? 'Задача'"

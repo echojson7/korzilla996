@@ -193,8 +193,8 @@ const mine = (one: TaskFull["timeItems"][number]) => one.userId === taskStore.me
 </script>
 
 <template>
-  <section :class="mode === 'work' ? 'card card--default gap-0 p-4' : ''">
-    <div v-if="mode === 'work'" class="flex min-h-8 items-center gap-2">
+  <section :class="mode === 'work' ? 'card card--default gap-0 px-4 pt-0 pb-4' : ''">
+    <div v-if="mode === 'work'" class="flex h-11 shrink-0 items-center gap-2 pt-1">
       <h3 v-if="tabs.length === 1" class="flex items-center gap-2 text-sm font-semibold"><Clock class="size-4 text-muted" />Учёт времени</h3>
       <div v-else class="toggle-button-group toggle-button-group--horizontal" role="tablist">
         <button
@@ -213,7 +213,7 @@ const mine = (one: TaskFull["timeItems"][number]) => one.userId === taskStore.me
       <button
         v-if="tab === 'time' && task.can.work && (running || task.status !== 'done')"
         type="button"
-        class="button button--sm ml-auto"
+        class="button button--sm -mr-2 ml-auto"
         :class="running ? 'button--danger' : 'button--secondary'"
         @click="emit('timer')"
       >
@@ -223,7 +223,7 @@ const mine = (one: TaskFull["timeItems"][number]) => one.userId === taskStore.me
     </div>
 
     <!-- Комментарии -->
-    <div v-if="tab === 'comments'" class="mt-3">
+    <div v-if="tab === 'comments'" class="mt-1">
       <ul class="flex flex-col gap-3">
         <li v-for="one in task.commentItems" :key="one.id" class="group flex gap-2.5">
           <ChatFace :user="person(one.userId)" size="sm" />
@@ -279,7 +279,7 @@ const mine = (one: TaskFull["timeItems"][number]) => one.userId === taskStore.me
     </ol>
 
     <!-- Время -->
-    <div v-else class="mt-3 flex flex-col gap-3">
+    <div v-else class="mt-1 flex flex-col gap-3">
       <!-- План и факт -->
       <div class="rounded-xl bg-surface-secondary px-4 py-3">
         <div class="flex flex-wrap items-baseline gap-x-6 gap-y-1 text-sm">
