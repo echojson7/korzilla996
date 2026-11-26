@@ -361,7 +361,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
     </header>
 
     <div class="chat-wall relative flex min-h-0 flex-1 flex-col">
-    <div ref="scroller" class="relative min-h-0 flex-1 overflow-y-auto px-3 py-3 sm:px-4 lg:px-5 thin-scroll" @scroll.passive="onScroll" @click.self="active = null">
+    <div ref="scroller" class="relative min-h-0 flex-1 overflow-y-auto px-3 pt-3 pb-1 sm:px-4 lg:px-5 thin-scroll" @scroll.passive="onScroll" @click.self="active = null">
       <p v-if="loading" class="py-16 text-center text-sm text-muted">Загружаем сообщения…</p>
       <div v-else-if="failed" class="py-16 text-center text-sm text-muted">
         Не получилось загрузить чат.
@@ -524,16 +524,16 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
           </div>
         </template>
       </template>
-    </div>
-    <!-- Полоса над полем ввода постоянной высоты: «кто печатает» и будущие
-         подсказки появляются в ней, лента при этом не прыгает. -->
-    <div class="flex h-7 shrink-0 items-center px-4">
-      <Transition name="fade">
-        <p v-if="typingText" class="flex max-w-full items-center gap-2 rounded-full bg-surface/85 px-3 py-0.5 text-[13px] text-muted shadow-sm backdrop-blur" aria-live="polite">
-          <span class="typing-dots" aria-hidden="true"><i /><i /><i /></span>
-          <span class="truncate">{{ typingText }}</span>
-        </p>
-      </Transition>
+      <!-- Отступ в конце ленты, после последнего сообщения: виден, только
+           когда долистал вниз. В нём — «кто печатает» и будущие подсказки. -->
+      <div v-if="!loading && !failed" class="flex h-8 items-center pt-1">
+        <Transition name="fade">
+          <p v-if="typingText" class="flex max-w-full items-center gap-2 rounded-full bg-surface/85 px-3 py-0.5 text-[13px] text-muted shadow-sm backdrop-blur" aria-live="polite">
+            <span class="typing-dots" aria-hidden="true"><i /><i /><i /></span>
+            <span class="truncate">{{ typingText }}</span>
+          </p>
+        </Transition>
+      </div>
     </div>
     <Composer class="relative z-10 mx-1.5 mb-1.5" ref="composer" :draft-key="chatId" :reply-to="replyTo" :editing="editing" @send="send" @gif="sendGifHere" @typing="sendTyping(chatId)" @save="save" @cancel="replyTo = null; editing = null" />
     </div>
