@@ -9,7 +9,7 @@
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { autoUpdate, computePosition, flip, offset, shift, size, type Placement } from "@floating-ui/dom";
 
-const props = withDefaults(defineProps<{ align?: "left" | "right" | "center"; width?: string; up?: boolean; hover?: boolean }>(), { align: "right", width: "w-72", up: false, hover: false });
+const props = withDefaults(defineProps<{ align?: "left" | "right" | "center"; width?: string; up?: boolean; hover?: boolean | "manual"; matchWidth?: boolean }>(), { align: "right", width: "w-72", up: false, hover: false, matchWidth: false });
 const open = ref(false);
 const root = ref<HTMLElement | null>(null);
 const panel = ref<HTMLElement | null>(null);
@@ -37,7 +37,9 @@ async function place() {
       shift({ padding: 8 }),
       size({
         padding: 8,
-        apply({ availableHeight, availableWidth, elements }) {
+        apply({ availableHeight, availableWidth, elements, rects }) {
+          /* matchWidth: панель шириной с якорь (с учётом своих полей p-1.5). */
+          if (props.matchWidth) elements.floating.style.width = `${Math.round(rects.reference.width) + 12}px`;
           elements.floating.style.maxHeight = `${Math.max(160, Math.floor(availableHeight))}px`;
           elements.floating.style.maxWidth = `${Math.floor(availableWidth)}px`;
         },
@@ -86,8 +88,9 @@ const close = () => (open.value = false);
 
 /* hover: панель открывается наведением мыши на кнопку и закрывается, когда
    мышь ушла и с кнопки, и с панели (с паузой, чтобы успеть перейти).
-   Пока открыта вложенная панель, эта не закрывается. Палец — как раньше,
-   нажатием. */
+   Пока открыта вложенная панель, эта ждёт её закрытия. Палец — как раньше,
+   нажатием. hover="manual" — наведение ловит не вся обёртка, а элемент,
+   которому слот отдал hoverIn/hoverOut (якорь при этом — вся обёртка). */
 let hoverTimer = 0;
 function hoverIn(event: PointerEvent) {
   if (!props.hover || event.pointerType !== "mouse") return;
@@ -97,18 +100,21 @@ function hoverIn(event: PointerEvent) {
 function hoverOut(event: PointerEvent) {
   if (!props.hover || event.pointerType !== "mouse") return;
   clearTimeout(hoverTimer);
-  hoverTimer = window.setTimeout(() => {
-    if (document.querySelector(`[data-popover][data-parent="${panelId}"]`)) return;
-    open.value = false;
-  }, 250);
+  const check = () => {
+    if (document.querySelector(`[data-popover][data-parent="${panelId}"]`)) hoverTimer = window.setTimeout(check, 250);
+    else open.value = false;
+  };
+  hoverTimer = window.setTimeout(check, 250);
 }
+const rootIn = (event: PointerEvent) => props.hover !== "manual" && hoverIn(event);
+const rootOut = (event: PointerEvent) => props.hover !== "manual" && hoverOut(event);
 onBeforeUnmount(() => clearTimeout(hoverTimer));
 defineExpose({ close });
 </script>
 
 <template>
-  <div ref="root" class="relative" @pointerenter="hoverIn" @pointerleave="hoverOut">
-    <slot name="trigger" :open="open" :toggle="() => (open = !open)" />
+  <div ref="root" class="relative" @pointerenter="rootIn" @pointerleave="rootOut">
+    <slot name="trigger" :open="open" :toggle="() => (open = !open)" :hover-in="hoverIn" :hover-out="hoverOut" />
     <Teleport to="body">
       <Transition name="pop">
         <div

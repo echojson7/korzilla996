@@ -153,18 +153,20 @@ const emit = defineEmits<{
             <button type="button" class="msg-side-btn !size-7" aria-label="Поставить реакцию" title="Реакция" :aria-expanded="open" @click="toggle"><Smile class="size-4" /></button>
           </template>
           <template #default="{ close }">
-            <div class="flex items-center gap-0.5">
-              <button v-for="emoji in QUICK.slice(0, 7)" :key="emoji" type="button" class="flex size-9 items-center justify-center rounded-full text-[22px] leading-none transition hover:scale-125 hover:bg-default" :aria-label="`Реакция ${emoji}`" @click="close(); emit('react', emoji)">{{ emoji }}</button>
-              <span class="mx-1 h-6 w-px bg-separator" aria-hidden="true" />
-              <Popover align="right" up width="w-auto">
-                <template #trigger="{ toggle: more, open: full }">
-                  <button type="button" class="flex size-9 items-center justify-center rounded-full text-muted transition hover:bg-default hover:text-foreground" :class="full ? 'bg-default text-foreground' : ''" aria-label="Все реакции" title="Все реакции" :aria-expanded="full" @click="more"><SmilePlus class="size-5" /></button>
-                </template>
-                <template #default="{ close: closeFull }">
-                  <EmojiPicker @pick="(emoji) => { closeFull(); close(); emit('react', emoji); }" />
-                </template>
-              </Popover>
-            </div>
+            <!-- Вся строка — якорь панели всех реакций: она встаёт ровно над
+                 строкой и той же ширины. Открывается наведением на «ещё». -->
+            <Popover hover="manual" match-width align="center" up width="">
+              <template #trigger="{ toggle: more, open: full, hoverIn, hoverOut }">
+                <div class="flex items-center gap-0.5">
+                  <button v-for="emoji in QUICK.slice(0, 7)" :key="emoji" type="button" class="flex size-9 items-center justify-center rounded-full text-[22px] leading-none transition hover:scale-125 hover:bg-default" :aria-label="`Реакция ${emoji}`" @click="close(); emit('react', emoji)">{{ emoji }}</button>
+                  <span class="mx-1 h-6 w-px bg-separator" aria-hidden="true" />
+                  <button type="button" class="flex size-9 items-center justify-center rounded-full text-muted transition hover:bg-default hover:text-foreground" :class="full ? 'bg-default text-foreground' : ''" aria-label="Все реакции" title="Все реакции" :aria-expanded="full" @click="full || more()" @pointerenter="hoverIn" @pointerleave="hoverOut"><SmilePlus class="size-5" /></button>
+                </div>
+              </template>
+              <template #default="{ close: closeFull }">
+                <EmojiPicker class="!w-full" @pick="(emoji) => { closeFull(); close(); emit('react', emoji); }" />
+              </template>
+            </Popover>
           </template>
         </Popover>
         </template>
