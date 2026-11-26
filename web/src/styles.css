@@ -565,3 +565,23 @@ body {
 .popover-layer {
   z-index: 90;
 }
+
+/* Кнопки сбоку пузыря: «⋯» и реакция. */
+.msg-side-btn {
+  display: flex;
+  width: 2rem;
+  height: 2rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: color-mix(in oklab, var(--surface) 85%, transparent);
+  color: var(--muted);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+  backdrop-filter: blur(8px);
+  transition: color 0.15s, background-color 0.15s;
+}
+.msg-side-btn:hover,
+.msg-side-btn[aria-expanded="true"] {
+  color: var(--foreground);
+  background: var(--surface);
+}

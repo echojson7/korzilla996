@@ -3,7 +3,7 @@
      удаление; на телефоне то же по нажатию. Файлы можно бросить в ленту. -->
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { ArrowLeft, Info, Pin, PinOff, X, Reply, Smile, MoreHorizontal, Forward, Check, CheckCheck, Clock, AlertCircle, Download, FileText, ChevronDown, Upload } from "@lucide/vue";
+import { ArrowLeft, Info, Pin, PinOff, X, Smile, MoreHorizontal, Forward, Check, CheckCheck, Clock, AlertCircle, Download, FileText, ChevronDown, Upload } from "@lucide/vue";
 import ChatFace from "./ChatFace.vue";
 import { href } from "../../lib/router";
 import Composer from "./Composer.vue";
@@ -38,13 +38,6 @@ const composer = ref<InstanceType<typeof Composer> | null>(null);
 const replyTo = ref<ChatMessage | null>(null);
 const editing = ref<ChatMessage | null>(null);
 const active = ref<number | null>(null);
-// Сообщение у верхнего края ленты: панель реакций ставим под пузырь, иначе её срежет.
-const barBelow = ref<number | null>(null);
-function aimBar(id: number, event: Event) {
-  const row = event.currentTarget as HTMLElement;
-  const top = scroller.value?.getBoundingClientRect().top ?? 0;
-  barBelow.value = row.getBoundingClientRect().top - top < 52 ? id : null;
-}
 const infoOpen = ref(false);
 const viewer = ref<ChatFile | null>(null);
 const dropping = ref(false);
@@ -227,6 +220,13 @@ function tap(message: ChatMessage, event: MouseEvent) {
   }
   active.value = active.value === message.id ? null : message.id;
 }
+/* Двойной щелчок по сообщению — ответ на него (выделенное двойным
+   щелчком слово снимаем). В ссылках, картинках и кнопках не срабатывает. */
+function quickReply(message: ChatMessage, event: MouseEvent) {
+  if (message.deleted || message.pending || (event.target as HTMLElement).closest("a, button, img, video, input")) return;
+  window.getSelection()?.removeAllRanges();
+  startReply(message);
+}
 function react(message: ChatMessage, emoji: string) {
   remember(emoji);
   active.value = null;
@@ -379,7 +379,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
             class="group/msg relative flex gap-2 rounded-xl transition-colors"
             :class="[row.message.userId === meId ? 'flex-row-reverse' : '', row.head ? 'mt-2.5' : 'mt-0.5']"
             @click="tap(row.message, $event)"
-            @pointerenter="aimBar(row.message.id, $event)"
+            @dblclick="quickReply(row.message, $event)"
             @pointerleave="(event) => event.pointerType === 'mouse' && active === row.message.id && (active = null)"
             @contextmenu="!row.message.deleted && !row.message.pending && openMenu(row.message, $event)"
           >
@@ -445,6 +445,20 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
                     <Check v-else class="size-3.5" aria-label="Доставлено" />
                   </template>
                 </span>
+                <!-- Реакция — кружок в нижнем углу пузыря, только при наведении. -->
+                <template v-if="!row.message.deleted && !row.message.pending">
+                <Popover class="!absolute -bottom-2.5 z-10 transition-opacity" :class="[row.message.userId === meId ? '-left-3' : '-right-3', active === row.message.id ? 'opacity-100' : 'opacity-0 group-hover/msg:opacity-100 has-[[aria-expanded=true]]:opacity-100']" :align="row.message.userId === meId ? 'right' : 'left'" up width="w-auto">
+                  <template #trigger="{ toggle, open }">
+                    <button type="button" class="msg-side-btn !size-7" aria-label="Поставить реакцию" title="Реакция" :aria-expanded="open" @click="toggle"><Smile class="size-4" /></button>
+                  </template>
+                  <template #default="{ close }">
+                    <div class="flex items-center gap-0.5 px-1 pb-1">
+                      <button v-for="emoji in QUICK.slice(0, 7)" :key="emoji" type="button" class="flex size-9 items-center justify-center rounded-full text-[22px] leading-none transition hover:scale-125 hover:bg-default" :aria-label="`Реакция ${emoji}`" @click="close(); react(row.message, emoji)">{{ emoji }}</button>
+                    </div>
+                    <EmojiPicker @pick="(emoji) => { close(); react(row.message, emoji); }" />
+                  </template>
+                </Popover>
+                </template>
               </div>
 
               <p v-if="row.message.failed" class="mt-1 text-xs text-danger">
@@ -477,34 +491,22 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
               </button>
             </div>
 
-            <!-- «⋯» сбоку пузыря: меню всех действий (то же — правый щелчок). -->
-            <div v-if="!row.message.deleted && !row.message.pending" class="flex shrink-0 items-center self-center">
-              <button
-                type="button"
-                class="flex size-8 items-center justify-center rounded-full bg-surface/80 text-muted shadow-sm backdrop-blur transition-opacity hover:text-foreground focus-visible:opacity-100"
-                :class="active === row.message.id || menu?.message.id === row.message.id ? 'opacity-100' : 'opacity-0 group-hover/msg:opacity-100'"
-                aria-label="Действия с сообщением"
-                title="Действия"
-                @click.stop="openMenu(row.message, $event)"
-              ><MoreHorizontal class="size-[18px]" /></button>
-            </div>
-
-            <!-- Над пузырём при наведении: только реакции и «Ответить». -->
+            <!-- Сбоку пузыря при наведении: «⋯» — все действия (то же — правый
+                 щелчок). Ответ — двойной щелчок по сообщению. -->
             <div
               v-if="!row.message.deleted && !row.message.pending"
-              class="absolute z-20 items-center gap-0.5 rounded-full bg-overlay p-1 shadow-overlay"
-              :class="[barBelow === row.message.id ? 'top-full mt-1' : '-top-11', row.message.userId === meId ? 'right-0' : chat?.type === 'group' ? 'left-10' : 'left-0', active === row.message.id ? 'flex' : 'hidden group-hover/msg:flex has-[[aria-expanded=true]]:flex']"
+              class="flex shrink-0 flex-col pt-0.5 transition-opacity"
+              :class="active === row.message.id || menu?.message.id === row.message.id ? 'opacity-100' : 'opacity-0 group-hover/msg:opacity-100 focus-within:opacity-100'"
               @click.stop
+              @dblclick.stop
             >
-              <button v-for="emoji in QUICK.slice(0, 6)" :key="emoji" type="button" class="flex size-9 items-center justify-center rounded-full text-[22px] leading-none transition hover:scale-125 hover:bg-default" :aria-label="`Реакция ${emoji}`" @click="react(row.message, emoji)">{{ emoji }}</button>
-              <Popover :align="row.message.userId === meId ? 'right' : 'left'" width="w-auto">
-                <template #trigger="{ toggle, open }">
-                  <button type="button" class="flex size-9 items-center justify-center rounded-full text-muted hover:bg-default hover:text-foreground" aria-label="Другая реакция" title="Другая реакция" :aria-expanded="open" @click="toggle"><Smile class="size-5" /></button>
-                </template>
-                <template #default="{ close }"><EmojiPicker @pick="(emoji) => { close(); react(row.message, emoji); }" /></template>
-              </Popover>
-              <span class="mx-1 h-5 w-px bg-separator" />
-              <button type="button" class="flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-muted hover:bg-default hover:text-foreground" title="Ответить" @click="startReply(row.message)"><Reply class="size-[18px]" />Ответить</button>
+              <button
+                type="button"
+                class="msg-side-btn"
+                aria-label="Действия с сообщением"
+                title="Действия"
+                @click="openMenu(row.message, $event)"
+              ><MoreHorizontal class="size-[18px]" /></button>
             </div>
           </div>
         </template>
