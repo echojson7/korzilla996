@@ -5,7 +5,7 @@
      «Поручил» показывают только открытые. «+» в колонке — быстрая задача. -->
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { Plus, Kanban, Table2, Briefcase, Flame, Play, Eye, Check, RotateCcw } from "@lucide/vue";
+import { Plus, Kanban, Table2, Briefcase, Flame, Play, Eye, Check, RotateCcw, CalendarClock } from "@lucide/vue";
 import PageHead from "../components/PageHead.vue";
 import Board from "../components/Board.vue";
 import DataTable from "../components/DataTable.vue";
@@ -79,15 +79,19 @@ function newTask() {
   setTimeout(() => board.value?.openAdd("new"), 0);
 }
 
-/* Срок: красный — просрочена, жёлтый — сегодня, серый — дальше. */
+/* Срок лейблом, цвет по близости: красный — просрочена, оранжевый —
+   сегодня, жёлтый — завтра и послезавтра, зелёный — дальше. */
 const tomorrow = day(1);
-function deadline(one: Task) {
-  if (one.state === "done") return { text: "Завершена", cls: "text-success" };
-  if (!one.deadline) return { text: "Без срока", cls: "text-muted" };
-  if (isOverdue(one)) return { text: `Просрочена · ${shortDate(one.deadline)}`, cls: "text-danger font-medium" };
-  if (one.deadline < tomorrow) return { text: "Сегодня", cls: "text-warning font-medium" };
-  if (one.deadline < day(2)) return { text: "Завтра", cls: "text-muted" };
-  return { text: shortDate(one.deadline), cls: "text-muted" };
+type Tone = "danger" | "warning" | "soon" | "calm" | "none" | "done";
+function deadline(one: Task): { text: string; tone: Tone; cls: string } {
+  const pick = (text: string, tone: Tone, cls: string) => ({ text, tone, cls });
+  if (one.state === "done") return pick("Завершена", "done", "text-success");
+  if (!one.deadline) return pick("Без срока", "none", "text-muted");
+  if (isOverdue(one)) return pick(`Просрочена · ${shortDate(one.deadline)}`, "danger", "text-danger font-medium");
+  if (one.deadline < tomorrow) return pick("Сегодня", "warning", "text-warning font-medium");
+  if (one.deadline < day(2)) return pick("Завтра", "soon", "text-muted");
+  if (one.deadline < day(3)) return pick(shortDate(one.deadline), "soon", "text-muted");
+  return pick(shortDate(one.deadline), "calm", "text-muted");
 }
 
 const TABLE: Column<Task>[] = [
@@ -164,7 +168,7 @@ const late = computed(() => tasks.filter(isOverdue).length);
             <Briefcase class="size-3 shrink-0" /><span class="truncate">{{ dealOf(one)!.title }}</span>
           </p>
           <div class="mt-2 flex items-center gap-2">
-            <span class="min-w-0 flex-1 truncate text-xs" :class="deadline(one).cls">{{ deadline(one).text }}</span>
+            <span class="min-w-0 flex-1"><span class="due" :class="`due--${deadline(one).tone}`"><CalendarClock class="size-3 shrink-0" />{{ deadline(one).text }}</span></span>
             <span class="flex gap-0.5">
               <Face :who="one.author" size="xs" />
               <Face v-if="one.owner !== one.author" :who="one.owner" size="xs" />
@@ -183,7 +187,7 @@ const late = computed(() => tasks.filter(isOverdue).length);
           </template>
           <template #owner="{ row }"><PersonLine :id="row.owner" /></template>
           <template #author="{ row }"><PersonLine :id="row.author" /></template>
-          <template #deadline="{ row }"><span class="whitespace-nowrap" :class="deadline(row).cls">{{ deadline(row).text }}</span></template>
+          <template #deadline="{ row }"><span class="due" :class="`due--${deadline(row).tone}`">{{ deadline(row).text }}</span></template>
           <template #state="{ row }">
             <HueChip :hue="TASK_STATE[row.state].hue">{{ TASK_STATE[row.state].label }}</HueChip>
           </template>

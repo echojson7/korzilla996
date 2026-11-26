@@ -49,7 +49,7 @@ const deadline = (date: Date | null) => (!date ? "без срока" : `до ${s
           <div class="flex items-center gap-2 text-sm text-muted">
             <component :is="one.icon" class="size-4" />{{ one.label }}
           </div>
-          <p class="mt-2 text-3xl font-semibold tabular-nums">{{ one.value }}</p>
+          <p class="mt-2 text-3xl font-semibold tracking-tight">{{ one.value }}</p>
           <p class="mt-0.5 truncate text-xs text-muted">{{ one.sub }}</p>
         </a>
       </div>

@@ -54,6 +54,55 @@
 @theme {
   --font-sans: "Onest Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-brand-mono: "IBM Plex Mono", ui-monospace, monospace;
+  /* Onest заметно плотнее Inter: те же названия начертаний, но легче.
+     font-medium — для акцента в строке, font-semibold — заголовки и имена,
+     font-bold почти не нужен. */
+  --font-weight-medium: 450;
+  --font-weight-semibold: 520;
+  --font-weight-bold: 600;
+}
+
+/* Палитра портала поверх темы HeroUI: холодные серо-голубые нейтральные
+   (как в Битрикс24, но спокойнее) и лазурный акцент. Тёмная тема —
+   сине-графитовая, как ночной режим Telegram, а не чисто чёрная. */
+:root,
+[data-theme="light"] {
+  --accent: oklch(0.6 0.15 245);
+  --accent-foreground: oklch(0.99 0 0);
+  --background: oklch(0.972 0.004 250);
+  --foreground: oklch(0.26 0.02 262);
+  --surface-secondary: oklch(0.962 0.006 250);
+  --surface-tertiary: oklch(0.942 0.008 250);
+  --muted: oklch(0.55 0.022 258);
+  --default: oklch(0.945 0.008 252);
+  --default-foreground: var(--foreground);
+  --field-foreground: var(--foreground);
+  --segment-foreground: var(--foreground);
+  --border: oklch(0.905 0.009 252);
+  --separator: oklch(0.928 0.007 252);
+  --success: oklch(0.69 0.15 152);
+  --warning: oklch(0.76 0.15 68);
+  --danger: oklch(0.62 0.2 24);
+}
+.dark,
+[data-theme="dark"] {
+  --accent: oklch(0.67 0.14 243);
+  --background: oklch(0.17 0.014 256);
+  --foreground: oklch(0.95 0.006 250);
+  --surface: oklch(0.215 0.017 256);
+  --surface-secondary: oklch(0.245 0.018 256);
+  --surface-tertiary: oklch(0.275 0.019 256);
+  --overlay: oklch(0.235 0.018 256);
+  --muted: oklch(0.72 0.022 255);
+  --default: oklch(0.285 0.019 256);
+  --default-foreground: var(--foreground);
+  --field-background: oklch(0.25 0.018 256);
+  --field-foreground: var(--foreground);
+  --segment: oklch(0.35 0.02 256);
+  --border: oklch(0.31 0.018 256);
+  --separator: oklch(0.28 0.017 256);
+  --success: oklch(0.7 0.14 152);
+  --danger: oklch(0.64 0.18 24);
 }
 
 /* Фон-фотография как в Битрикс24. Пока картинка грузится, виден её
@@ -68,7 +117,13 @@ body,
 }
 body {
   font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--foreground);
+  font-feature-settings: "cv11";
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
   overflow: hidden;
   background: transparent;
 }
@@ -186,16 +241,40 @@ body {
 }
 
 /* Мессенджер: фон ленты, свои сообщения, подсветка при переходе к ответу. */
+/* Фон ленты как в Telegram: мягкий градиент и поверх плотный узор из
+   контурных иконок (src/chat-pattern.svg, иконки Lucide разного размера
+   и наклона, плитка бесшовная). Узор — маска, поэтому его цвет задаётся
+   здесь и меняется с темой. */
 .chat-wall {
-  background: color-mix(in oklab, var(--surface-secondary) 70%, var(--accent) 4%);
+  --wall-ink: oklch(0.4 0.05 170 / 0.13);
+  background:
+    radial-gradient(120% 90% at 0% 0%, oklch(0.935 0.035 215), transparent 60%),
+    radial-gradient(110% 90% at 100% 100%, oklch(0.94 0.045 130), transparent 65%),
+    linear-gradient(160deg, oklch(0.95 0.03 165), oklch(0.94 0.03 200));
+}
+.chat-wall::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--wall-ink);
+  -webkit-mask: url("./chat-pattern.svg") 0 0 / 520px 520px repeat;
+  mask: url("./chat-pattern.svg") 0 0 / 520px 520px repeat;
+}
+.dark .chat-wall {
+  --wall-ink: oklch(0.85 0.04 240 / 0.07);
+  background:
+    radial-gradient(120% 90% at 0% 0%, oklch(0.25 0.04 250), transparent 60%),
+    radial-gradient(110% 90% at 100% 100%, oklch(0.23 0.045 200), transparent 65%),
+    linear-gradient(160deg, oklch(0.19 0.025 262), oklch(0.17 0.02 240));
 }
 .bubble-mine {
-  background: oklch(0.93 0.06 150);
+  background: oklch(0.955 0.05 135);
   color: oklch(0.25 0.03 150);
 }
 .dark .bubble-mine {
-  background: oklch(0.36 0.06 160);
-  color: oklch(0.96 0.01 160);
+  background: oklch(0.45 0.09 250);
+  color: oklch(0.98 0.005 250);
 }
 .flash {
   animation: flash 1.4s ease-out;
@@ -204,3 +283,34 @@ body {
   0%, 40% { background: color-mix(in oklab, var(--accent) 22%, transparent); }
   100% { background: transparent; }
 }
+
+/* Срок задачи лейблом: цвет по близости срока. */
+.due {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 0.25rem;
+  height: 1.375rem;
+  padding: 0 0.5rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+}
+.due--danger { background: oklch(0.94 0.045 25); color: oklch(0.5 0.19 25); }
+.due--warning { background: oklch(0.94 0.06 60); color: oklch(0.52 0.15 50); }
+.due--soon { background: oklch(0.95 0.07 95); color: oklch(0.5 0.11 85); }
+.due--calm { background: oklch(0.95 0.04 155); color: oklch(0.47 0.11 155); }
+.due--none { background: var(--default); color: var(--muted); }
+.due--done { background: oklch(0.95 0.04 155); color: oklch(0.47 0.11 155); }
+.dark .due--danger { background: oklch(0.33 0.08 25); color: oklch(0.85 0.1 25); }
+.dark .due--warning { background: oklch(0.34 0.07 55); color: oklch(0.86 0.11 60); }
+.dark .due--soon { background: oklch(0.34 0.06 95); color: oklch(0.88 0.1 95); }
+.dark .due--calm, .dark .due--done { background: oklch(0.31 0.05 155); color: oklch(0.85 0.09 155); }
+.bubble-mine .text-accent { color: oklch(0.52 0.13 150); }
+.bubble-mine .text-muted { color: oklch(0.5 0.06 145); }
+.dark .bubble-mine .text-accent { color: oklch(0.88 0.08 225); }
+.dark .bubble-mine .text-muted { color: oklch(0.82 0.04 245); }

@@ -110,18 +110,18 @@ defineExpose({ openAdd });
 </script>
 
 <template>
-  <div ref="board" class="flex h-full min-h-0 gap-2.5 overflow-x-auto overflow-y-hidden pb-1 photo-scroll">
+  <div ref="board" class="flex h-full min-h-0 gap-2 overflow-x-auto overflow-y-hidden pb-1 photo-scroll">
     <section
       v-for="column in columns"
       :key="column.id"
-      class="column flex h-full w-[272px] min-w-[264px] shrink-0 flex-col rounded-2xl"
+      class="flex h-full w-[264px] min-w-[248px] shrink-0 flex-col rounded-xl"
       :class="{ 'is-drop-target': dragging != null && over?.column === column.id }"
       :style="{ '--hue': column.hue }"
       @dragover="dragOver($event, column.id)"
       @dragleave="($event.currentTarget as HTMLElement).contains($event.relatedTarget as Node) || (over = null)"
       @drop="drop($event, column.id)"
     >
-      <header class="shrink-0 px-2 pt-2">
+      <header class="shrink-0">
         <div class="hue-bar flex h-8 items-center gap-2 rounded-xl px-3 text-white">
           <h2 class="min-w-0 flex-1 truncate text-sm font-semibold">{{ column.label }}</h2>
           <span class="rounded-full bg-black/15 px-1.5 text-xs font-semibold tabular-nums">{{ inColumn(column.id).length }}</span>
@@ -129,7 +129,7 @@ defineExpose({ openAdd });
             <Plus class="size-4" />
           </button>
         </div>
-        <p v-if="column.total" class="px-1 pt-1 text-xs font-medium text-muted tabular-nums">{{ column.total }}</p>
+        <p v-if="column.total" class="on-photo px-1 pt-1 text-xs font-medium tabular-nums">{{ column.total }}</p>
         <input
           v-if="adding === column.id"
           v-model="draft"
@@ -141,7 +141,7 @@ defineExpose({ openAdd });
           @blur="draft.trim() || (adding = null)"
         />
       </header>
-      <ol :ref="(el) => (el ? lists.set(column.id, el as HTMLElement) : lists.delete(column.id))" class="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto p-2 thin-scroll">
+      <ol :ref="(el) => (el ? lists.set(column.id, el as HTMLElement) : lists.delete(column.id))" class="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto pt-1.5 pb-2 photo-scroll">
         <li v-for="item in inColumn(column.id)" :key="keyOf(item)">
           <div v-if="dragging != null && over?.column === column.id && over.before === keyOf(item)" class="mb-1.5 h-0.5 rounded-full bg-accent" />
           <div
@@ -149,7 +149,7 @@ defineExpose({ openAdd });
             draggable="true"
             role="button"
             tabindex="0"
-            class="cursor-pointer rounded-xl border border-transparent bg-surface p-2.5 text-sm shadow-surface transition hover:border-border hover:shadow-md focus-visible:outline-2 focus-visible:outline-focus"
+            class="cursor-pointer rounded-xl border border-transparent bg-surface px-3 py-2.5 text-sm shadow-surface transition hover:border-border hover:shadow-md focus-visible:outline-2 focus-visible:outline-focus"
             :class="{ 'is-dragging': dragging === keyOf(item) }"
             @dragstart="start($event, keyOf(item))"
             @dragend="stopDrag"
@@ -160,7 +160,7 @@ defineExpose({ openAdd });
           </div>
         </li>
         <li v-if="dragging != null && over?.column === column.id && over.before == null" class="h-0.5 rounded-full bg-accent" />
-        <li v-if="!inColumn(column.id).length && !(dragging != null && over?.column === column.id)" class="py-8 text-center text-xs text-muted">Пусто</li>
+        <li v-if="!inColumn(column.id).length && !(dragging != null && over?.column === column.id)" class="on-photo rounded-xl border border-dashed border-white/35 py-6 text-center text-xs opacity-80">Пусто</li>
       </ol>
     </section>
   </div>

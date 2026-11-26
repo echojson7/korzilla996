@@ -226,7 +226,8 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
       <button v-if="panel" type="button" class="button button--ghost button--icon-only" aria-label="Закрыть" @click="emit('close')"><X class="size-5" /></button>
     </header>
 
-    <div ref="scroller" class="chat-wall min-h-0 flex-1 overflow-y-auto px-3 py-3 md:px-6 thin-scroll" @scroll.passive="onScroll" @click.self="active = null">
+    <div class="chat-wall relative flex min-h-0 flex-1 flex-col">
+    <div ref="scroller" class="relative min-h-0 flex-1 overflow-y-auto px-3 py-3 md:px-6 thin-scroll" @scroll.passive="onScroll" @click.self="active = null">
       <p v-if="loading" class="py-16 text-center text-sm text-muted">Загружаем сообщения…</p>
       <div v-else-if="failed" class="py-16 text-center text-sm text-muted">
         Не получилось загрузить чат.
@@ -355,6 +356,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
           </div>
         </template>
       </template>
+    </div>
     </div>
 
     <button v-if="!atBottom" type="button" class="absolute right-5 bottom-24 z-20 flex size-10 items-center justify-center rounded-full bg-overlay shadow-overlay" aria-label="К последним сообщениям" @click="toBottom(true)">

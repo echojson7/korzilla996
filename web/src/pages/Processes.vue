@@ -46,7 +46,7 @@ const TABLE: Column<Process>[] = [
       <div class="mb-3 grid grid-cols-2 gap-3 xl:grid-cols-4">
         <button v-for="one in stats" :key="one.id" type="button" class="sheet rounded-2xl p-4 text-left shadow-surface transition hover:-translate-y-0.5" @click="setQuery({ kind: one.id })">
           <p class="text-sm text-muted">{{ one.label }}</p>
-          <p class="mt-1 text-2xl font-semibold tabular-nums">{{ one.count }}</p>
+          <p class="mt-1 text-2xl font-semibold tracking-tight">{{ one.count }}</p>
           <p class="text-xs text-muted">{{ number(one.actions) }} действий · {{ one.auto ? `сами запускаются: ${one.auto}` : "все вручную" }}</p>
         </button>
       </div>
