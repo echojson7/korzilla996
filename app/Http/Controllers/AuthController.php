@@ -86,9 +86,12 @@ class AuthController extends Controller
                 'initials' => $user->initials(),
                 'email' => $user->email,
                 'role' => $user->role,
-                'roleLabel' => User::ROLES[$user->role] ?? $user->role,
+                'roleLabel' => $user->roleLabel(),
                 'position' => $user->position,
                 'permissions' => $user->permissions(),
+                'access' => $user->access(),
+                'manager' => \App\Support\Access::isManager($user),
+                'owner' => \App\Support\Access::isOwner($user),
             ] : null,
             'csrf' => csrf_token(),
         ];

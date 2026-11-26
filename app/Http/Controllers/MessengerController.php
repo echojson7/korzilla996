@@ -7,8 +7,10 @@ use App\Models\ChatMember;
 use App\Models\Message;
 use App\Models\MessageFile;
 use App\Models\MessageReaction;
+use App\Models\Task;
 use App\Models\User;
 use App\Support\Gifs;
+use App\Support\Access;
 use App\Support\GeneralChat;
 use App\Support\Realtime;
 use App\Support\TaskMentions;
@@ -137,6 +139,7 @@ class MessengerController extends Controller
                 return $chat;
             });
         } else {
+            abort_unless(Access::allows($me, 'messenger', 'chats'), 403, 'Создавать групповые чаты нельзя: нет права');
             $ids = collect($data['user_ids'] ?? [])->map(fn ($id) => (int) $id)->push($me->id)->unique();
             $chat = DB::transaction(function () use ($data, $me, $ids) {
                 $chat = Chat::query()->create(['type' => 'group', 'title' => trim($data['title']), 'created_by' => $me->id]);
@@ -166,6 +169,7 @@ class MessengerController extends Controller
             'entity' => ['required', 'string', 'regex:/^(task|deal|project|process|staff):[A-Za-z0-9_-]{1,40}$/'],
             'title' => ['required', 'string', 'max:120'],
         ]);
+        $this->canSeeEntity($data['entity'], $me);
 
         $chat = DB::transaction(function () use ($data, $me) {
             $chat = Chat::query()->firstOrCreate(
@@ -381,6 +385,7 @@ class MessengerController extends Controller
     {
         $me = $this->me($request);
         $member = $this->membership($chat, $me);
+        $this->canWrite($chat, $me);
         $request->validate([
             'body' => ['nullable', 'string', 'max:10000'],
             'reply_to_id' => ['nullable', 'integer'],
@@ -468,7 +473,7 @@ class MessengerController extends Controller
     {
         $me = $this->me($request);
         $this->membership($message->chat, $me);
-        abort_unless($message->kind === 'text' && ($message->user_id === $me->id || $me->permissions() === ['*']), 403, 'Удалять можно только свои сообщения');
+        abort_unless($message->kind === 'text' && ($message->user_id === $me->id || Access::allows($me, 'messenger', 'moderate')), 403, 'Удалять можно только свои сообщения');
         DB::transaction(function () use ($message) {
             foreach ($message->files as $file) {
                 Storage::disk('local')->delete($file->path);
@@ -495,6 +500,7 @@ class MessengerController extends Controller
         $targets = Chat::query()->whereIn('id', array_unique($data['chat_ids']))
             ->whereIn('id', ChatMember::query()->where('user_id', $me->id)->select('chat_id'))->get();
         abort_if($targets->isEmpty(), 404);
+        $targets->each(fn (Chat $chat) => $this->canWrite($chat, $me));
         $origin = $message->meta['forwarded_from'] ?? $message->user_id;
         $message->load('files');
 
@@ -628,7 +634,27 @@ class MessengerController extends Controller
 
     private function canManage(Chat $chat, User $me): void
     {
-        abort_unless($chat->created_by === $me->id || $me->permissions() === ['*'], 403, 'Это может создатель чата');
+        abort_unless($chat->created_by === $me->id || Access::allows($me, 'messenger', 'moderate'), 403, 'Это может создатель чата');
+    }
+
+    /** Общий чат: писать — с правом «писать в общий чат». */
+    private function canWrite(Chat $chat, User $me): void
+    {
+        abort_if(GeneralChat::is($chat) && ! Access::allows($me, 'messenger', 'general'), 403, 'В общий чат писать нельзя: нет права');
+    }
+
+    /** Чат карточки — только тем, кто видит саму карточку. */
+    private function canSeeEntity(string $entity, User $me): void
+    {
+        [$kind, $id] = explode(':', $entity, 2);
+        $ok = match ($kind) {
+            'task' => ($task = Task::query()->find((int) $id)) && $me->can('view', $task),
+            'deal' => Access::allows($me, 'crm', 'view'),
+            'process' => Access::allows($me, 'processes', 'view'),
+            'staff' => Access::allows($me, 'staff', 'view'),
+            default => true,
+        };
+        abort_unless($ok, 404);
     }
 
     private function dropChat(Chat $chat): void
@@ -683,6 +709,8 @@ class MessengerController extends Controller
                 'entity' => $chat->entity,
                 /* Общий чат портала: обложка-ромб, всегда сверху, выйти нельзя. */
                 'general' => GeneralChat::is($chat),
+                /* Писать нельзя (общий чат без права) — поле ввода прячется. */
+                'readonly' => GeneralChat::is($chat) && ! Access::allows($me, 'messenger', 'general'),
                 'title' => $title,
                 'initials' => $peer ? $peer->initials() : self::initials((string) $title),
                 'hue' => $peer ? self::hue($peer->id) : self::hue($chat->id * 7 + 3),

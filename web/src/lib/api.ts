@@ -71,7 +71,13 @@ export interface Me {
   roleLabel: string;
   position: string | null;
   permissions: string[];
+  /* Права по разделам: tasks.view = none | own | dept | all (см. lib/access). */
+  access?: Record<string, Record<string, Level>>;
+  /* Владелец или администратор: настройки и права. */
+  manager?: boolean;
+  owner?: boolean;
 }
+export type Level = "none" | "own" | "dept" | "all";
 interface AuthState {
   admin: Me | null;
   csrf: string;

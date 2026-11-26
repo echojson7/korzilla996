@@ -3,7 +3,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from "vue";
 import { Search, Briefcase, ListChecks, User, CornerDownLeft } from "@lucide/vue";
-import { PAGES } from "../pages";
+import { PAGES, isAllowed } from "../pages";
 import { deals } from "../lib/data";
 import { people } from "../lib/messenger";
 import { taskStore, nameOf } from "../lib/tasks";
@@ -26,7 +26,7 @@ const has = (value: string, words: string) => value.toLowerCase().includes(words
 
 const hits = computed<Hit[]>(() => {
   const words = text.value.trim().toLowerCase();
-  const out: Hit[] = PAGES.map((one) => ({ ...one, title: one.id === "profile" ? "Мой профиль" : one.title })).filter((one) => !words || has(one.title, words)).map((one) => ({ group: "Разделы", label: one.title, icon: one.icon, go: () => navigate(one.path) }));
+  const out: Hit[] = PAGES.filter(isAllowed).map((one) => ({ ...one, title: one.id === "profile" ? "Мой профиль" : one.title })).filter((one) => !words || has(one.title, words)).map((one) => ({ group: "Разделы", label: one.title, icon: one.icon, go: () => navigate(one.path) }));
   if (!words) return out;
   for (const one of deals) if (has(`${one.title} ${one.company} ${one.id}`, words)) out.push({ group: "Сделки", label: one.title, hint: one.company, icon: Briefcase, go: () => navigate("/deals", { funnel: one.funnel, open: one.id }) });
   for (const one of taskStore.list) if (has(`${one.title} ${one.id}`, words)) out.push({ group: "Задачи", label: one.title, hint: nameOf(one.responsibleId), icon: ListChecks, go: () => navigate("/tasks", { tab: "all", open: one.id }) });

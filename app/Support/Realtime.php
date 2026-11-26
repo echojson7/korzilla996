@@ -169,11 +169,23 @@ class Realtime
         return ['last' => (int) $rows->last()->id, 'changes' => array_map('array_values', $changes), 'reset' => false];
     }
 
-    /** Сотрудники, которые видят всё (владелец, администраторы). */
+    /**
+     * Сотрудники, которые видят все задачи: владелец, администраторы и
+     * роли с правом «видеть все задачи». Кэш сбрасывает смена ролей.
+     */
     public static function admins(): array
     {
-        return Cache::remember('realtime:admins', 60, fn () => User::query()
-            ->whereIn('role', ['owner', 'admin'])->where('is_active', true)->pluck('id')->map(fn ($id) => (int) $id)->all());
+        return Cache::remember('realtime:admins', 60, function () {
+            try {
+                $roles = \App\Models\Role::query()->get(['key', 'permissions'])
+                    ->filter(fn ($role) => ($role->permissions['tasks']['view'] ?? null) === 'all')
+                    ->pluck('key')->push('owner')->push('admin')->unique()->all();
+            } catch (\Illuminate\Database\QueryException) {
+                $roles = ['owner', 'admin'];
+            }
+
+            return User::query()->whereIn('role', $roles)->where('is_active', true)->pluck('id')->map(fn ($id) => (int) $id)->all();
+        });
     }
 
     private static function prune(): void

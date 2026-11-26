@@ -9,6 +9,8 @@ export type Messengers = Partial<Record<"telegram" | "whatsapp" | "max" | "vk", 
 
 export interface Profile extends ChatUser {
   roleLabel: string;
+  /* Можно менять должность и отдел (право «менять профили»). */
+  org?: boolean;
   phone: string | null;
   messengers: Messengers;
   about: string | null;

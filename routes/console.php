@@ -1,18 +1,20 @@
 <?php
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
 
 /*
- * Учётки сотрудников заводит консоль: формы регистрации у портала нет,
- * иначе он стоял бы с открытой дверью до первого вошедшего.
+ * Учётки сотрудников заводят владелец и администраторы — в настройках
+ * портала или здесь, в консоли. Формы регистрации у портала нет, иначе он
+ * стоял бы с открытой дверью до первого вошедшего.
  */
-Artisan::command('staff:create {email} {name} {--role=staff : owner, admin или staff} {--position=} {--department=}', function () {
+Artisan::command('staff:create {email} {name} {--role=staff : owner, admin, staff или ключ своей роли} {--position=} {--department=}', function () {
     $email = mb_strtolower(trim($this->argument('email')));
     $role = $this->option('role');
-    if (! isset(User::ROLES[$role])) {
-        $this->error('Роль — owner, admin или staff.');
+    if (! isset(User::ROLES[$role]) && ! Role::query()->where('key', $role)->exists()) {
+        $this->error('Роль — owner, admin, staff или ключ своей роли из настроек.');
 
         return 1;
     }

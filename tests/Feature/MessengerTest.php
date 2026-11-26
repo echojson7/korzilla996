@@ -85,10 +85,10 @@ class MessengerTest extends TestCase
         $anna = $this->user('Анна Иванова');
         $boris = $this->user('Борис Петров');
 
-        $chat = $this->actingAs($anna)->postJson('/api/messenger/entity-chats', ['entity' => 'task:12', 'title' => 'Задача: Сайт'])
-            ->assertCreated()->assertJsonPath('data.entity', 'task:12')->assertJsonPath('data.type', 'group')->json('data');
-        $this->actingAs($boris)->postJson('/api/messenger/entity-chats', ['entity' => 'task:12', 'title' => 'Другое'])
-            ->assertOk()->assertJsonPath('data.id', $chat['id'])->assertJsonPath('data.title', 'Задача: Сайт')
+        $chat = $this->actingAs($anna)->postJson('/api/messenger/entity-chats', ['entity' => 'deal:12', 'title' => 'Сделка: Сайт'])
+            ->assertCreated()->assertJsonPath('data.entity', 'deal:12')->assertJsonPath('data.type', 'group')->json('data');
+        $this->actingAs($boris)->postJson('/api/messenger/entity-chats', ['entity' => 'deal:12', 'title' => 'Другое'])
+            ->assertOk()->assertJsonPath('data.id', $chat['id'])->assertJsonPath('data.title', 'Сделка: Сайт')
             ->assertJsonCount(2, 'data.members');
         $this->postJson('/api/messenger/entity-chats', ['entity' => 'drop table', 'title' => 'x'])->assertStatus(422);
     }

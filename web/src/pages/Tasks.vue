@@ -4,6 +4,7 @@
      Вид помнится (k996.tasks.view) и стоит в адресе (?view), вкладка — ?tab,
      открытая задача — ?open (new — новая задача). Данные — с сервера. -->
 <script setup lang="ts">
+import { can } from "../lib/access";
 import { computed, onMounted, watch } from "vue";
 import { Plus, Kanban, Table2, CalendarRange, Briefcase, Flame, CalendarClock, ListChecks, Paperclip, GitBranch, Timer, Hash, Folder } from "@lucide/vue";
 import PageHead from "../components/PageHead.vue";
@@ -165,7 +166,7 @@ const due = (one: TaskBrief) => dueLook(one.status, one.deadline);
   <div class="flex h-full min-h-0 flex-col">
     <PageHead title="Задачи" :sub="!tasksEnabled ? '' : late ? `Просрочено у меня: ${plural(late, 'задача', 'задачи', 'задач')}` : 'Всё в срок'">
       <template #actions>
-        <button type="button" class="button button--primary" :disabled="!tasksEnabled" @click="newTask"><Plus class="size-4" />Задача</button>
+        <button v-if="can('tasks', 'create')" type="button" class="button button--primary" :disabled="!tasksEnabled" @click="newTask"><Plus class="size-4" />Задача</button>
       </template>
       <template #toolbar>
         <Segmented label="Задачи" :items="tabs" :model-value="tab" @update:model-value="(key) => setQuery({ tab: key === 'mine' ? null : key })" />

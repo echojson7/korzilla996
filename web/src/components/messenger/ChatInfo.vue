@@ -8,7 +8,7 @@ import ChatFace from "./ChatFace.vue";
 import { href } from "../../lib/router";
 import PeoplePicker from "./PeoplePicker.vue";
 import { person, meId, renameChat, addMembers, removeMember, setCover, type ChatItem } from "../../lib/messenger";
-import { auth } from "../../lib/session";
+import { can } from "../../lib/access";
 import { ApiError } from "../../lib/api";
 import { toast } from "../../lib/toast";
 
@@ -29,7 +29,7 @@ watch(() => props.open, () => {
 });
 
 const group = computed(() => props.chat?.type === "group");
-const manager = computed(() => !!props.chat && (props.chat.createdBy === meId.value || auth.me?.permissions.includes("*")));
+const manager = computed(() => !!props.chat && (props.chat.createdBy === meId.value || can("messenger", "moderate")));
 const members = computed(() => (props.chat?.members ?? []).map((id) => person(id)).filter((one) => !!one).sort((a, b) => a!.name.localeCompare(b!.name, "ru")));
 const peer = computed(() => person(props.chat?.peer));
 

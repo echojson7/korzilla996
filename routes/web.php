@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AccessController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GifController;
 use App\Http\Controllers\MessengerController;
@@ -24,6 +25,17 @@ Route::prefix('api')->group(function () {
 
     /* Общий канал обновлений (real-time), см. App\Support\Realtime. */
     Route::get('realtime', [RealtimeController::class, 'sync'])->middleware('auth');
+
+    /* Настройки: сотрудники, роли и права (владелец и администраторы). */
+    Route::prefix('access')->middleware('auth')->controller(AccessController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::post('roles', 'storeRole');
+        Route::patch('roles/{role}', 'updateRole');
+        Route::delete('roles/{role}', 'destroyRole');
+        Route::post('users', 'storeUser');
+        Route::patch('users/{user}', 'updateUser');
+        Route::post('users/{user}/password', 'password');
+    });
 
     /* Профили сотрудников и аватары. */
     Route::middleware('auth')->controller(ProfileController::class)->group(function () {

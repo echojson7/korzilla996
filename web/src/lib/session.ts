@@ -18,3 +18,11 @@ export async function loadSession() {
   auth.me = me === undefined ? demoMe() : me;
   auth.ready = true;
 }
+
+/* Роль или права поменяли в настройках (событие access): перечитать, кто я.
+   Учётку выключили — сервер ответит «не вошёл», и откроется экран входа. */
+export async function refreshSession() {
+  if (auth.demo) return;
+  const me = await fetchSession();
+  if (me !== undefined) auth.me = me;
+}

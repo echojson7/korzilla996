@@ -24,7 +24,7 @@ import { toast } from "../lib/toast";
 const myId = computed(() => auth.me?.id ?? 0);
 const id = computed(() => Number(route.value.query.get("id")) || myId.value);
 const mine = computed(() => id.value === myId.value);
-const admin = computed(() => !!auth.me?.permissions.includes("*"));
+const admin = computed(() => !!profile.value?.org);
 const editing = computed(() => route.value.query.get("edit") === "1" && !!profile.value?.form);
 
 const profile = ref<Profile | null>(null);

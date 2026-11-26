@@ -36,7 +36,7 @@ onMounted(async () => {
 const staff = computed(() => [...people.values()].filter((one) => one.active).sort((a, b) => a.name.localeCompare(b.name, "ru")));
 const deptOf = (one: ChatUser) => one.department?.trim() || NO_DEPT;
 const departments = computed(() => [...new Set(staff.value.map(deptOf))].sort((a, b) => (a === NO_DEPT ? 1 : b === NO_DEPT ? -1 : a.localeCompare(b, "ru"))));
-const roleOf = (one: ChatUser) => ROLE[one.role ?? "staff"] ?? ROLE.staff;
+const roleOf = (one: ChatUser) => one.roleLabel ?? ROLE[one.role ?? "staff"] ?? ROLE.staff;
 
 const dept = computed(() => {
   const asked = route.value.query.get("dept") ?? "";

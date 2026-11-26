@@ -4,7 +4,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { ChevronsLeft, ChevronsRight, X } from "@lucide/vue";
-import { PAGES } from "../pages";
+import { PAGES, isAllowed } from "../pages";
 import { route, href } from "../lib/router";
 import { myOpenTasks, myOverdue, newDeals } from "../lib/counters";
 import { totalUnread } from "../lib/messenger";
@@ -15,7 +15,7 @@ const emit = defineEmits<{ toggle: []; closeMobile: [] }>();
 
 const groups = computed(() => {
   const out: { name: string; items: typeof PAGES }[] = [];
-  for (const one of PAGES.filter((page) => !page.hidden)) {
+  for (const one of PAGES.filter((page) => !page.hidden && isAllowed(page))) {
     const last = out[out.length - 1];
     if (last && last.name === one.group) last.items.push(one);
     else out.push({ name: one.group, items: [one] });

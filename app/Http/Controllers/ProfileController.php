@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Support\Access;
 use App\Support\Avatars;
 use App\Support\Realtime;
 use Illuminate\Http\JsonResponse;
@@ -17,22 +18,26 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Профиль сотрудника: смотреть может любой вошедший, править — сам
- * сотрудник или администратор. Должность и отдел меняет только
- * администратор (это оргструктура, а не личное). Роли, почта-логин и
- * учётки — по-прежнему только консолью.
+ * сотрудник или тот, у кого право «менять профили» (отдела или всех).
+ * Должность и отдел меняет только он (это оргструктура, а не личное).
+ * Роли и учётки — в настройках (AccessController) и консолью.
  */
 class ProfileController extends Controller
 {
     public function show(Request $request, User $user): JsonResponse
     {
-        return response()->json(['data' => $user->profile($this->canEdit($request->user(), $user))]);
+        $me = $request->user();
+        abort_unless($me->id === $user->id || Access::allows($me, 'staff', 'view'), 403, 'Профили сотрудников закрыты для вашей роли');
+
+        return response()->json(['data' => $this->out($me, $user)]);
     }
 
     public function update(Request $request, User $user): JsonResponse
     {
         $me = $request->user();
         abort_unless($this->canEdit($me, $user), 403, 'Править можно только свой профиль');
-        $admin = in_array('*', $me->permissions(), true);
+        /* Должность и отдел — оргструктура: нужно право менять профили (даже свой). */
+        $admin = $this->canManage($me, $user);
 
         $data = $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:120'],
@@ -85,7 +90,7 @@ class ProfileController extends Controller
         $user->update($patch);
         $this->announce($user);
 
-        return response()->json(['data' => $user->fresh()->profile(true)]);
+        return response()->json(['data' => $this->out($me, $user->fresh())]);
     }
 
     public function uploadAvatar(Request $request, User $user): JsonResponse
@@ -99,7 +104,7 @@ class ProfileController extends Controller
         Avatars::store($user, $request->file('avatar'));
         $this->announce($user);
 
-        return response()->json(['data' => $user->profile(true)]);
+        return response()->json(['data' => $this->out($request->user(), $user)]);
     }
 
     public function deleteAvatar(Request $request, User $user): JsonResponse
@@ -108,7 +113,7 @@ class ProfileController extends Controller
         Avatars::delete($user);
         $this->announce($user);
 
-        return response()->json(['data' => $user->profile(true)]);
+        return response()->json(['data' => $this->out($request->user(), $user)]);
     }
 
     /** Картинка аватара: адрес с версией не меняется, кэш — навсегда. */
@@ -149,9 +154,29 @@ class ProfileController extends Controller
         return response()->noContent();
     }
 
+    /** Профиль для ответа: org — можно ли менять должность и отдел. */
+    private function out(User $me, User $user): array
+    {
+        return $user->profile($this->canEdit($me, $user)) + ['org' => $this->canManage($me, $user)];
+    }
+
     private function canEdit(?User $me, User $user): bool
     {
-        return $me && ($me->id === $user->id || in_array('*', $me->permissions(), true));
+        return $me && ($me->id === $user->id || $this->canManage($me, $user));
+    }
+
+    /** Чужой профиль: право «менять профили» отдела или всех; владельца правит только владелец. */
+    private function canManage(?User $me, User $user): bool
+    {
+        if (! $me || (Access::isOwner($user) && ! Access::isOwner($me))) {
+            return false;
+        }
+
+        return match (Access::level($me, 'staff', 'edit')) {
+            'all' => true,
+            'dept' => in_array($user->id, Access::colleagues($me), true),
+            default => false,
+        };
     }
 
     /** Остальным — «у сотрудника новый аватар/статус»: списки обновятся сами. */

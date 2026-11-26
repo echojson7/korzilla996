@@ -5,7 +5,7 @@
 import { computed, reactive, ref, shallowRef, watch } from "vue";
 import { on, startRealtime, live as rtLive } from "./realtime";
 import { api, upload, ApiError } from "./api";
-import { auth } from "./session";
+import { auth, refreshSession } from "./session";
 import { toast } from "./toast";
 import type { GifItem } from "./gifs";
 
@@ -13,7 +13,8 @@ export interface ChatUser {
   id: number;
   name: string;
   email?: string;
-  role?: "owner" | "admin" | "staff";
+  role?: string;
+  roleLabel?: string;
   initials: string;
   position: string | null;
   department: string | null;
@@ -32,6 +33,8 @@ export interface ChatItem {
   entity?: string | null;
   /* Общий чат портала: все сотрудники, обложка-ромб, всегда первым. */
   general?: boolean;
+  /* Писать нельзя: общий чат, а у роли нет права. */
+  readonly?: boolean;
   title: string;
   initials: string;
   hue: number;
@@ -282,6 +285,8 @@ export function startMessenger() {
     clearTimeout(peopleTimer);
     peopleTimer = window.setTimeout(() => void loadPeople().catch(() => undefined), 300);
   });
+  /* Роль или права поменяли в настройках — перечитать свою учётку. */
+  on("access", () => void refreshSession().catch(() => undefined));
   startRealtime();
   Promise.all([loadPeople(), loadChats()]).then(prefetchTop).catch(() => undefined);
   /* С живыми событиями опрос — раз в 30 с на всякий случай, без них — раз

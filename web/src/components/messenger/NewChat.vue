@@ -7,6 +7,7 @@ import PeoplePicker from "./PeoplePicker.vue";
 import { startDirect, createGroup, type ChatItem, type ChatUser } from "../../lib/messenger";
 import { ApiError } from "../../lib/api";
 import { toast } from "../../lib/toast";
+import { can } from "../../lib/access";
 
 const props = defineProps<{ open: boolean }>();
 const emit = defineEmits<{ close: []; created: [chat: ChatItem] }>();
@@ -44,7 +45,7 @@ const group = () => {
 
 <template>
   <Modal :open="open" title="Новый чат" @close="emit('close')">
-    <div class="toggle-button-group toggle-button-group--horizontal mb-3 grid w-full grid-cols-2" role="radiogroup" aria-label="Вид чата">
+    <div v-if="can('messenger', 'chats')" class="toggle-button-group toggle-button-group--horizontal mb-3 grid w-full grid-cols-2" role="radiogroup" aria-label="Вид чата">
       <button v-for="one in ([['direct', 'Личный'], ['group', 'Групповой']] as const)" :key="one[0]" type="button" role="radio" class="toggle-button justify-center" :aria-checked="mode === one[0]" :data-selected="mode === one[0] ? 'true' : undefined" @click="mode = one[0]">{{ one[1] }}</button>
     </div>
     <PeoplePicker v-if="mode === 'direct'" single @pick="direct" />

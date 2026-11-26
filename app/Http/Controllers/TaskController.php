@@ -12,6 +12,8 @@ use App\Models\TaskMember;
 use App\Models\TaskTag;
 use App\Models\TaskTime;
 use App\Models\User;
+use App\Policies\TaskPolicy;
+use App\Support\Access;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -29,7 +31,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * ответственный, соисполнители, наблюдатели) и администраторы; чужая
  * задача отвечает 404.
  *
- * Права: поля меняют постановщик, ответственный и администратор;
+ * Права — по роли (App\Policies\TaskPolicy): видеть свои / отдела / все,
+ * менять, удалять. На уровне «свои»: поля меняют постановщик и ответственный;
  * соисполнители — статус, чек-лист, файлы и время; комментировать могут все
  * участники. Каждое изменение полей пишется в историю.
  */
@@ -48,10 +51,7 @@ class TaskController extends Controller
             ->withCount(['comments', 'files', 'children'])
             ->withCount(['checklist as checklist_total', 'checklist as checklist_done' => fn ($q) => $q->where('done', true)])
             ->withSum('time as time_spent', 'seconds');
-        if (! $this->isAdmin($me)) {
-            $query->where(fn ($q) => $q->where('creator_id', $me->id)->orWhere('responsible_id', $me->id)
-                ->orWhereIn('id', TaskMember::query()->select('task_id')->where('user_id', $me->id)));
-        }
+        TaskPolicy::visible($query, $me);
         /* ids=1,2,3 — только эти задачи (догрузка по событиям real-time). */
         if ($request->filled('ids')) {
             $ids = array_slice(array_filter(array_map('intval', explode(',', (string) $request->input('ids')))), 0, 500);
@@ -86,6 +86,7 @@ class TaskController extends Controller
     public function store(Request $request): JsonResponse
     {
         $me = $this->me($request);
+        abort_unless($me->can('create', Task::class), 403, 'Ставить задачи нельзя: нет права');
         $data = $this->validated($request, true);
         if (! empty($data['parent_id'])) {
             $this->see(Task::query()->findOrFail($data['parent_id']), $me);
@@ -197,7 +198,7 @@ class TaskController extends Controller
     {
         $me = $this->me($request);
         $this->see($task, $me);
-        abort_unless($task->creator_id === $me->id || $this->isAdmin($me), 403, 'Удалить задачу может постановщик');
+        abort_unless($me->can('delete', $task), 403, 'Удалить задачу может постановщик');
         DB::transaction(function () use ($task) {
             Storage::disk('local')->deleteDirectory('tasks/'.$task->id);
             $task->delete();
@@ -356,8 +357,9 @@ class TaskController extends Controller
     public function deleteComment(Request $request, TaskComment $comment): Response
     {
         $me = $this->me($request);
-        $this->see(Task::query()->findOrFail($comment->task_id), $me);
-        abort_unless($comment->user_id === $me->id || $this->isAdmin($me), 403, 'Удалить можно свой комментарий');
+        $task = Task::query()->findOrFail($comment->task_id);
+        $this->see($task, $me);
+        abort_unless($comment->user_id === $me->id || $me->can('moderate', $task), 403, 'Удалить можно свой комментарий');
         $comment->delete();
 
         return response()->noContent();
@@ -438,7 +440,7 @@ class TaskController extends Controller
         $me = $this->me($request);
         $task = Task::query()->findOrFail($entry->task_id);
         $this->see($task, $me);
-        abort_unless($entry->user_id === $me->id || $this->isAdmin($me), 403, 'Удалить можно своё время');
+        abort_unless($entry->user_id === $me->id || $me->can('moderate', $task), 403, 'Удалить можно своё время');
         $entry->delete();
         $task->touch();
 
@@ -483,19 +485,20 @@ class TaskController extends Controller
         return $user;
     }
 
+    /** Сверх правил задачи: с правом «менять все задачи» (как раньше администратор). */
     private function isAdmin(User $me): bool
     {
-        return $me->permissions() === ['*'];
+        return Access::level($me, 'tasks', 'edit') === 'all';
     }
 
     private function see(Task $task, User $me): void
     {
-        abort_unless($this->isAdmin($me) || in_array($me->id, $task->participantIds(), true), 404);
+        abort_unless($me->can('view', $task), 404);
     }
 
     private function editor(Task $task, User $me): bool
     {
-        return $this->isAdmin($me) || in_array($me->id, [$task->creator_id, $task->responsible_id], true);
+        return $me->can('update', $task);
     }
 
     private function canEdit(Task $task, User $me): void
@@ -506,8 +509,7 @@ class TaskController extends Controller
     /** Работать с задачей: постановщик, ответственный, соисполнители. */
     private function canWork(Task $task, User $me): void
     {
-        $ok = $this->editor($task, $me) || $task->members->contains(fn ($m) => $m->user_id === $me->id && $m->role === 'accomplice');
-        abort_unless($ok, 403, 'Наблюдатель может только комментировать');
+        abort_unless($me->can('work', $task), 403, 'Наблюдатель может только комментировать');
     }
 
     /**
@@ -704,8 +706,8 @@ class TaskController extends Controller
             ->withCount(['checklist as checklist_total', 'checklist as checklist_done' => fn ($q) => $q->where('done', true)])
             ->withSum('time as time_spent', 'seconds')->orderBy('id')->get();
         $parent = $task->parent_id ? Task::query()->find($task->parent_id) : null;
-        $canSeeParent = $parent && ($this->isAdmin($me) || in_array($me->id, $parent->participantIds(), true));
-        $working = $this->editor($task, $me) || $task->members->contains(fn ($m) => $m->user_id === $me->id && $m->role === 'accomplice');
+        $canSeeParent = $parent && $me->can('view', $parent);
+        $working = $me->can('work', $task);
 
         return [
             ...$this->brief($task),
@@ -726,7 +728,7 @@ class TaskController extends Controller
             'can' => [
                 'edit' => $this->editor($task, $me),
                 'work' => $working,
-                'delete' => $task->creator_id === $me->id || $this->isAdmin($me),
+                'delete' => $me->can('delete', $task),
             ],
         ];
     }

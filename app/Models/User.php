@@ -9,7 +9,9 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use App\Support\Access;
 use App\Support\Avatars;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Notifications\Notifiable;
 
 #[Fillable(['name', 'email', 'password', 'role', 'position', 'department', 'is_active', 'phone', 'messengers', 'about', 'birthday', 'birthday_year_hidden', 'status_emoji', 'status_text', 'status_until'])]
@@ -59,10 +61,31 @@ class User extends Authenticatable
         return mb_strtoupper(implode('', array_map(fn ($word) => mb_substr($word, 0, 1), array_slice($words, 0, 2))));
     }
 
-    /** Права для приложения: владелец и администратор — всё. */
+    /** Роль сотрудника с набором прав (users.role — ключ роли). */
+    public function roleRecord(): BelongsTo
+    {
+        return $this->belongsTo(Role::class, 'role', 'key');
+    }
+
+    /** Подпись роли: системные — из ROLES, свои — из таблицы ролей. */
+    public function roleLabel(): string
+    {
+        return self::ROLES[$this->role] ?? $this->roleRecord?->name ?? $this->role;
+    }
+
+    /**
+     * Права для приложения: ['*'] у владельца и администратора (настройки,
+     * всё можно). Подробные права по разделам — access().
+     */
     public function permissions(): array
     {
-        return in_array($this->role, ['owner', 'admin'], true) ? ['*'] : [];
+        return Access::isManager($this) ? ['*'] : [];
+    }
+
+    /** Права по разделам: tasks.view = own|dept|all|none и т. д. */
+    public function access(): array
+    {
+        return Access::map($this);
     }
 
     /** Мессенджеры в профиле: ключ — подпись. */
@@ -95,6 +118,7 @@ class User extends Authenticatable
             'name' => $this->name,
             'email' => $this->email,
             'role' => $this->role,
+            'roleLabel' => $this->roleLabel(),
             'initials' => $this->initials(),
             'position' => $this->position,
             'department' => $this->department,
@@ -112,7 +136,6 @@ class User extends Authenticatable
         $messengers = array_filter(array_intersect_key((array) $this->messengers, self::MESSENGERS), fn ($value) => is_string($value) && $value !== '');
 
         return $this->card() + [
-            'roleLabel' => self::ROLES[$this->role] ?? $this->role,
             'phone' => $this->phone,
             'messengers' => (object) $messengers,
             'about' => $this->about,

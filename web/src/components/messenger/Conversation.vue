@@ -25,7 +25,7 @@ import { toast } from "../../lib/toast";
 import { entityOf, entityTitle } from "../../lib/entities";
 import { messageLayout } from "../../lib/look";
 import type { GifItem } from "../../lib/gifs";
-import { auth } from "../../lib/session";
+import { can } from "../../lib/access";
 
 /* closeTab — крестик закрытия рисует сама панель снаружи (ярлычок), в шапке его нет. */
 const props = withDefaults(defineProps<{ chatId: number; panel?: boolean; back?: boolean; closeTab?: boolean }>(), { panel: false, back: false, closeTab: false });
@@ -268,7 +268,7 @@ function openMenu(message: ChatMessage, event: MouseEvent, views = false) {
 const leftLayout = computed(() => messageLayout.value === "left");
 const onRight = (message: ChatMessage) => !leftLayout.value && message.userId === meId.value;
 const withAuthor = (message: ChatMessage) => leftLayout.value || (message.userId !== meId.value && chat.value?.type === "group");
-const canDelete = (message: ChatMessage) => message.userId === meId.value || !!auth.me?.permissions.includes("*");
+const canDelete = (message: ChatMessage) => message.userId === meId.value || can("messenger", "moderate");
 async function copyText(message: ChatMessage) {
   menu.value = null;
   try {
@@ -552,7 +552,8 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
         </Transition>
       </div>
     </div>
-    <Composer class="relative z-10 mx-1.5 mb-1.5" ref="composer" :draft-key="chatId" :reply-to="replyTo" :editing="editing" @send="send" @gif="sendGifHere" @typing="sendTyping(chatId)" @save="save" @cancel="replyTo = null; editing = null" />
+    <p v-if="chat?.readonly" class="relative z-10 mx-1.5 mb-1.5 rounded-2xl bg-surface/85 px-4 py-3 text-center text-sm text-muted shadow-sm backdrop-blur">В общий чат писать нельзя: так настроена ваша роль</p>
+    <Composer v-else class="relative z-10 mx-1.5 mb-1.5" ref="composer" :draft-key="chatId" :reply-to="replyTo" :editing="editing" @send="send" @gif="sendGifHere" @typing="sendTyping(chatId)" @save="save" @cancel="replyTo = null; editing = null" />
     </div>
 
     <button v-if="!atBottom" type="button" class="absolute right-5 bottom-24 z-20 flex size-10 items-center justify-center rounded-full bg-overlay shadow-overlay" aria-label="К последним сообщениям" @click="toBottom(true)">
