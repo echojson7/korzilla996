@@ -24,6 +24,8 @@ function open(id: number) {
 }
 /* Открыли раздел — мини-чат закрываем: он про то место, где его открыли. */
 watch(() => route.value.path, () => (quick.value = null));
+/* Перешли к сообщению из мини-чата — он своё сделал. */
+watch(() => route.value.query.get("msg"), (msg) => msg && (quick.value = null));
 const panelChat = computed(() => (quick.value && chatById(quick.value) ? quick.value : null));
 function expand() {
   const id = quick.value;

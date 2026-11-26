@@ -7,7 +7,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { ArrowLeft, Info, Pin, PinOff, List, X, ExternalLink, Download, ChevronDown, Upload } from "@lucide/vue";
 import ChatFace from "./ChatFace.vue";
 import ReleaseCard from "./ReleaseCard.vue";
-import { href } from "../../lib/router";
+import { href, route, setQuery } from "../../lib/router";
 import Composer from "./Composer.vue";
 import ChatInfo from "./ChatInfo.vue";
 import SystemLine from "./SystemLine.vue";
@@ -18,7 +18,7 @@ import { apiUrl } from "../../lib/api";
 import { remember } from "../../lib/emoji";
 import { plural } from "../../lib/format";
 import {
-  chatById, threadOf, openThread, loadOlder, sendMessage, sendGif, editMessage, deleteMessage, toggleReaction, markRead, togglePin, togglePinMessage, previewOf, dropFailed,
+  chatById, threadOf, openThread, loadOlder, sendMessage, sendGif, editMessage, deleteMessage, toggleReaction, markRead, togglePin, togglePinMessage, previewOf, messageHref, dropFailed,
   typingIn, sendTyping, person, meId, focused, dayLabel, fileSize, type ChatMessage, type ChatFile, type ChatUser,
 } from "../../lib/messenger";
 import { toast } from "../../lib/toast";
@@ -164,7 +164,29 @@ async function load() {
     jumpToBottom();
     settling = false;
     read();
+    consumeMsg();
   });
+}
+
+/* Пришли по «Перейти к сообщению» (msg=чат.сообщение в адресе) — к нему. */
+async function consumeMsg() {
+  const [chatId, id] = (route.value.query.get("msg") ?? "").split(".").map(Number);
+  if (!id || chatId !== props.chatId || loading.value || failed.value) return;
+  setQuery({ msg: null });
+  await jump(id);
+}
+watch(() => route.value.query.get("msg"), () => !settling && consumeMsg());
+
+/* «Перейти к сообщению»: из мини-чата, из чата карточки в мессенджере или к
+   оригиналу пересланного. Если сообщение здесь же — просто прокрутка. */
+const goTarget = (message: ChatMessage) => message.forwardedMsg ?? { chatId: props.chatId, id: message.id };
+const canGo = (message: ChatMessage) => !!message.forwardedMsg || props.panel || pinsOnly.value || (route.value.path === "/messenger" && !!chat.value?.entity);
+function goTo(message: ChatMessage) {
+  const target = goTarget(message);
+  const here = target.chatId === props.chatId;
+  if (here && pinsOnly.value) return void showPins(false, target.id);
+  if (here && !props.panel && !(route.value.path === "/messenger" && chat.value?.entity)) return void jump(target.id);
+  location.hash = messageHref(target.chatId, target.id);
 }
 
 let settling = true;
@@ -308,7 +330,7 @@ async function copyText(message: ChatMessage) {
     toast("Не получилось скопировать", "danger");
   }
 }
-function menuAction(name: "reply" | "copy" | "forward" | "edit" | "remove" | "pin") {
+function menuAction(name: "reply" | "copy" | "forward" | "edit" | "remove" | "pin" | "go") {
   const message = menu.value?.message;
   menu.value = null;
   if (!message) return;
@@ -317,6 +339,7 @@ function menuAction(name: "reply" | "copy" | "forward" | "edit" | "remove" | "pi
   else if (name === "forward") forwarding.value = message;
   else if (name === "edit") startEdit(message);
   else if (name === "pin") togglePinMessage(message);
+  else if (name === "go") goTo(message);
   else deleteMessage(message);
 }
 function forwarded(ids: number[]) {
@@ -448,7 +471,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
         </button>
       </Transition>
       <button v-if="chat?.canPin && !pinsOnly" type="button" class="button button--secondary button--sm shrink-0" @click="togglePinMessage(pinShown)"><PinOff class="size-4" />Открепить</button>
-      <button type="button" class="button button--ghost button--sm button--icon-only shrink-0" :class="pinsOnly ? 'text-accent' : ''" :aria-pressed="pinsOnly" :aria-label="pinsOnly ? 'Назад к чату' : 'Все закреплённые'" :title="pinsOnly ? 'Назад к чату' : 'Все закреплённые'" @click="showPins(!pinsOnly)"><List class="size-[18px]" /></button>
+      <button type="button" class="button button--secondary button--sm shrink-0" :aria-pressed="pinsOnly" @click="showPins(!pinsOnly)"><ArrowLeft v-if="pinsOnly" class="size-4" /><List v-else class="size-4" />{{ pinsOnly ? "К чату" : "Все закреплённые" }}</button>
     </div>
 
     <div class="chat-wall relative flex min-h-0 flex-1 flex-col" :class="chat?.changelog ? 'chat-wall--changelog' : chat?.general ? 'chat-wall--general' : ''">
@@ -556,6 +579,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
       :can-delete="canDelete(menu.message)"
       :seen="menu.message.userId === meId ? seenCount(menu.message) : 0"
       :start-views="!!menu.views"
+      :can-go="canGo(menu.message)"
       :can-pin="!!chat?.canPin && menu.message.kind !== 'system' && !menu.message.deleted"
       @close="menu = null"
       @react="(emoji) => { const m = menu!.message; menu = null; react(m, emoji); }"
@@ -565,6 +589,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
       @edit="menuAction('edit')"
       @remove="menuAction('remove')"
       @pin="menuAction('pin')"
+      @go="menuAction('go')"
     />
     <ForwardDialog :message="forwarding" @close="forwarding = null" @done="forwarded" />
     <ChatInfo :open="infoOpen" :chat="chat" @close="infoOpen = false" @left="panel ? emit('close') : emit('back')" />

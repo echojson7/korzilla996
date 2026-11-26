@@ -8,6 +8,8 @@ import { api, upload, ApiError } from "./api";
 import { auth, refreshSession } from "./session";
 import { toast } from "./toast";
 import type { GifItem } from "./gifs";
+import { entityOf } from "./entities";
+import { href } from "./router";
 
 export interface ChatUser {
   id: number;
@@ -74,6 +76,8 @@ export interface ChatMessage {
   meta?: { event?: string; users?: number[]; title?: string } | null;
   /* Переслано: id автора оригинала. */
   forwardedFrom?: number | null;
+  /* Переслано: где оригинал — для «Перейти к сообщению». */
+  forwardedMsg?: { id: number; chatId: number } | null;
   body: string | null;
   /* GIF или стикер из пикера (lib/gifs.ts). */
   gif?: GifItem | null;
@@ -714,4 +718,14 @@ export function fileSize(bytes: number) {
   if (bytes < 1024) return `${bytes} Б`;
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} КБ`;
   return `${(bytes / 1024 / 1024).toLocaleString("ru-RU", { maximumFractionDigits: 1 })} МБ`;
+}
+
+/* «Перейти к сообщению»: чат карточки — открыть саму карточку (задачу,
+   сделку) с её чатом, обычный — мессенджер; msg=«чат.сообщение» в адресе
+   подхватит лента и прокрутит к сообщению. Нет доступа — разбирается тот
+   раздел, куда привели. */
+export function messageHref(chatId: number, id: number) {
+  const msg = `${chatId}.${id}`;
+  const kind = entityOf(chatById(chatId)?.entity);
+  return kind ? `${kind.href}&msg=${msg}` : href("/messenger", { chat: chatId, msg });
 }

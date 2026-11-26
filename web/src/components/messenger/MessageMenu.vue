@@ -3,7 +3,7 @@
      щелчка и не вылезает за экран; Esc, щелчок мимо и прокрутка закрывают. -->
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { Star, Reply, Copy, Forward, Pencil, Trash2, Download, Smile, Eye, ChevronLeft, ChevronRight, Pin, PinOff } from "@lucide/vue";
+import { Star, Reply, Copy, Forward, Pencil, Trash2, Download, Smile, Eye, ChevronLeft, ChevronRight, Pin, PinOff, CornerUpRight } from "@lucide/vue";
 import ChatFace from "./ChatFace.vue";
 import EmojiPicker from "./EmojiPicker.vue";
 import { QUICK } from "../../lib/emoji";
@@ -12,8 +12,8 @@ import { person, viewsOf, type ChatMessage } from "../../lib/messenger";
 import { isFavorite, loadFavorites, toggleFavorite } from "../../lib/gifs";
 import { computePosition, flip, offset, shift, size } from "@floating-ui/dom";
 
-const props = withDefaults(defineProps<{ message: ChatMessage; x: number; y: number; mine: boolean; canDelete: boolean; seen?: number; startViews?: boolean; canPin?: boolean }>(), { seen: 0, startViews: false, canPin: false });
-const emit = defineEmits<{ close: []; react: [emoji: string]; reply: []; copy: []; forward: []; edit: []; remove: []; pin: [] }>();
+const props = withDefaults(defineProps<{ message: ChatMessage; x: number; y: number; mine: boolean; canDelete: boolean; seen?: number; startViews?: boolean; canPin?: boolean; canGo?: boolean }>(), { seen: 0, startViews: false, canPin: false, canGo: false });
+const emit = defineEmits<{ close: []; react: [emoji: string]; reply: []; copy: []; forward: []; edit: []; remove: []; pin: []; go: [] }>();
 
 const box = ref<HTMLElement | null>(null);
 const pos = ref({ left: props.x, top: props.y });
@@ -124,6 +124,7 @@ function remove() {
           <button type="button" class="flex size-9 items-center justify-center rounded-full text-muted hover:bg-default" aria-label="Другая реакция" @click="picking = true"><Smile class="size-5" /></button>
         </div>
         <div class="mx-1 mb-1 h-px bg-separator" />
+        <button v-if="canGo && !message.pending" type="button" role="menuitem" class="menu-row" @click="emit('go')"><CornerUpRight class="size-[18px]" />Перейти к сообщению</button>
         <button type="button" role="menuitem" class="menu-row" @click="emit('reply')"><Reply class="size-[18px]" />Ответить</button>
         <button v-if="message.body" type="button" role="menuitem" class="menu-row" @click="emit('copy')"><Copy class="size-[18px]" />Копировать текст</button>
         <button type="button" role="menuitem" class="menu-row" @click="emit('forward')"><Forward class="size-[18px]" />Переслать</button>

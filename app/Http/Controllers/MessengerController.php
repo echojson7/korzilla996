@@ -507,11 +507,15 @@ class MessengerController extends Controller
         abort_if($targets->isEmpty(), 404);
         $targets->each(fn (Chat $chat) => $this->canWrite($chat, $me));
         $origin = $message->meta['forwarded_from'] ?? $message->user_id;
+        /* Откуда переслано — чтобы «Перейти к сообщению» вело к оригиналу. */
+        $source = isset($message->meta['forwarded_msg'])
+            ? ['forwarded_msg' => (int) $message->meta['forwarded_msg'], 'forwarded_chat' => (int) ($message->meta['forwarded_chat'] ?? 0)]
+            : ['forwarded_msg' => $message->id, 'forwarded_chat' => $message->chat_id];
         $message->load('files');
 
         foreach ($targets as $chat) {
-            $copy = DB::transaction(function () use ($chat, $me, $message, $origin) {
-                $copy = $chat->messages()->create(['user_id' => $me->id, 'body' => $message->body, 'meta' => ['forwarded_from' => $origin] + (isset($message->meta['gif']) ? ['gif' => $message->meta['gif']] : [])]);
+            $copy = DB::transaction(function () use ($chat, $me, $message, $origin, $source) {
+                $copy = $chat->messages()->create(['user_id' => $me->id, 'body' => $message->body, 'meta' => ['forwarded_from' => $origin] + $source + (isset($message->meta['gif']) ? ['gif' => $message->meta['gif']] : [])]);
                 foreach ($message->files as $file) {
                     $path = 'messenger/'.$chat->id.'/'.Str::random(40).'.'.(pathinfo($file->path, PATHINFO_EXTENSION) ?: 'bin');
                     if (Storage::disk('local')->copy($file->path, $path)) {
@@ -817,6 +821,8 @@ class MessengerController extends Controller
             'kind' => $message->kind ?? 'text',
             'meta' => $message->kind === 'system' ? $message->meta : null,
             'forwardedFrom' => $message->kind === 'text' && isset($message->meta['forwarded_from']) ? (int) $message->meta['forwarded_from'] : null,
+            'forwardedMsg' => $message->kind === 'text' && ! empty($message->meta['forwarded_msg']) && ! empty($message->meta['forwarded_chat'])
+                ? ['id' => (int) $message->meta['forwarded_msg'], 'chatId' => (int) $message->meta['forwarded_chat']] : null,
             'body' => $deleted ? null : $message->body,
             'gif' => ! $deleted && ($message->kind ?? 'text') === 'text' ? ($message->meta['gif'] ?? null) : null,
             'deleted' => $deleted,
