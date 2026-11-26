@@ -22,3 +22,19 @@
   окружение `~/korzilla996-env`), со стендом korzillaX ничего общего нет.
 - Сервер — Laravel 13 в корне ветки. Учётки сотрудников заводит только
   консоль (`staff:create`), регистрации нет.
+- Скорость сервера: FrankenPHP в worker-режиме (Laravel Octane, воркер —
+  `public/index.php`). Приложение живёт между запросами, поэтому никакого
+  состояния в `static`-свойствах, синглтонах и глобальных переменных: всё
+  про текущего пользователя — только из `$request`. Воркеры перезапускаются
+  сами, когда меняются `app/`, `config/`, `routes/`, `bootstrap/`, `.env`
+  или пакеты, и после каждых 500 запросов.
+- Кэши Laravel (config, routes, events) на стенде собирает
+  `deploy/after-update.sh` из хуков git после pull, commit и checkout
+  (поставить один раз: `sh deploy/install-hooks.sh`). Поменял `routes/` или
+  `config/` и проверяешь без коммита — сначала `php artisan optimize:clear`,
+  иначе работают старые маршруты. Тесты кэш не читают (`phpunit.xml`).
+- SQLite в режиме WAL: рядом с `database.sqlite` лежат `-wal` и `-shm`.
+  Копию базы снимать не `cp`, а `VACUUM INTO`: `~/korzilla996-env/bin/php -r
+  '(new PDO("sqlite:database/database.sqlite"))->exec("VACUUM INTO \"/путь/копия.sqlite\"");'`.
+- Обои — AVIF и WebP рядом (`web/public/bg`): новое фото — оба формата,
+  AVIF: `ffmpeg -i x.webp -c:v libaom-av1 -still-picture 1 -crf 26 x.avif`.

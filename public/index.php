@@ -5,6 +5,18 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
+/*
+ * Worker-режим FrankenPHP (Laravel Octane): приложение загружается один раз
+ * и обслуживает запросы в цикле. Воркером назначен этот же файл, поэтому
+ * адреса /index.php/api/… не меняются. Без worker-режима — обычный путь ниже.
+ */
+if (($_SERVER['FRANKENPHP_WORKER'] ?? false) && function_exists('frankenphp_handle_request')) {
+    $_SERVER['APP_BASE_PATH'] ??= dirname(__DIR__);
+    require __DIR__.'/../vendor/laravel/octane/bin/frankenphp-worker.php';
+
+    return;
+}
+
 // Determine if the application is in maintenance mode...
 if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
     require $maintenance;

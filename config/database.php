@@ -38,9 +38,20 @@ return [
             'database' => env('DB_DATABASE', database_path('database.sqlite')),
             'prefix' => '',
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
-            'busy_timeout' => null,
-            'journal_mode' => null,
-            'synchronous' => null,
+            /* Портал работает на одном файле SQLite, а запросы идут параллельно
+               (несколько воркеров FrankenPHP): WAL пускает чтение во время
+               записи, busy_timeout ждёт блокировку вместо ошибки «database is
+               locked», synchronous=NORMAL в WAL не теряет целостность и пишет
+               в разы быстрее. cache_size в КиБ со знаком минус — на соединение,
+               mmap_size — отображение файла в память (не съедает RSS). */
+            'busy_timeout' => env('DB_BUSY_TIMEOUT', 5000),
+            'journal_mode' => env('DB_JOURNAL_MODE', 'wal'),
+            'synchronous' => env('DB_SYNCHRONOUS', 'normal'),
+            'pragmas' => [
+                'cache_size' => (int) env('DB_CACHE_SIZE', -8000),
+                'mmap_size' => (int) env('DB_MMAP_SIZE', 64 * 1024 * 1024),
+                'temp_store' => 'memory',
+            ],
             'transaction_mode' => 'DEFERRED',
         ],
 

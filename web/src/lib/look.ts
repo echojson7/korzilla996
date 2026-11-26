@@ -1,6 +1,6 @@
 /* Внешний вид: светлая или тёмная тема и фон-фотография, как в Битрикс24.
    Фото лежат в public/bg (выбраны пользователем, с wallhaven.cc): 2560 px для
-   больших экранов, 1280 px для остальных и маленькая миниатюра для выбора. Пока фото
+   больших экранов, 1280 px для остальных (AVIF и WebP) и маленькая миниатюра для выбора. Пока фото
    грузится, виден его средний цвет. Тот же выбор до первого кадра делает
    скрипт в index.html — держать их одинаковыми. */
 
@@ -39,7 +39,15 @@ function apply() {
   const one = BACKDROPS.find((item) => item.id === backdrop.value) ?? BACKDROPS[0];
   const size = Math.max(screen.width, screen.height) * devicePixelRatio > 1600 ? "" : "-1280";
   root.style.setProperty("--bg-color", one.color);
-  root.style.setProperty("--bg-image", `url("${new URL(`./bg/${one.id}${size}.webp`, location.href).href}")`);
+  root.style.setProperty("--bg-image", photo(`./bg/${one.id}${size}`));
+}
+
+/* AVIF втрое легче WebP; image-set с type() сам берёт первый формат, который
+   браузер умеет. Старым браузерам без type() — просто WebP. */
+const typed = CSS.supports("background-image", 'image-set(url("a.avif") type("image/avif"))');
+function photo(base: string) {
+  const url = (ext: string) => `url("${new URL(`${base}.${ext}`, location.href).href}")`;
+  return typed ? `image-set(${url("avif")} type("image/avif"), ${url("webp")} type("image/webp"))` : url("webp");
 }
 
 export function startLook() {
