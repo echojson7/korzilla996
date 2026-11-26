@@ -388,3 +388,21 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .slide-left-enter-active, .slide-left-leave-active { transition: none; }
 }
+
+/* Ярлычок закрытия, выступающий из плавающей панели вправо. */
+.panel-tab {
+  display: flex;
+  width: 2.25rem;
+  height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  padding-right: 0.125rem;
+  border-radius: 0 0.875rem 0.875rem 0;
+  background: var(--surface);
+  color: var(--muted);
+  box-shadow: 6px 4px 14px -6px oklch(0 0 0 / 0.35);
+  transition: color 120ms;
+}
+.panel-tab:hover {
+  color: var(--foreground);
+}

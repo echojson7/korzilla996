@@ -3,7 +3,7 @@
      раздела; в самом мессенджере — просто выбирает чат. -->
 <script setup lang="ts">
 import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref } from "vue";
-import { MessagesSquare, Plus } from "@lucide/vue";
+import { MessagesSquare, Plus, X } from "@lucide/vue";
 import ChatFace from "../components/messenger/ChatFace.vue";
 /* Сам чат и окно «Новый чат» — отдельными кусками: нужны по щелчку. */
 const Conversation = defineAsyncComponent(() => import("../components/messenger/Conversation.vue"));
@@ -70,9 +70,14 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
       <div v-if="panelChat" class="fixed inset-0 z-40 bg-black/25 md:right-[56px]" @click="quick = null" />
     </Transition>
     <Transition name="slide">
-      <div v-if="panelChat" class="fixed inset-y-0 right-0 z-50 flex w-full flex-col shadow-2xl md:right-[56px] md:w-[min(640px,calc(100vw-56px))]">
-        <Conversation :chat-id="panelChat" panel class="min-h-0 flex-1" @close="quick = null" />
-        <button type="button" class="border-t border-separator bg-surface py-2 text-center text-xs text-muted hover:text-foreground" @click="expand">Открыть в мессенджере</button>
+      <!-- Мини-чат плавает с отступами; закрывается ярлычком справа,
+           выступающим из блока в сторону колонки чатов. -->
+      <div v-if="panelChat" class="fixed inset-y-2 right-11 left-2 z-50 md:inset-y-3 md:right-[100px] md:left-auto md:w-[min(640px,calc(100vw-120px))]">
+        <div class="flex h-full flex-col overflow-hidden rounded-2xl bg-surface shadow-2xl ring-1 ring-black/5 dark:ring-white/10">
+          <Conversation :chat-id="panelChat" panel close-tab class="min-h-0 flex-1" @close="quick = null" />
+          <button type="button" class="border-t border-separator bg-surface py-2 text-center text-xs text-muted hover:text-foreground" @click="expand">Открыть в мессенджере</button>
+        </div>
+        <button type="button" class="panel-tab absolute top-4 -right-9" aria-label="Закрыть чат" title="Закрыть (Esc)" @click="quick = null"><X class="size-5" /></button>
       </div>
     </Transition>
   </Teleport>

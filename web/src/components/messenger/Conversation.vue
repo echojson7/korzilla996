@@ -18,7 +18,8 @@ import {
 } from "../../lib/messenger";
 import { toast } from "../../lib/toast";
 
-const props = withDefaults(defineProps<{ chatId: number; panel?: boolean; back?: boolean }>(), { panel: false, back: false });
+/* closeTab — крестик закрытия рисует сама панель снаружи (ярлычок), в шапке его нет. */
+const props = withDefaults(defineProps<{ chatId: number; panel?: boolean; back?: boolean; closeTab?: boolean }>(), { panel: false, back: false, closeTab: false });
 const emit = defineEmits<{ close: []; back: [] }>();
 
 const chat = computed(() => chatById(props.chatId));
@@ -240,7 +241,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
         <PinOff v-if="chat.pinned" class="size-[18px]" /><Pin v-else class="size-[18px]" />
       </button>
       <button v-if="chat" type="button" class="button button--ghost button--icon-only" aria-label="О чате" title="О чате" @click="infoOpen = true"><Info class="size-[18px]" /></button>
-      <button v-if="panel" type="button" class="button button--ghost button--icon-only" aria-label="Закрыть" @click="emit('close')"><X class="size-5" /></button>
+      <button v-if="panel && !closeTab" type="button" class="button button--ghost button--icon-only" aria-label="Закрыть" @click="emit('close')"><X class="size-5" /></button>
     </header>
 
     <div class="chat-wall relative flex min-h-0 flex-1 flex-col">

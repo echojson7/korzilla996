@@ -1,7 +1,7 @@
-<!-- Карточка сущности поверх раздела, как слайдер Битрикс24: слева
-     плавающая панель карточки, справа на оставшуюся ширину — чат этой
-     задачи или сделки (один на сущность, живёт в мессенджере). Обе с
-     отступами от краёв экрана и скруглениями. Esc или щелчок мимо закрывают. -->
+<!-- Карточка сущности поверх раздела, как слайдер Битрикс24: один
+     плавающий блок с отступами и скруглением, слева карточка (уже), справа
+     чат этой задачи или сделки (один на сущность, живёт в мессенджере).
+     Закрывает ярлычок справа, Esc или щелчок мимо. -->
 <script setup lang="ts">
 import { defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch, nextTick } from "vue";
 import { X, MessagesSquare } from "@lucide/vue";
@@ -46,42 +46,46 @@ watch(() => [props.open, props.chat?.entity, enabled.value] as const, async ([op
     <Transition name="fade">
       <div v-if="open" class="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]" />
     </Transition>
-    <div v-if="open" class="fixed inset-0 z-50 flex gap-3 p-2 md:p-3" @click.self="emit('close')">
+    <div v-if="open" class="fixed inset-0 z-50 flex p-2 md:py-3 md:pr-[100px] md:pl-3" @click.self="emit('close')">
       <Transition name="slide-left" appear>
-        <aside
-          ref="panel"
-          tabindex="-1"
-          role="dialog"
-          aria-modal="true"
-          :aria-label="title"
-          class="flex w-full min-w-0 shrink-0 flex-col overflow-hidden rounded-2xl bg-background shadow-2xl outline-none"
-          :class="chat ? 'lg:w-[min(640px,48%)]' : 'md:w-[min(760px,100%)]'"
-        >
-          <header class="flex items-start gap-3 border-b border-separator bg-surface px-6 py-4">
-            <div class="min-w-0 flex-1">
-              <h2 class="text-xl font-semibold">{{ title }}</h2>
-              <p v-if="sub" class="mt-0.5 text-sm text-muted">{{ sub }}</p>
-            </div>
-            <button type="button" class="button button--ghost button--sm button--icon-only -mr-2" aria-label="Закрыть" title="Закрыть (Esc)" @click="emit('close')">
-              <X class="size-5" />
-            </button>
-          </header>
-          <div class="min-h-0 flex-1 overflow-y-auto p-6 thin-scroll"><slot /></div>
-          <footer v-if="$slots.footer" class="flex items-center gap-2 border-t border-separator bg-surface px-6 py-3"><slot name="footer" /></footer>
-        </aside>
-      </Transition>
+        <!-- Карточка и чат — один цельный блок: карточка уже, чат шире. -->
+        <div class="relative flex min-w-0 overflow-visible" :class="chat ? 'w-full' : 'w-full md:w-[min(760px,100%)]'">
+          <div class="flex min-w-0 flex-1 overflow-hidden rounded-2xl bg-background shadow-2xl ring-1 ring-black/5 dark:ring-white/10">
+            <aside
+              ref="panel"
+              tabindex="-1"
+              role="dialog"
+              aria-modal="true"
+              :aria-label="title"
+              class="flex w-full min-w-0 shrink-0 flex-col outline-none"
+              :class="chat ? 'lg:w-[clamp(400px,38%,560px)] lg:border-r lg:border-separator' : ''"
+            >
+              <header class="flex items-start gap-3 border-b border-separator bg-surface px-6 py-4">
+                <div class="min-w-0 flex-1">
+                  <h2 class="text-xl font-semibold">{{ title }}</h2>
+                  <p v-if="sub" class="mt-0.5 text-sm text-muted">{{ sub }}</p>
+                </div>
+                <button type="button" class="button button--ghost button--sm button--icon-only -mr-2 md:hidden" aria-label="Закрыть" @click="emit('close')">
+                  <X class="size-5" />
+                </button>
+              </header>
+              <div class="min-h-0 flex-1 overflow-y-auto p-6 thin-scroll"><slot /></div>
+              <footer v-if="$slots.footer" class="flex items-center gap-2 border-t border-separator bg-surface px-6 py-3"><slot name="footer" /></footer>
+            </aside>
 
-      <Transition name="slide" appear>
-        <section v-if="chat" class="hidden min-w-0 flex-1 flex-col overflow-hidden rounded-2xl bg-surface shadow-2xl lg:flex" :aria-label="`Чат: ${chat.title}`">
-          <Conversation v-if="chatId" :chat-id="chatId" class="min-h-0 flex-1" />
-          <div v-else class="chat-wall flex flex-1 flex-col items-center justify-center p-6 text-center text-sm text-muted">
-            <MessagesSquare class="size-10" />
-            <p class="mt-3 font-medium text-foreground">Чат {{ chat.title.toLowerCase().startsWith("задача") ? "задачи" : "карточки" }}</p>
-            <p v-if="!enabled" class="mt-1 max-w-xs">Чат карточки работает с сервером: откройте портал на стенде.</p>
-            <p v-else-if="chatFailed" class="mt-1">Не получилось открыть чат.</p>
-            <p v-else class="mt-1">Открываем…</p>
+            <section v-if="chat" class="hidden min-w-0 flex-1 flex-col bg-surface lg:flex" :aria-label="`Чат: ${chat.title}`">
+              <Conversation v-if="chatId" :chat-id="chatId" class="min-h-0 flex-1" />
+              <div v-else class="chat-wall flex flex-1 flex-col items-center justify-center p-6 text-center text-sm text-muted">
+                <MessagesSquare class="size-10" />
+                <p class="mt-3 font-medium text-foreground">Чат {{ chat.title.toLowerCase().startsWith("задача") ? "задачи" : "карточки" }}</p>
+                <p v-if="!enabled" class="mt-1 max-w-xs">Чат карточки работает с сервером: откройте портал на стенде.</p>
+                <p v-else-if="chatFailed" class="mt-1">Не получилось открыть чат.</p>
+                <p v-else class="mt-1">Открываем…</p>
+              </div>
+            </section>
           </div>
-        </section>
+          <button type="button" class="panel-tab absolute top-4 -right-9 hidden md:flex" aria-label="Закрыть" title="Закрыть (Esc)" @click="emit('close')"><X class="size-5" /></button>
+        </div>
       </Transition>
     </div>
   </Teleport>
