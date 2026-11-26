@@ -195,7 +195,7 @@ const late = computed(() => tasks.filter(isOverdue).length);
       </div>
     </div>
 
-    <SidePanel :open="!!opened" :title="opened?.title ?? ''" :sub="opened ? `Задача №${opened.id}` : ''" @close="close">
+    <SidePanel :open="!!opened" :chat="opened ? { entity: `task:${opened.id}`, title: `Задача: ${opened.title}` } : null" :title="opened?.title ?? ''" :sub="opened ? `Задача №${opened.id}` : ''" @close="close">
       <template v-if="opened">
         <div class="grid gap-4 md:grid-cols-[1fr_240px]">
           <section class="card card--default gap-3 p-4">

@@ -78,4 +78,17 @@ class MessengerTest extends TestCase
         $this->actingAs($anna)->patchJson("/api/messenger/chats/{$chat['id']}", ['title' => 'Продажи'])->assertJsonPath('data.title', 'Продажи');
         $this->postJson("/api/messenger/chats/{$chat['id']}/pin")->assertJsonPath('data.pinned', true);
     }
+
+    public function test_entity_chat_is_one_per_entity_and_joins_opener(): void
+    {
+        $anna = $this->user('Анна Иванова');
+        $boris = $this->user('Борис Петров');
+
+        $chat = $this->actingAs($anna)->postJson('/api/messenger/entity-chats', ['entity' => 'task:12', 'title' => 'Задача: Сайт'])
+            ->assertCreated()->assertJsonPath('data.entity', 'task:12')->assertJsonPath('data.type', 'group')->json('data');
+        $this->actingAs($boris)->postJson('/api/messenger/entity-chats', ['entity' => 'task:12', 'title' => 'Другое'])
+            ->assertOk()->assertJsonPath('data.id', $chat['id'])->assertJsonPath('data.title', 'Задача: Сайт')
+            ->assertJsonCount(2, 'data.members');
+        $this->postJson('/api/messenger/entity-chats', ['entity' => 'drop table', 'title' => 'x'])->assertStatus(422);
+    }
 }

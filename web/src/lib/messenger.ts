@@ -19,6 +19,8 @@ export interface ChatUser {
 export interface ChatItem {
   id: number;
   type: "direct" | "group";
+  /* Чат задачи, сделки и т. п.: «task:12». */
+  entity?: string | null;
   title: string;
   initials: string;
   hue: number;
@@ -300,6 +302,11 @@ function upsert(chat: ChatItem) {
   list.push(chat);
   chats.value = list.sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.at.localeCompare(a.at));
   return chat;
+}
+
+/* Чат карточки (задачи, сделки…): один на сущность, создаётся при первом открытии. */
+export async function openEntityChat(entity: string, title: string) {
+  return upsert(await api<ChatItem>("POST", "messenger/entity-chats", { entity, title }));
 }
 
 export async function startDirect(userId: number) {

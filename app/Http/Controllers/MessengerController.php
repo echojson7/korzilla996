@@ -102,6 +102,31 @@ class MessengerController extends Controller
         return response()->json(['data' => $this->chatOne($chat, $me)], $chat->wasRecentlyCreated ? 201 : 200);
     }
 
+    /**
+     * Чат задачи, сделки или проекта: один на сущность, создаётся при первом
+     * открытии карточки. Кто открыл карточку — становится участником.
+     */
+    public function entityChat(Request $request): JsonResponse
+    {
+        $me = $this->me($request);
+        $data = $request->validate([
+            'entity' => ['required', 'string', 'regex:/^(task|deal|project|process|staff):[A-Za-z0-9_-]{1,40}$/'],
+            'title' => ['required', 'string', 'max:120'],
+        ]);
+
+        $chat = DB::transaction(function () use ($data, $me) {
+            $chat = Chat::query()->firstOrCreate(
+                ['entity' => $data['entity']],
+                ['type' => 'group', 'title' => trim($data['title']), 'created_by' => $me->id],
+            );
+            ChatMember::query()->firstOrCreate(['chat_id' => $chat->id, 'user_id' => $me->id]);
+
+            return $chat;
+        });
+
+        return response()->json(['data' => $this->chatOne($chat, $me)], $chat->wasRecentlyCreated ? 201 : 200);
+    }
+
     public function updateChat(Request $request, Chat $chat): JsonResponse
     {
         $me = $this->me($request);
@@ -441,6 +466,7 @@ class MessengerController extends Controller
             return [
                 'id' => $chat->id,
                 'type' => $chat->type,
+                'entity' => $chat->entity,
                 'title' => $title,
                 'initials' => $peer ? $peer->initials() : self::initials((string) $title),
                 'hue' => $peer ? self::hue($peer->id) : self::hue($chat->id * 7 + 3),

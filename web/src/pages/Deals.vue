@@ -99,7 +99,7 @@ const nextLabel = (at: number) => (at === 0 ? "сегодня" : at === 1 ? "з�
       </Board>
     </div>
 
-    <SidePanel :open="!!opened" :title="opened?.title ?? ''" :sub="opened ? `Сделка №${opened.id} · ${opened.company}` : ''" @close="close">
+    <SidePanel :open="!!opened" :chat="opened ? { entity: `deal:${opened.id}`, title: `Сделка: ${opened.title}` } : null" :title="opened?.title ?? ''" :sub="opened ? `Сделка №${opened.id} · ${opened.company}` : ''" @close="close">
       <template v-if="opened">
         <!-- Полоса стадий: щелчок переводит сделку, как в Битрикс24 -->
         <div class="flex gap-1">

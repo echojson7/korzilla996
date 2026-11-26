@@ -22,6 +22,7 @@ Route::prefix('api')->group(function () {
         Route::get('users', 'users');
         Route::get('chats', 'chats');
         Route::post('chats', 'createChat');
+        Route::post('entity-chats', 'entityChat');
         Route::patch('chats/{chat}', 'updateChat');
         Route::post('chats/{chat}/members', 'addMembers');
         Route::delete('chats/{chat}/members/{user}', 'removeMember');

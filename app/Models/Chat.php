@@ -10,7 +10,7 @@ class Chat extends Model
 {
     public const TYPES = ['direct', 'group'];
 
-    protected $fillable = ['type', 'title', 'avatar', 'direct_key', 'created_by', 'last_message_at'];
+    protected $fillable = ['type', 'title', 'avatar', 'direct_key', 'entity', 'created_by', 'last_message_at'];
 
     protected function casts(): array
     {
