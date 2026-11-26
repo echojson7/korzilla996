@@ -490,10 +490,11 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
         </template>
       </template>
     </div>
-    <!-- Кто печатает — над полем ввода, без сдвига ленты. -->
-    <div class="relative h-0">
+    <!-- Полоса над полем ввода постоянной высоты: «кто печатает» и будущие
+         подсказки появляются в ней, лента при этом не прыгает. -->
+    <div class="flex h-7 shrink-0 items-center px-4">
       <Transition name="fade">
-        <p v-if="typingText" class="absolute bottom-1 left-4 z-10 flex max-w-[calc(100%-2rem)] items-center gap-2 rounded-full bg-surface/85 px-3 py-1 text-[13px] text-muted shadow-sm backdrop-blur" aria-live="polite">
+        <p v-if="typingText" class="flex max-w-full items-center gap-2 rounded-full bg-surface/85 px-3 py-0.5 text-[13px] text-muted shadow-sm backdrop-blur" aria-live="polite">
           <span class="typing-dots" aria-hidden="true"><i /><i /><i /></span>
           <span class="truncate">{{ typingText }}</span>
         </p>
