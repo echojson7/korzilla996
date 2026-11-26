@@ -93,4 +93,12 @@ class QueryCountTest extends TestCase
         $this->assertCount(16, $chats->firstWhere('type', 'group')['members']);
         $this->assertSame([[$boris->id]], $bindings);
     }
+
+    /** Вложения сообщений ищутся по индексу, а не перебором таблицы. */
+    public function test_message_files_are_found_by_index(): void
+    {
+        $plan = collect(DB::select('explain query plan select * from message_files where message_id in (1, 2, 3)'))->pluck('detail')->implode(' ');
+
+        $this->assertStringContainsString('message_files_message_idx', $plan);
+    }
 }

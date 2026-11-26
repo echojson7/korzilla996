@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use App\Support\Access;
 use App\Support\Avatars;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Notifications\Notifiable;
 
@@ -65,6 +66,28 @@ class User extends Authenticatable
     public function roleRecord(): BelongsTo
     {
         return $this->belongsTo(Role::class, 'role', 'key');
+    }
+
+    public function departmentRecord(): BelongsTo
+    {
+        return $this->belongsTo(Department::class, 'department_id');
+    }
+
+    /**
+     * Отдел названием, как раньше была колонка department: читать —
+     * имя из справочника, записать — найти отдел по названию или завести
+     * (App\Models\Department::idFor). В списках грузить with('departmentRecord').
+     */
+    protected function department(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->departmentRecord?->name,
+            set: function (?string $value) {
+                $this->unsetRelation('departmentRecord');
+
+                return ['department_id' => Department::idFor($value)];
+            },
+        );
     }
 
     /** Подпись роли: системные — из ROLES, свои — из таблицы ролей. */

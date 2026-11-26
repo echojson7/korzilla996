@@ -159,11 +159,10 @@ class Access
     /** Коллеги по отделу, включая самого. Без отдела — только сам. */
     public static function colleagues(User $user): array
     {
-        $department = trim((string) $user->department);
-        if ($department === '') {
+        if (! $user->department_id) {
             return [$user->id];
         }
 
-        return User::query()->where('department', $department)->pluck('id')->map(fn ($id) => (int) $id)->push($user->id)->unique()->values()->all();
+        return User::query()->where('department_id', $user->department_id)->pluck('id')->map(fn ($id) => (int) $id)->push($user->id)->unique()->values()->all();
     }
 }

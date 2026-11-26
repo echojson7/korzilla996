@@ -48,7 +48,7 @@ class MessengerController extends Controller
 
     public function users(Request $request): JsonResponse
     {
-        $users = User::query()->with('roleRecord')->orderBy('name')->get()->map(fn (User $user) => $this->person($user));
+        $users = User::query()->with(['roleRecord', 'departmentRecord'])->orderBy('name')->get()->map(fn (User $user) => $this->person($user));
 
         return response()->json(['data' => $users]);
     }
