@@ -185,6 +185,8 @@ Artisan::command('bitrix:users {--no-photos : без фото} {--dry : толь
 
 /* Компании, контакты и сделки из Битрикс24 по вебхуку (см. App\Support\Bitrix\ImportCrm). Сначала bitrix:users и crm:import-bitrix. */
 Artisan::command('bitrix:crm {--only=* : companies, contacts, deals (по умолчанию всё по порядку)} {--update : переписать уже перенесённые из Битрикса}', function () {
+    ini_set('memory_limit', '512M');
+    Illuminate\Support\Facades\DB::disableQueryLog();
     $webhook = (string) config('services.bitrix24.webhook');
     $parts = parse_url($webhook);
     $portal = ($parts['scheme'] ?? 'https').'://'.($parts['host'] ?? '');

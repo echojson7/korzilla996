@@ -52,13 +52,16 @@ class Client
                 continue;
             }
             $body = $response->json() ?? [];
+            $status = $response->status();
+            $ok = $response->successful();
+            unset($response);
             $error = $body['error'] ?? null;
-            if ($response->successful() && ! $error) {
+            if ($ok && ! $error) {
                 return $body;
             }
-            $retry = $error === 'QUERY_LIMIT_EXCEEDED' || $response->status() === 503 || $response->serverError();
+            $retry = $error === 'QUERY_LIMIT_EXCEEDED' || $status >= 500;
             if (! $retry || $try >= 6) {
-                throw new RuntimeException("Битрикс24 {$method}: ".($error ?: 'HTTP '.$response->status()).' '.($body['error_description'] ?? ''));
+                throw new RuntimeException("Битрикс24 {$method}: ".($error ?: 'HTTP '.$status).' '.($body['error_description'] ?? ''));
             }
             sleep(2 * $try);
         }
@@ -102,7 +105,8 @@ class Client
             return;
         }
         $done = 50;
-        foreach (array_chunk($offsets, 50) as $chunk) {
+        /* По 10 страниц (500 записей) за batch: ответ на 2500 записей со всеми UF_* весит десятки МБ. */
+        foreach (array_chunk($offsets, 10) as $chunk) {
             $cmd = [];
             foreach ($chunk as $offset) {
                 $cmd['p'.$offset] = $method.'?'.http_build_query($params + ['start' => $offset]);
@@ -117,6 +121,8 @@ class Client
                 $done += count($rows);
                 yield $rows;
             }
+            unset($body, $rows);
+            gc_collect_cycles();
             $progress && $progress($done, $total);
         }
     }
