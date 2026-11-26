@@ -9,6 +9,7 @@ use App\Models\MessageFile;
 use App\Models\MessageReaction;
 use App\Models\User;
 use App\Support\Realtime;
+use App\Support\TaskMentions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -399,8 +400,16 @@ class MessengerController extends Controller
             return $message;
         });
 
+        /* @Имя в чате задачи — человек становится наблюдателем. */
+        $watchers = $body === '' ? [] : TaskMentions::apply($chat, $me, $body);
+
         $payload = $this->message($message->load(['files', 'reactions', 'replyTo']));
         Realtime::emit($this->memberIds($chat), 'message', ['chatId' => $chat->id, 'message' => $payload, 'clientId' => $request->input('client_id'), 'new' => true]);
+        if ($watchers) {
+            $names = collect($watchers)->pluck('name')->sort()->implode(', ');
+            $this->system($chat, $me, 'watcher', "{$me->name} добавляет наблюдателем задачи: {$names}", ['users' => collect($watchers)->pluck('id')->all()]);
+            Realtime::emit($this->memberIds($chat), 'chat', ['chatId' => $chat->id]);
+        }
 
         return response()->json(['data' => $payload], 201);
     }

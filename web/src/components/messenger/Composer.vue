@@ -6,7 +6,8 @@ import { computed, nextTick, ref, watch } from "vue";
 import { Paperclip, Smile, SendHorizontal, X, Reply, Pencil, FileText, Check } from "@lucide/vue";
 import Popover from "../Popover.vue";
 import EmojiPicker from "./EmojiPicker.vue";
-import { person, fileSize, type ChatMessage } from "../../lib/messenger";
+import { person, people, meId, fileSize, type ChatMessage } from "../../lib/messenger";
+import ChatFace from "./ChatFace.vue";
 import { toast } from "../../lib/toast";
 
 const props = defineProps<{ replyTo: ChatMessage | null; editing: ChatMessage | null; draftKey: number }>();
@@ -89,10 +90,64 @@ function submit() {
   }
   text.value = "";
   files.value = [];
+  mention.value = null;
   focus();
 }
 
+/* ---------- @упоминания: «@» и начало имени — список сотрудников ---------- */
+
+const mention = ref<{ start: number; query: string } | null>(null);
+const pickAt = ref(0);
+function findMention() {
+  const el = box.value;
+  if (!el || el.selectionStart !== el.selectionEnd) return (mention.value = null);
+  const before = text.value.slice(0, el.selectionStart);
+  const hit = /(^|\s)@([\p{L}\p{N}]*(?: [\p{L}\p{N}]*)?)$/u.exec(before);
+  mention.value = hit ? { start: before.length - hit[2].length - 1, query: hit[2].toLowerCase() } : null;
+  pickAt.value = 0;
+}
+const candidates = computed(() => {
+  const query = mention.value?.query;
+  if (query == null) return [];
+  return [...people.values()]
+    .filter((one) => one.active && one.id !== meId.value && (!query || one.name.toLowerCase().startsWith(query) || one.name.toLowerCase().split(/\s+/).some((word) => word.startsWith(query))))
+    .sort((a, b) => a.name.localeCompare(b.name, "ru"))
+    .slice(0, 6);
+});
+function pickMention(one: { name: string }) {
+  const at = mention.value;
+  const el = box.value;
+  if (!at || !el) return;
+  const insert = `@${one.name} `;
+  const end = el.selectionStart;
+  text.value = text.value.slice(0, at.start) + insert + text.value.slice(end);
+  mention.value = null;
+  nextTick(() => {
+    el.focus();
+    el.setSelectionRange(at.start + insert.length, at.start + insert.length);
+  });
+}
+
 function onKey(event: KeyboardEvent) {
+  if (mention.value && candidates.value.length && !event.isComposing) {
+    const n = candidates.value.length;
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      pickAt.value = (pickAt.value + (event.key === "ArrowDown" ? 1 : n - 1)) % n;
+      return;
+    }
+    if (event.key === "Enter" || event.key === "Tab") {
+      event.preventDefault();
+      pickMention(candidates.value[pickAt.value]);
+      return;
+    }
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      mention.value = null;
+      return;
+    }
+  }
   if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
     event.preventDefault();
     submit();
@@ -122,7 +177,22 @@ function onPick(event: Event) {
 </script>
 
 <template>
-  <div class="rounded-2xl bg-surface px-2 py-2 shadow-[0_2px_12px_-2px_rgb(0_0_0/0.14)] ring-1 ring-black/5 dark:ring-white/10" @click.self="box?.focus()">
+  <div class="relative rounded-2xl bg-surface px-2 py-2 shadow-[0_2px_12px_-2px_rgb(0_0_0/0.14)] ring-1 ring-black/5 dark:ring-white/10" @click.self="box?.focus()">
+    <ul v-if="mention && candidates.length" class="absolute inset-x-1.5 bottom-full z-20 mb-1.5 overflow-hidden rounded-xl bg-overlay p-1 shadow-lg ring-1 ring-black/5" role="listbox" aria-label="Упомянуть">
+      <li v-for="(one, i) in candidates" :key="one.id">
+        <button
+          type="button"
+          role="option"
+          class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm"
+          :class="i === pickAt ? 'bg-default' : 'hover:bg-default'"
+          :aria-selected="i === pickAt"
+          @mousedown.prevent="pickMention(one)"
+          @mouseenter="pickAt = i"
+        >
+          <ChatFace :user="one" size="xs" /><span class="truncate">{{ one.name }}</span>
+        </button>
+      </li>
+    </ul>
     <div v-if="editing || replyTo" class="mx-1 mt-0.5 mb-1.5 flex items-center gap-2 rounded-xl bg-surface-secondary px-3 py-2 text-sm">
       <Pencil v-if="editing" class="size-4 shrink-0 text-accent" />
       <Reply v-else class="size-4 shrink-0 text-accent" />
@@ -158,6 +228,11 @@ function onPick(event: Event) {
         placeholder="Напишите сообщение…"
         aria-label="Сообщение"
         @keydown="onKey"
+        @input="findMention"
+        @click="findMention"
+        @keyup.left="findMention"
+        @keyup.right="findMention"
+        @blur="mention = null"
         @paste="onPaste"
       />
       <Popover align="right" up width="w-auto" class="flex shrink-0">

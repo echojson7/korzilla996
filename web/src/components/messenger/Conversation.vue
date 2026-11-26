@@ -15,7 +15,7 @@ import { QUICK, remember } from "../../lib/emoji";
 import { plural } from "../../lib/format";
 import {
   chatById, threadOf, openThread, loadOlder, sendMessage, editMessage, deleteMessage, toggleReaction, markRead, togglePin, dropFailed,
-  typingIn, sendTyping, person, meId, focused, clock, dayLabel, fileSize, type ChatMessage, type ChatFile,
+  typingIn, sendTyping, person, people, meId, focused, clock, dayLabel, fileSize, type ChatMessage, type ChatFile,
 } from "../../lib/messenger";
 import { toast } from "../../lib/toast";
 
@@ -216,8 +216,18 @@ function onDrop(event: DragEvent) {
 
 /* Текст со ссылками — без v-html. */
 const URL_RE = /(https?:\/\/[^\s<>"']+[^\s<>"'.,;:!?)\]])/g;
+/* @Имя сотрудника — подсвечено, длинные имена проверяются первыми. */
+const MENTION_RE = computed(() => {
+  const names = [...people.values()].map((one) => one.name.trim()).filter(Boolean).sort((a, b) => b.length - a.length);
+  return names.length ? new RegExp(`(@(?:${names.map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")}))(?![\\p{L}\\p{N}])`, "giu") : null;
+});
 function parts(text: string) {
-  return text.split(URL_RE).map((chunk, i) => ({ text: chunk, link: i % 2 === 1 }));
+  const out: { text: string; link?: boolean; mention?: boolean }[] = [];
+  text.split(URL_RE).forEach((chunk, i) => {
+    if (i % 2 === 1 || !MENTION_RE.value || !chunk.includes("@")) return out.push({ text: chunk, link: i % 2 === 1 });
+    chunk.split(MENTION_RE.value).forEach((piece, j) => out.push({ text: piece, mention: j % 2 === 1 }));
+  });
+  return out;
 }
 const onlyEmoji = (text: string | null) => !!text && text.length <= 12 && /^(\p{Extended_Pictographic}|\p{Emoji_Component}|\s|‍|️)+$/u.test(text) && !/^[\d#*\s]+$/.test(text);
 
@@ -330,7 +340,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
                   <div v-if="row.message.pending && row.message.files.length && !row.message.failed" class="my-1 h-1 overflow-hidden rounded-full bg-black/10"><div class="h-full bg-accent transition-[width]" :style="{ width: `${Math.round((row.message.progress ?? 0) * 100)}%` }" /></div>
 
                   <p v-if="row.message.body" class="break-words whitespace-pre-wrap">
-                    <template v-for="(part, i) in parts(row.message.body)" :key="i"><a v-if="part.link" :href="part.text" target="_blank" rel="noopener noreferrer" class="link break-all" @click.stop>{{ part.text }}</a><template v-else>{{ part.text }}</template></template>
+                    <template v-for="(part, i) in parts(row.message.body)" :key="i"><a v-if="part.link" :href="part.text" target="_blank" rel="noopener noreferrer" class="link break-all" @click.stop>{{ part.text }}</a><span v-else-if="part.mention" class="font-medium text-accent">{{ part.text }}</span><template v-else>{{ part.text }}</template></template>
                   </p>
                 </template>
                 <span class="float-right mt-1 ml-2 flex items-center gap-1 text-[11px] leading-4 text-muted not-italic select-none" :class="onlyEmoji(row.message.body) ? 'text-xs' : ''">

@@ -109,4 +109,23 @@ class TaskTest extends TestCase
         $this->get('/api/editor-images/..%2F..%2F.env')->assertNotFound();
         $this->postJson('/api/tasks', ['title' => '   '])->assertStatus(422);
     }
+
+    public function test_mention_in_task_chat_adds_auditor(): void
+    {
+        $anna = $this->user('Анна Иванова');
+        $boris = $this->user('Борис Петров');
+        $gleb = $this->user('Глеб');
+        $id = $this->actingAs($anna)->postJson('/api/tasks', ['title' => 'Отчёт', 'responsible_id' => $boris->id])->json('data.id');
+        $chat = $this->postJson('/api/messenger/entity-chats', ['entity' => "task:{$id}", 'title' => 'Задача: Отчёт'])->json('data.id');
+
+        /* Ответственного не трогаем, Глеба — в наблюдатели; «@Глебов» не считается. */
+        $this->postJson("/api/messenger/chats/{$chat}/messages", ['body' => '@Борис Петров, @Глебов и @Глеб, гляньте'])->assertCreated();
+        $this->getJson("/api/tasks/{$id}")->assertJsonPath('data.auditors', [$gleb->id])->assertJsonPath('data.responsibleId', $boris->id);
+        $this->actingAs($gleb)->getJson('/api/tasks')->assertJsonCount(1, 'data.tasks');
+        $this->getJson("/api/messenger/chats/{$chat}/messages")->assertOk();
+
+        /* Повторное упоминание ничего не дублирует. */
+        $this->actingAs($anna)->postJson("/api/messenger/chats/{$chat}/messages", ['body' => 'Ещё раз @Глеб'])->assertCreated();
+        $this->getJson("/api/tasks/{$id}")->assertJsonPath('data.auditors', [$gleb->id]);
+    }
 }

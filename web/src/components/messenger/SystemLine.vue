@@ -28,6 +28,7 @@ const parts = computed<Part[] | null>(() => {
   switch (event.value) {
     case "created": return [...who, { text: " создаёт чат " }, { strong: `«${body.match(/«(.*)»/)?.[1] ?? ""}»` }];
     case "added": return [...who, { text: " добавляет в чат " }, ...list(users.value)];
+    case "watcher": return [...who, { text: " добавляет наблюдателем задачи " }, ...list(users.value)];
     case "removed": return [...who, { text: " исключает из чата " }, ...list(users.value)];
     case "left": return [...who, { text: " выходит из чата" }];
     case "joined": return [...who, { text: " присоединяется к обсуждению" }];

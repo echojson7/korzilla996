@@ -24,6 +24,7 @@ import {
   type TaskFull, type TaskInput, type Status, type Priority, type TaskBrief,
 } from "../../lib/tasks";
 import { deals, FUNNEL } from "../../lib/data";
+import { chats, threads } from "../../lib/messenger";
 import { apiUrl, ApiError } from "../../lib/api";
 import { href } from "../../lib/router";
 import { toast } from "../../lib/toast";
@@ -59,6 +60,17 @@ async function load(id: number) {
     loading.value = false;
   }
 }
+/* Позвали человека через @ в чате задачи — сервер сделал его наблюдателем:
+   перечитать карточку, чтобы он появился в полях. */
+const watcherNote = computed(() => {
+  const chat = task.value && chats.value.find((one) => one.entity === `task:${task.value!.id}`);
+  const list = chat ? threads.get(chat.id)?.messages ?? [] : [];
+  for (let i = list.length - 1; i >= 0; i--) if (list[i].meta?.event === "watcher") return list[i].id;
+  return 0;
+});
+watch(watcherNote, (next, prev) => {
+  if (next && prev !== undefined && next !== prev && task.value) load(task.value.id);
+});
 watch(() => props.taskId, (id) => {
   if (id != null) load(id);
   else {
