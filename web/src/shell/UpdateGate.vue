@@ -1,4 +1,4 @@
-<!-- Портал обновлён: окно поверх всего, интерфейс под ним недоступен,
+<!-- Korzilla 996 обновлена: окно поверх всего, интерфейс под ним недоступен,
      пока страницу не перезагрузят. Через 30 с перезагрузка сама. -->
 <script setup lang="ts">
 import { onMounted, ref, watch, nextTick } from "vue";
@@ -48,7 +48,7 @@ function reload() {
       aria-describedby="update-text"
     >
       <div class="card w-full max-w-sm bg-surface p-6 text-center shadow-xl">
-        <h2 id="update-title" class="text-lg font-semibold">Портал обновлён</h2>
+        <h2 id="update-title" class="text-lg font-semibold">Korzilla 996 обновлена</h2>
         <p id="update-text" class="mt-1 text-sm text-muted">Вышла новая версия. Обновите страницу, чтобы продолжить работу. Через {{ WAIT }} секунд она обновится сама.</p>
         <button ref="button" type="button" class="button button--primary mt-5 w-full" :disabled="busy" @click="reload">
           <RefreshCw class="size-4" :class="{ 'animate-spin': busy }" />{{ busy ? "Обновляем…" : `Обновить страницу (${left})` }}
