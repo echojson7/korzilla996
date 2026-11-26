@@ -20,9 +20,11 @@ import UserPick from "./UserPick.vue";
 import DeadlinePick from "./DeadlinePick.vue";
 import TaskActivity from "./TaskActivity.vue";
 import CardBlock from "./CardBlock.vue";
+import NoAccess from "../NoAccess.vue";
+import { deniedOf, atLeast, type Denied } from "../../lib/denied";
 import {
   taskStore, person, nameOf, STATUSES, STATUS, PRIORITIES, getTask, createTask, updateTask, setStatus,
-  deleteTask, toggleTimer, addCheck, updateCheck, deleteCheck, addFiles, deleteFile, upsert,
+  deleteTask, toggleTimer, addCheck, updateCheck, deleteCheck, addFiles, deleteFile, upsert, forgetTask,
   type TaskFull, type TaskInput, type Status, type Priority, type TaskBrief,
 } from "../../lib/tasks";
 import { deals, FUNNEL } from "../../lib/data";
@@ -41,6 +43,8 @@ const fail = (error: unknown) => toast(error instanceof ApiError ? error.first :
 
 const task = ref<TaskFull | null>(null);
 const loading = ref(false);
+/* Нет доступа / не найдена / сбой: вместо карточки — экран NoAccess. */
+const denied = ref<Denied | null>(null);
 const draft = computed(() => props.taskId == null);
 const blank = (): TaskInput & { checklist: string[] } => ({
   title: "", description: "", status: "pending", priority: "normal", responsible_id: taskStore.me, deadline: null,
@@ -72,15 +76,21 @@ async function adoptFrom(run: () => Promise<TaskFull>) {
   return adopt(await run(), since);
 }
 async function load(id: number) {
-  loading.value = !task.value || task.value.id !== id;
+  const first = !task.value || task.value.id !== id;
+  loading.value = first;
   const since = opSeq;
   try {
-    task.value = adopt(await getTask(id), since);
+    const fresh = await (first ? atLeast(getTask(id)) : getTask(id));
+    denied.value = null;
+    task.value = adopt(fresh, since);
   } catch (error) {
-    if (error instanceof ApiError && error.status === 404) {
-      toast("Задача не найдена или удалена", "danger");
-      emit("close");
-    } else fail(error);
+    const state = deniedOf(error);
+    /* Открытая карточка и сбой связи — оставить её и сказать тостом;
+       нет доступа или задачи — убрать всё, что о ней знали. */
+    if (state === "error" && !first) return fail(error);
+    if (state !== "error") forgetTask(id);
+    task.value = null;
+    denied.value = state;
   } finally {
     loading.value = false;
   }
@@ -482,6 +492,12 @@ defineExpose({ create });
     <div class="h-32 animate-pulse rounded-xl bg-default" />
     <div class="h-64 animate-pulse rounded-xl bg-default" />
   </div>
+  <template v-else-if="denied && taskId != null">
+    <Teleport defer to="#task-panel-title"><h2 class="text-xl font-semibold">Задача №{{ taskId }}</h2></Teleport>
+    <NoAccess :state="denied" what="task" @retry="load(taskId)">
+      <button type="button" class="button button--ghost button--sm" @click="emit('close')">Закрыть</button>
+    </NoAccess>
+  </template>
   <div
     v-else-if="task || draft"
     :class="descEditing ? 'absolute inset-0 bg-surface' : '-m-3 flex flex-col gap-3'"

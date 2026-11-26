@@ -44,7 +44,7 @@ class TaskTest extends TestCase
 
         /* Видят участники, чужой — нет. */
         $outsider = $this->user('Олег Посторонний');
-        $this->actingAs($outsider)->getJson("/api/tasks/{$id}")->assertNotFound();
+        $this->actingAs($outsider)->getJson("/api/tasks/{$id}")->assertForbidden()->assertExactJson(["message" => "Нет доступа к задаче", "reason" => "forbidden"]);
         $this->getJson('/api/tasks')->assertJsonCount(0, 'data.tasks');
         $this->actingAs($vera)->getJson('/api/tasks')->assertJsonCount(1, 'data.tasks')->assertJsonPath('data.tasks.0.accomplices', [$vera->id]);
         $this->actingAs($eve)->getJson('/api/tasks')->assertJsonCount(1, 'data.tasks');
@@ -71,7 +71,7 @@ class TaskTest extends TestCase
         $file = UploadedFile::fake()->create('ТЗ.pdf', 10, 'application/pdf');
         $saved = $this->post("/api/tasks/{$id}/files", ['files' => [$file]], ['Accept' => 'application/json'])->assertCreated()->json('data.0');
         $this->get("/api/task-files/{$saved['id']}")->assertOk();
-        $this->actingAs($outsider)->get("/api/task-files/{$saved['id']}")->assertNotFound();
+        $this->actingAs($outsider)->get("/api/task-files/{$saved['id']}")->assertForbidden();
 
         /* Постановщик принимает работу. */
         $full = $this->actingAs($anna)->postJson("/api/tasks/{$id}/status", ['status' => 'done'])->assertJsonPath('data.status', 'done')->json('data');
@@ -97,7 +97,7 @@ class TaskTest extends TestCase
         /* Удаляет только постановщик. */
         $this->actingAs($boris)->deleteJson("/api/tasks/{$id}")->assertForbidden();
         $this->actingAs($anna)->deleteJson("/api/tasks/{$id}")->assertNoContent();
-        $this->getJson("/api/tasks/{$id}")->assertNotFound();
+        $this->getJson("/api/tasks/{$id}")->assertNotFound()->assertExactJson(["message" => "Не найдено", "reason" => "not_found"]);
     }
 
     public function test_admin_sees_all_and_editor_images(): void

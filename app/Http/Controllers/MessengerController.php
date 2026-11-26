@@ -33,7 +33,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * Каждое изменение — событие участникам (App\Support\Realtime): сразу
  * через Mercure, если он есть, и меткой для лёгкого опроса sync.
  *
- * Чужой чат отвечает 404, а не 403: так не видно, какие чаты вообще есть.
+ * Чужой чат отвечает 403 «Нет доступа к чату» без названия и сообщений,
+ * несуществующий — 404 (портал показывает экран «Нет доступа»).
  */
 class MessengerController extends Controller
 {
@@ -605,8 +606,9 @@ class MessengerController extends Controller
 
     private function membership(?Chat $chat, User $me): ChatMember
     {
-        $member = $chat ? ChatMember::query()->where('chat_id', $chat->id)->where('user_id', $me->id)->first() : null;
-        abort_unless($member, 404);
+        abort_unless($chat, 404);
+        $member = ChatMember::query()->where('chat_id', $chat->id)->where('user_id', $me->id)->first();
+        abort_unless($member, 403, 'Нет доступа к чату');
 
         return $member;
     }
@@ -708,13 +710,13 @@ class MessengerController extends Controller
     {
         [$kind, $id] = explode(':', $entity, 2);
         $ok = match ($kind) {
-            'task' => ($task = Task::query()->find((int) $id)) && $me->can('view', $task),
+            'task' => ($task = Task::query()->find((int) $id)) ? $me->can('view', $task) : abort(404),
             'deal' => Access::allows($me, 'crm', 'view'),
             'process' => Access::allows($me, 'processes', 'view'),
             'staff' => Access::allows($me, 'staff', 'view'),
             default => true,
         };
-        abort_unless($ok, 404);
+        abort_unless($ok, 403, 'Нет доступа');
     }
 
     private function dropChat(Chat $chat): void

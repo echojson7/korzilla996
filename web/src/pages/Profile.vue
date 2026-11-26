@@ -17,6 +17,8 @@ import {
 } from "../lib/profile";
 import { auth } from "../lib/session";
 import { ApiError } from "../lib/api";
+import NoAccess from "../components/NoAccess.vue";
+import { deniedOf, atLeast, type Denied } from "../lib/denied";
 import { route, setQuery, navigate, href } from "../lib/router";
 import { plural, shortDate } from "../lib/format";
 import { toast } from "../lib/toast";
@@ -29,17 +31,23 @@ const editing = computed(() => route.value.query.get("edit") === "1" && !!profil
 
 const profile = ref<Profile | null>(null);
 const loading = ref(true);
-const missing = ref(false);
+/* Нет доступа / нет сотрудника / сбой: экран NoAccess вместо профиля. */
+const missing = ref<Denied | null>(null);
 
 async function load() {
   if (!id.value) return;
-  loading.value = !profile.value || profile.value.id !== id.value;
-  missing.value = false;
+  const first = !profile.value || profile.value.id !== id.value;
+  loading.value = first;
+  missing.value = null;
   try {
-    profile.value = await fetchProfile(id.value);
+    profile.value = await (first ? atLeast(fetchProfile(id.value)) : fetchProfile(id.value));
   } catch (error) {
-    if (error instanceof ApiError && error.status === 404) missing.value = true;
-    else toast("Не получилось загрузить профиль", "danger");
+    const state = deniedOf(error);
+    if (state === "error" && !first) toast("Не получилось загрузить профиль", "danger");
+    else {
+      profile.value = null;
+      missing.value = state;
+    }
   } finally {
     loading.value = false;
   }
@@ -233,7 +241,9 @@ async function submitPassword() {
       <div v-if="loading" class="sheet animate-pulse rounded-3xl p-6 shadow-surface">
         <div class="flex items-center gap-5"><div class="size-28 rounded-full bg-default" /><div class="flex-1 space-y-3"><div class="h-6 w-1/3 rounded bg-default" /><div class="h-4 w-1/4 rounded bg-default" /></div></div>
       </div>
-      <p v-else-if="missing || !profile" class="on-photo py-16 text-center">Такого сотрудника нет</p>
+      <NoAccess v-else-if="missing || !profile" :state="missing ?? 'not_found'" what="profile" class="sheet rounded-3xl shadow-surface" @retry="load">
+        <a :href="href('/staff')" class="button button--ghost button--sm">К сотрудникам</a>
+      </NoAccess>
 
       <template v-else>
         <!-- Шапка профиля -->

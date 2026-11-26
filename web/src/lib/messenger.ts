@@ -447,6 +447,13 @@ function merge(one: Thread, rows: ChatMessage[]) {
   }
 }
 
+/* Чат закрыт или удалён (сервер ответил 403/404): выбросить ленту и строку
+   списка, чтобы старые сообщения и название нигде не показывались. */
+export function forgetChat(id: number) {
+  threads.delete(id);
+  if (chats.value.some((one) => one.id === id)) chats.value = chats.value.filter((one) => one.id !== id);
+}
+
 export async function openThread(id: number): Promise<void> {
   const one = thread(id);
   if (one.loaded) return refreshThread(id);

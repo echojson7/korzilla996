@@ -49,8 +49,8 @@ class MessengerTest extends TestCase
         $this->getJson('/api/messenger/chats')->assertJsonPath('data.chats.0.unread', 0);
 
         /* Чужому чат не виден, файл тоже. */
-        $this->actingAs($eve)->getJson("/api/messenger/chats/{$chat['id']}/messages")->assertNotFound();
-        $this->get('/api/messenger/files/'.$sent['files'][0]['id'])->assertNotFound();
+        $this->actingAs($eve)->getJson("/api/messenger/chats/{$chat['id']}/messages")->assertForbidden()->assertExactJson(["message" => "Нет доступа к чату", "reason" => "forbidden"]);
+        $this->get('/api/messenger/files/'.$sent['files'][0]['id'])->assertForbidden();
 
         /* Правка и удаление — только своё. */
         $this->actingAs($boris)->patchJson("/api/messenger/messages/{$sent['id']}", ['body' => 'нет'])->assertForbidden();

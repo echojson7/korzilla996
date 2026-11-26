@@ -29,7 +29,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 /**
  * Задачи как в Битрикс24. Видят задачу её участники (постановщик,
  * ответственный, соисполнители, наблюдатели) и администраторы; чужая
- * задача отвечает 404.
+ * задача отвечает 403 «Нет доступа к задаче» без названия и полей,
+ * несуществующая — 404 (портал показывает экран «Нет доступа»).
  *
  * Права — по роли (App\Policies\TaskPolicy): видеть свои / отдела / все,
  * менять, удалять. На уровне «свои»: поля меняют постановщик и ответственный;
@@ -501,7 +502,7 @@ class TaskController extends Controller
 
     private function see(Task $task, User $me): void
     {
-        abort_unless($me->can('view', $task), 404);
+        abort_unless($me->can('view', $task), 403, 'Нет доступа к задаче');
     }
 
     private function editor(Task $task, User $me): bool

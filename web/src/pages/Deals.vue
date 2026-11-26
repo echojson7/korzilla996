@@ -10,6 +10,7 @@ import Board from "../components/Board.vue";
 import Segmented from "../components/Segmented.vue";
 import SearchBox from "../components/SearchBox.vue";
 import SidePanel from "../components/SidePanel.vue";
+import NoAccess from "../components/NoAccess.vue";
 import Face from "../components/Face.vue";
 import HueChip from "../components/HueChip.vue";
 import PersonLine from "../components/PersonLine.vue";
@@ -54,6 +55,8 @@ function add(stage: string, title: string) {
   toast(`Сделка «${title}» создана`, "success");
 }
 
+/* ?open=… есть, а сделки нет — окно всё равно открывается, с экраном «Не найдена». */
+const openParam = computed(() => route.value.query.get("open"));
 const opened = computed(() => deals.find((one) => String(one.id) === route.value.query.get("open")) ?? null);
 const open = (deal: Deal) => setQuery({ open: deal.id });
 const close = () => setQuery({ open: null });
@@ -117,7 +120,7 @@ const nextLabel = (at: number) => (at === 0 ? "сегодня" : at === 1 ? "з�
       </Board>
     </div>
 
-    <SidePanel :open="!!opened" :chat="opened ? { entity: `deal:${opened.id}`, title: `Сделка: ${opened.title}` } : null" :title="opened?.title ?? ''" :sub="opened ? `Сделка №${opened.id} · ${opened.company}` : ''" @close="close">
+    <SidePanel :open="!!openParam" :chat="opened ? { entity: `deal:${opened.id}`, title: `Сделка: ${opened.title}` } : null" :title="opened?.title ?? `Сделка №${openParam}`" :sub="opened ? `Сделка №${opened.id} · ${opened.company}` : ''" @close="close">
       <div v-if="opened && descEditing" class="absolute inset-0 bg-surface">
         <MarkdownField
           fill
@@ -194,6 +197,7 @@ const nextLabel = (at: number) => (at === 0 ? "сегодня" : at === 1 ? "з�
           <p class="text-sm text-muted">Сделку ведёт шаблон «Весь процесс (запускается автоматически)» из Битрикс24. Он заработает вместе с движком процессов.</p>
         </section>
       </template>
+      <NoAccess v-else state="not_found" what="deal"><button type="button" class="button button--ghost button--sm" @click="close">Закрыть</button></NoAccess>
       <template v-if="opened && descEditing" #footer>
         <button type="button" class="button button--primary button--sm" @click="saveDesc"><Check class="size-4" />Сохранить</button>
         <button type="button" class="button button--ghost button--sm" @click="descEditing = false">Отмена</button>

@@ -88,7 +88,7 @@ class AccessTest extends TestCase
         $foreign = $this->actingAs($other)->postJson('/api/tasks', ['title' => 'Чужая задача'])->assertCreated()->json('data.id');
 
         $this->actingAs($intern)->getJson('/api/tasks')->assertOk()->assertJsonCount(1, 'data.tasks')->assertJsonPath('data.tasks.0.id', $mine);
-        $this->getJson("/api/tasks/{$foreign}")->assertNotFound();
+        $this->getJson("/api/tasks/{$foreign}")->assertForbidden();
         $this->getJson("/api/tasks/{$mine}")->assertOk()->assertJsonPath('data.can.edit', false);
         $this->patchJson("/api/tasks/{$mine}", ['title' => 'Правка'])->assertForbidden();
         $this->postJson('/api/tasks', ['title' => 'Своя'])->assertForbidden();
@@ -99,7 +99,7 @@ class AccessTest extends TestCase
         $this->postJson('/api/messenger/chats', ['type' => 'direct', 'user_id' => $boss->id])->assertSuccessful(); /* личный чат с коллегой уже заведён при появлении учётки */
         $general = GeneralChat::chat();
         $this->postJson("/api/messenger/chats/{$general->id}/messages", ['body' => 'Привет всем'])->assertForbidden();
-        $this->postJson('/api/messenger/entity-chats', ['entity' => "task:{$foreign}", 'title' => 'Задача'])->assertNotFound();
+        $this->postJson('/api/messenger/entity-chats', ['entity' => "task:{$foreign}", 'title' => 'Задача'])->assertForbidden();
 
         /* Роль удалили — сотрудник снова «Сотрудник». */
         $this->actingAs($admin)->deleteJson("/api/access/roles/{$role['id']}")->assertNoContent();

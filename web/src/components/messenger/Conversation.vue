@@ -19,19 +19,23 @@ import { remember } from "../../lib/emoji";
 import { plural } from "../../lib/format";
 import {
   chatById, threadOf, openThread, loadOlder, sendMessage, sendGif, editMessage, deleteMessage, toggleReaction, markRead, togglePin, togglePinMessage, previewOf, messageHref, dropFailed,
-  typingIn, sendTyping, person, meId, focused, dayLabel, fileSize, type ChatMessage, type ChatFile, type ChatUser,
+  typingIn, sendTyping, person, forgetChat, meId, focused, dayLabel, fileSize, type ChatMessage, type ChatFile, type ChatUser,
 } from "../../lib/messenger";
 import { toast } from "../../lib/toast";
 import { entityOf, entityTitle } from "../../lib/entities";
 import { messageLayout } from "../../lib/look";
 import type { GifItem } from "../../lib/gifs";
 import { can } from "../../lib/access";
+import NoAccess from "../NoAccess.vue";
+import { deniedOf, atLeast, type Denied } from "../../lib/denied";
 
 /* closeTab — крестик закрытия рисует сама панель снаружи (ярлычок), в шапке его нет. */
 const props = withDefaults(defineProps<{ chatId: number; panel?: boolean; back?: boolean; closeTab?: boolean }>(), { panel: false, back: false, closeTab: false });
 const emit = defineEmits<{ close: []; back: [] }>();
 
-const chat = computed(() => chatById(props.chatId));
+/* Нет доступа / чата нет: вместо ленты — экран NoAccess, данные чата не берём. */
+const denied = ref<"forbidden" | "not_found" | null>(null);
+const chat = computed(() => (denied.value ? null : chatById(props.chatId)));
 const kind = computed(() => entityOf(chat.value?.entity));
 const thread = computed(() => threadOf(props.chatId));
 const loading = ref(false);
@@ -48,6 +52,8 @@ const shutViewer2 = backdrop(() => (viewer.value = null));
 const dropping = ref(false);
 const atBottom = ref(true);
 
+/* Скелетон ленты: пузыри разной ширины. */
+const SKELETON = ["46%", "34%", "58%", "40%", "28%", "52%"];
 const typers = computed(() => typingIn(props.chatId));
 /* «Анна печатает…», «Анна, Глеб печатают…», «Анна, Глеб, Вера и ещё 2 печатают…». */
 const typingText = computed(() => {
@@ -140,6 +146,7 @@ function toBottom(smooth = false) {
 
 async function load() {
   failed.value = false;
+  denied.value = null;
   replyTo.value = null;
   editing.value = null;
   active.value = null;
@@ -149,10 +156,15 @@ async function load() {
   loading.value = !known;
   settling = true;
   try {
-    await openThread(props.chatId);
+    await (known ? openThread(props.chatId) : atLeast(openThread(props.chatId)));
     unreadMark.value = firstUnread.value;
-  } catch {
-    failed.value = true;
+  } catch (error) {
+    const state: Denied = deniedOf(error);
+    if (state === "error") failed.value = true;
+    else {
+      forgetChat(props.chatId);
+      denied.value = state;
+    }
   } finally {
     loading.value = false;
   }
@@ -459,6 +471,11 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
           <span class="block truncate text-xs" :class="typers.length ? 'text-accent' : 'text-muted'">{{ sub }}</span>
         </span>
       </button>
+      <span v-else-if="loading" class="flex min-w-0 flex-1 animate-pulse items-center gap-3" aria-hidden="true">
+        <span class="size-10 shrink-0 rounded-full bg-default" />
+        <span class="flex-1 space-y-1.5"><span class="block h-3.5 w-40 max-w-full rounded bg-default" /><span class="block h-3 w-24 rounded bg-default" /></span>
+      </span>
+      <span v-else-if="denied" class="min-w-0 flex-1 truncate font-semibold">Чат №{{ chatId }}</span>
       <span v-else class="flex-1" />
       <!-- Чат карточки: открыть саму задачу, сделку… -->
       <a v-if="kind" :href="kind.href" class="button button--secondary button--sm shrink-0" :title="kind.open" @click="panel && emit('close')"><ExternalLink class="size-4" /><span class="hidden sm:inline">{{ kind.open }}</span></a>
@@ -497,10 +514,17 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
          при любой его высоте (ответ, правка, файлы, длинный текст). -->
     <div class="relative flex min-h-0 flex-1 flex-col">
     <div ref="scroller" class="relative min-h-0 flex-1 overflow-y-auto px-3 pt-3 pb-1 sm:px-4 lg:px-5 thin-scroll" @scroll.passive="onScroll" @click.self="active = null">
-      <p v-if="loading" class="py-16 text-center text-sm text-muted">Загружаем сообщения…</p>
-      <div v-else-if="failed" class="py-16 text-center text-sm text-muted">
-        Не получилось загрузить чат.
-        <button type="button" class="link" @click="load">Ещё раз</button>
+      <div v-if="loading" class="flex h-full animate-pulse flex-col justify-end gap-3 pb-2" aria-label="Загружаем сообщения…">
+        <span v-for="(w, i) in SKELETON" :key="i" class="h-10 rounded-2xl bg-surface/80" :class="i % 3 === 1 ? 'self-end' : 'self-start'" :style="{ width: w }" />
+      </div>
+      <div v-else-if="denied" class="flex h-full items-center justify-center">
+        <NoAccess :state="denied" what="chat" class="rounded-3xl bg-surface/90 shadow-sm backdrop-blur">
+          <button v-if="back" type="button" class="button button--ghost button--sm md:hidden" @click="emit('back')">К списку чатов</button>
+          <button v-if="panel" type="button" class="button button--ghost button--sm" @click="emit('close')">Закрыть</button>
+        </NoAccess>
+      </div>
+      <div v-else-if="failed" class="flex h-full items-center justify-center">
+        <NoAccess state="error" what="chat" class="rounded-3xl bg-surface/90 shadow-sm backdrop-blur" @retry="load" />
       </div>
       <template v-else>
         <p v-if="pinsOnly" class="wall-note py-3 text-center text-xs text-muted">Закреплённые сообщения · щелчок — к сообщению в чате</p>
@@ -562,7 +586,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
       </template>
       <!-- Отступ в конце ленты, после последнего сообщения: виден, только
            когда долистал вниз. В нём — «кто печатает» и будущие подсказки. -->
-      <div v-if="!loading && !failed" class="flex h-8 items-center pt-1">
+      <div v-if="!loading && !failed && !denied" class="flex h-8 items-center pt-1">
         <Transition name="fade">
           <p v-if="typingText" class="flex max-w-full items-center gap-2 rounded-full bg-surface/85 px-3 py-0.5 text-[13px] text-muted shadow-sm backdrop-blur" aria-live="polite">
             <span class="typing-dots" aria-hidden="true"><i /><i /><i /></span>
@@ -581,7 +605,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
       <button type="button" class="button button--ghost button--sm" @click="showPins(false)"><ArrowLeft class="size-4" />Назад к чату</button>
     </div>
     <p v-else-if="chat?.readonly" class="relative z-10 mx-1.5 mb-1.5 rounded-2xl bg-surface/85 px-4 py-3 text-center text-sm text-muted shadow-sm backdrop-blur">{{ chat.changelog ? "Здесь владелец и администраторы рассказывают, что нового в портале" : "В общий чат писать нельзя: так настроена ваша роль" }}</p>
-    <Composer v-else class="relative z-10 mx-1.5 mb-1.5" ref="composer" :draft-key="chatId" :reply-to="replyTo" :editing="editing" @send="send" @gif="sendGifHere" @typing="sendTyping(chatId)" @save="save" @cancel="replyTo = null; editing = null" />
+    <Composer v-else-if="!denied && !failed" class="relative z-10 mx-1.5 mb-1.5" ref="composer" :draft-key="chatId" :reply-to="replyTo" :editing="editing" @send="send" @gif="sendGifHere" @typing="sendTyping(chatId)" @save="save" @cancel="replyTo = null; editing = null" />
     </div>
 
 

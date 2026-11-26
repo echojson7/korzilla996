@@ -8,6 +8,8 @@ import { backdrop } from "../lib/backdrop";
 import { defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch, nextTick } from "vue";
 import { X, MessagesSquare } from "@lucide/vue";
 import { enabled, openEntityChat } from "../lib/messenger";
+import NoAccess from "./NoAccess.vue";
+import { deniedOf, type Denied } from "../lib/denied";
 
 /* Лента чата — отдельным куском: грузится, только когда нужна. */
 const Conversation = defineAsyncComponent(() => import("./messenger/Conversation.vue"));
@@ -20,7 +22,8 @@ const emit = defineEmits<{ close: [] }>();
 const shut = backdrop(() => emit("close"));
 const panel = ref<HTMLElement | null>(null);
 const chatId = ref<number | null>(null);
-const chatFailed = ref(false);
+/* Чат сущности не открылся: нет доступа, нет сущности или сбой. */
+const chatFailed = ref<Denied | null>(null);
 const sideMode = ref<"chat" | "side">("chat");
 watch(() => props.chat?.entity, () => (sideMode.value = "chat"));
 
@@ -37,14 +40,16 @@ watch(() => props.open, async (open) => {
 });
 
 /* Чат сущности подтягиваем, когда карточка открыта. */
-watch(() => [props.open, props.chat?.entity, enabled.value] as const, async ([open, entity, on]) => {
-  chatFailed.value = false;
+const again = ref(0);
+const openAgain = () => again.value++;
+watch(() => [props.open, props.chat?.entity, enabled.value, again.value] as const, async ([open, entity, on]) => {
+  chatFailed.value = null;
   if (!open || !entity || !on) return void (chatId.value = null);
   try {
     const one = await openEntityChat(entity, props.chat!.title);
     if (props.chat?.entity === entity) chatId.value = one.id;
-  } catch {
-    chatFailed.value = true;
+  } catch (error) {
+    if (props.chat?.entity === entity) chatFailed.value = deniedOf(error);
   }
 }, { immediate: true });
 </script>
@@ -93,11 +98,13 @@ watch(() => [props.open, props.chat?.entity, enabled.value] as const, async ([op
                     </div>
                   </template>
                 </Conversation>
+                <div v-else-if="chatFailed" class="chat-wall flex flex-1 flex-col items-center justify-center p-6">
+                  <NoAccess :state="chatFailed" what="chat" compact class="rounded-3xl bg-surface/90 shadow-sm backdrop-blur" @retry="chatFailed = null; chatId = null; openAgain()" />
+                </div>
                 <div v-else class="chat-wall flex flex-1 flex-col items-center justify-center p-6 text-center text-sm text-muted">
                   <MessagesSquare class="size-10" />
                   <p class="mt-3 font-medium text-foreground">Чат {{ chat.title.toLowerCase().startsWith("задача") ? "задачи" : "карточки" }}</p>
                   <p v-if="!enabled" class="mt-1 max-w-xs">Чат карточки работает с сервером: откройте портал на стенде.</p>
-                  <p v-else-if="chatFailed" class="mt-1">Не получилось открыть чат.</p>
                   <p v-else class="mt-1">Открываем…</p>
                   <button v-if="sideLabel" type="button" class="button button--secondary button--sm mt-4" @click="sideMode = 'side'">{{ sideLabel }}</button>
                 </div>

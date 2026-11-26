@@ -6,13 +6,15 @@ import { MessagesSquare } from "@lucide/vue";
 import ChatList from "../components/messenger/ChatList.vue";
 import Conversation from "../components/messenger/Conversation.vue";
 import NewChat from "../components/messenger/NewChat.vue";
-import { enabled, chatById, ready } from "../lib/messenger";
+import { enabled } from "../lib/messenger";
 import { route, setQuery } from "../lib/router";
 
 const creating = ref(false);
+/* Чат из адреса открываем всегда, даже если его нет в списке: чужой или
+   удалённый покажет в окне чата экран «Нет доступа» / «Не найден». */
 const selected = computed(() => {
   const id = Number(route.value.query.get("chat"));
-  return id && (chatById(id) || !ready.value) ? id : null;
+  return Number.isInteger(id) && id > 0 ? id : null;
 });
 const open = (id: number | null) => setQuery({ chat: id }, { replace: false });
 </script>

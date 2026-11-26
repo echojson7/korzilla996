@@ -9,7 +9,9 @@ import ChatRail from "./ChatRail.vue";
 import { totalUnread } from "../lib/messenger";
 import Toasts from "../components/Toasts.vue";
 import { route } from "../lib/router";
-import { views, pageOf, warmUp } from "../pages";
+import { views, pageOf, warmUp, PAGES, isAllowed } from "../pages";
+import NoAccess from "../components/NoAccess.vue";
+import { href } from "../lib/router";
 import { local } from "../lib/prefs";
 
 const collapsed = local("collapsed", false);
@@ -17,9 +19,14 @@ const mobileOpen = ref(false);
 const searching = ref(false);
 
 const view = computed(() => views.get(pageOf(route.value.path).path));
+/* Раздел есть, но закрыт для роли (ссылка от коллеги): экран «Нет доступа». */
+const closed = computed(() => {
+  const one = PAGES.find((page) => page.path === route.value.path);
+  return one && !isAllowed(one) ? one : null;
+});
 /* Непрочитанные — числом в заголовке вкладки, как в Telegram Web. */
 watch(() => [route.value.path, totalUnread.value] as const, ([path, unread]) => {
-  document.title = `${unread ? `(${unread > 99 ? "99+" : unread}) ` : ""}${pageOf(path).title} — Korzilla 996`;
+  document.title = `${unread ? `(${unread > 99 ? "99+" : unread}) ` : ""}${closed.value ? "Нет доступа" : pageOf(path).title} — Korzilla 996`;
 }, { immediate: true });
 
 const onKey = (event: KeyboardEvent) => {
@@ -41,7 +48,12 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
     <div class="flex min-w-0 flex-1 flex-col">
       <Topbar @menu="mobileOpen = true" @search="searching = true" />
       <main class="min-h-0 flex-1">
-        <KeepAlive :max="6">
+        <div v-if="closed" class="flex h-full items-start justify-center px-3 pt-[10vh] md:px-5">
+          <NoAccess state="forbidden" what="section" class="sheet w-full max-w-lg rounded-3xl shadow-surface">
+            <a :href="href('/')" class="button button--secondary button--sm">На обзор</a>
+          </NoAccess>
+        </div>
+        <KeepAlive v-else :max="6">
           <component :is="view" :key="pageOf(route.path).path" />
         </KeepAlive>
       </main>

@@ -231,6 +231,13 @@ export function upsert(one: TaskBrief, remote = false) {
   for (const tag of one.tags) if (!taskStore.tags.includes(tag)) taskStore.tags.push(tag);
 }
 
+/* Задача закрыта или удалена (сервер ответил 403/404): убрать её из
+   списка, чтобы название и поля из кэша нигде не показывались. */
+export function forgetTask(id: number) {
+  const at = taskStore.list.findIndex((task) => task.id === id);
+  if (at >= 0) taskStore.list.splice(at, 1);
+}
+
 /* ---------- Действия ---------- */
 
 export const getTask = (id: number) => api<TaskFull>("GET", `tasks/${id}`);
