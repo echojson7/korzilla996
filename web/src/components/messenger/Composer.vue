@@ -147,7 +147,7 @@ function onPick(event: Event) {
     <!-- Вся полоса — поле ввода, как в Telegram: кнопки по 40 px по краям,
          текст растёт вверх, кнопки остаются на уровне последней строки. -->
     <div class="flex cursor-text items-end gap-1" @click.self="box?.focus()">
-      <button v-if="!editing" type="button" class="composer-btn" aria-label="Прикрепить файл" title="Прикрепить файл" @click="input?.click()"><Paperclip class="size-[22px]" /></button>
+      <button v-if="!editing" type="button" class="composer-btn self-start" aria-label="Прикрепить файл" title="Прикрепить файл" @click="input?.click()"><Paperclip class="size-[22px]" /></button>
       <input ref="input" type="file" multiple class="hidden" @change="onPick" />
       <textarea
         ref="box"
