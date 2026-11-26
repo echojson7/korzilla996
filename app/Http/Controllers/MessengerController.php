@@ -449,6 +449,43 @@ class MessengerController extends Controller
         return response()->noContent();
     }
 
+    /**
+     * Переслать сообщение в другие чаты: текст и копии файлов, с пометкой
+     * «Переслано от …». Пересылать можно только в свои чаты.
+     */
+    public function forward(Request $request, Message $message): JsonResponse
+    {
+        $me = $this->me($request);
+        $this->membership($message->chat, $me);
+        abort_unless($message->kind === 'text', 422, 'Системное сообщение не переслать');
+        $data = $request->validate(['chat_ids' => ['required', 'array', 'min:1', 'max:20'], 'chat_ids.*' => ['integer']]);
+        $targets = Chat::query()->whereIn('id', array_unique($data['chat_ids']))
+            ->whereIn('id', ChatMember::query()->where('user_id', $me->id)->select('chat_id'))->get();
+        abort_if($targets->isEmpty(), 404);
+        $origin = $message->meta['forwarded_from'] ?? $message->user_id;
+        $message->load('files');
+
+        foreach ($targets as $chat) {
+            $copy = DB::transaction(function () use ($chat, $me, $message, $origin) {
+                $copy = $chat->messages()->create(['user_id' => $me->id, 'body' => $message->body, 'meta' => ['forwarded_from' => $origin]]);
+                foreach ($message->files as $file) {
+                    $path = 'messenger/'.$chat->id.'/'.Str::random(40).'.'.(pathinfo($file->path, PATHINFO_EXTENSION) ?: 'bin');
+                    if (Storage::disk('local')->copy($file->path, $path)) {
+                        $copy->files()->create(['name' => $file->name, 'path' => $path, 'mime' => $file->mime, 'size' => $file->size, 'width' => $file->width, 'height' => $file->height]);
+                    }
+                }
+                $chat->update(['last_message_at' => $copy->created_at]);
+                ChatMember::query()->where('chat_id', $chat->id)->where('user_id', $me->id)->update(['last_read_id' => $copy->id]);
+
+                return $copy;
+            });
+            $payload = $this->message($copy->load(['files', 'reactions', 'replyTo']));
+            Realtime::emit($this->memberIds($chat), 'message', ['chatId' => $chat->id, 'message' => $payload, 'new' => true]);
+        }
+
+        return response()->json(['data' => ['count' => $targets->count()]]);
+    }
+
     /** Поставить реакцию или снять, если она уже стоит. */
     public function react(Request $request, Message $message): JsonResponse
     {
@@ -648,6 +685,7 @@ class MessengerController extends Controller
             'userId' => $message->user_id,
             'kind' => $message->kind ?? 'text',
             'meta' => $message->kind === 'system' ? $message->meta : null,
+            'forwardedFrom' => $message->kind === 'text' && isset($message->meta['forwarded_from']) ? (int) $message->meta['forwarded_from'] : null,
             'body' => $deleted ? null : $message->body,
             'deleted' => $deleted,
             'replyTo' => ! $deleted && $message->replyTo ? [

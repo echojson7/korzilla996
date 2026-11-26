@@ -54,6 +54,8 @@ export interface ChatMessage {
   userId: number | null;
   kind?: "text" | "system";
   meta?: { event?: string; users?: number[]; title?: string } | null;
+  /* Переслано: id автора оригинала. */
+  forwardedFrom?: number | null;
   body: string | null;
   deleted: boolean;
   replyTo: { id: number; userId: number | null; text: string } | null;
@@ -497,6 +499,17 @@ export async function deleteMessage(message: ChatMessage) {
     replace({ ...message, deleted: true, body: null, files: [], reactions: [], replyTo: null });
   } catch (error) {
     toast(error instanceof ApiError ? error.first : "Не получилось удалить", "danger");
+  }
+}
+
+export async function forwardMessage(message: ChatMessage, chatIds: number[]) {
+  try {
+    await api("POST", `messenger/messages/${message.id}/forward`, { chat_ids: chatIds });
+    reloadSoon();
+    return true;
+  } catch (error) {
+    toast(error instanceof ApiError ? error.first : "Не получилось переслать", "danger");
+    return false;
   }
 }
 

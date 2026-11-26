@@ -122,4 +122,26 @@ class MessengerTest extends TestCase
         $this->actingAs($anna)->deleteJson("/api/messenger/messages/{$systemId}")->assertForbidden();
         $this->postJson("/api/messenger/chats/{$chat['id']}/typing")->assertNoContent();
     }
+
+    public function test_forward_copies_text_and_files_to_own_chats_only(): void
+    {
+        Storage::fake('local');
+        $anna = $this->user('Анна Иванова');
+        $boris = $this->user('Борис Петров');
+        $vera = $this->user('Вера Сидорова');
+        $withBoris = $this->actingAs($anna)->postJson('/api/messenger/chats', ['type' => 'direct', 'user_id' => $boris->id])->json('data');
+        $withVera = $this->postJson('/api/messenger/chats', ['type' => 'direct', 'user_id' => $vera->id])->json('data');
+        $foreign = $this->actingAs($boris)->postJson('/api/messenger/chats', ['type' => 'direct', 'user_id' => $vera->id])->json('data');
+
+        $sent = $this->actingAs($boris)->post("/api/messenger/chats/{$withBoris['id']}/messages", ['body' => 'Отчёт', 'files' => [UploadedFile::fake()->create('отчёт.pdf', 10)]], ['Accept' => 'application/json'])->json('data');
+        $this->actingAs($anna)->postJson("/api/messenger/messages/{$sent['id']}/forward", ['chat_ids' => [$withVera['id'], $foreign['id']]])
+            ->assertOk()->assertJsonPath('data.count', 1);
+
+        $copy = $this->actingAs($vera)->getJson("/api/messenger/chats/{$withVera['id']}/messages")->json('data.messages.0');
+        $this->assertSame('Отчёт', $copy['body']);
+        $this->assertSame($boris->id, $copy['forwardedFrom']);
+        $this->assertSame($anna->id, $copy['userId']);
+        $this->get('/api/messenger/files/'.$copy['files'][0]['id'])->assertOk();
+        $this->actingAs($boris)->getJson("/api/messenger/chats/{$foreign['id']}/messages")->assertJsonCount(0, 'data.messages');
+    }
 }

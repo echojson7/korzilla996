@@ -3,12 +3,14 @@
      удаление; на телефоне то же по нажатию. Файлы можно бросить в ленту. -->
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { ArrowLeft, Info, Pin, PinOff, X, Reply, Pencil, Trash2, Smile, Check, CheckCheck, Clock, AlertCircle, Download, FileText, ChevronDown, Upload } from "@lucide/vue";
+import { ArrowLeft, Info, Pin, PinOff, X, Reply, Smile, MoreHorizontal, Forward, Check, CheckCheck, Clock, AlertCircle, Download, FileText, ChevronDown, Upload } from "@lucide/vue";
 import ChatFace from "./ChatFace.vue";
 import Composer from "./Composer.vue";
 import EmojiPicker from "./EmojiPicker.vue";
 import ChatInfo from "./ChatInfo.vue";
 import SystemLine from "./SystemLine.vue";
+import MessageMenu from "./MessageMenu.vue";
+import ForwardDialog from "./ForwardDialog.vue";
 import Popover from "../Popover.vue";
 import { apiUrl } from "../../lib/api";
 import { QUICK, remember } from "../../lib/emoji";
@@ -18,6 +20,7 @@ import {
   typingIn, sendTyping, person, people, meId, focused, clock, dayLabel, fileSize, type ChatMessage, type ChatFile,
 } from "../../lib/messenger";
 import { toast } from "../../lib/toast";
+import { auth } from "../../lib/session";
 
 /* closeTab — крестик закрытия рисует сама панель снаружи (ярлычок), в шапке его нет. */
 const props = withDefaults(defineProps<{ chatId: number; panel?: boolean; back?: boolean; closeTab?: boolean }>(), { panel: false, back: false, closeTab: false });
@@ -180,22 +183,61 @@ function startEdit(message: ChatMessage) {
   editing.value = message;
   active.value = null;
 }
-const confirmDelete = ref<number | null>(null);
-function remove(message: ChatMessage) {
-  if (confirmDelete.value !== message.id) {
-    confirmDelete.value = message.id;
-    setTimeout(() => confirmDelete.value === message.id && (confirmDelete.value = null), 3000);
+/* Нажатие пальцем показывает панель реакций (наведения нет). Мышью панель
+   живёт только под курсором — щелчок её не «залипает». */
+function tap(message: ChatMessage, event: MouseEvent) {
+  const kind = (event as PointerEvent).pointerType;
+  if (kind === "mouse" || !kind) {
+    active.value = null;
     return;
   }
-  confirmDelete.value = null;
-  active.value = null;
-  deleteMessage(message);
+  active.value = active.value === message.id ? null : message.id;
 }
 function react(message: ChatMessage, emoji: string) {
   remember(emoji);
   active.value = null;
   toggleReaction(message, emoji);
 }
+/* Меню действий: у кнопки «⋯» или в точке правого щелчка. */
+const menu = ref<{ message: ChatMessage; x: number; y: number } | null>(null);
+const forwarding = ref<ChatMessage | null>(null);
+function openMenu(message: ChatMessage, event: MouseEvent) {
+  if (event.type === "contextmenu") {
+    /* Свой текст можно выделить и скопировать штатно — в ссылке и выделении меню не мешаем. */
+    if ((event.target as HTMLElement).closest("a") || String(window.getSelection() ?? "").trim()) return;
+    event.preventDefault();
+    menu.value = { message, x: event.clientX, y: event.clientY };
+  } else {
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    menu.value = { message, x: rect.left, y: rect.bottom + 6 };
+  }
+  active.value = null;
+}
+const canDelete = (message: ChatMessage) => message.userId === meId.value || !!auth.me?.permissions.includes("*");
+async function copyText(message: ChatMessage) {
+  menu.value = null;
+  try {
+    await navigator.clipboard.writeText(message.body ?? "");
+    toast("Текст скопирован");
+  } catch {
+    toast("Не получилось скопировать", "danger");
+  }
+}
+function menuAction(name: "reply" | "copy" | "forward" | "edit" | "remove") {
+  const message = menu.value?.message;
+  menu.value = null;
+  if (!message) return;
+  if (name === "reply") startReply(message);
+  else if (name === "copy") copyText(message);
+  else if (name === "forward") forwarding.value = message;
+  else if (name === "edit") startEdit(message);
+  else deleteMessage(message);
+}
+function forwarded(ids: number[]) {
+  forwarding.value = null;
+  toast(ids.length === 1 ? "Сообщение переслано" : `Переслано в ${ids.length} чата`, "success");
+}
+
 function jump(id: number) {
   const el = scroller.value?.querySelector<HTMLElement>(`[data-id="${id}"]`);
   if (!el) return toast("Сообщение выше, прокрутите ленту");
@@ -302,7 +344,9 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
             :data-id="row.message.id"
             class="group/msg relative flex gap-2 rounded-xl transition-colors"
             :class="[row.message.userId === meId ? 'flex-row-reverse' : '', row.head ? 'mt-2.5' : 'mt-0.5']"
-            @click="active = active === row.message.id ? null : row.message.id"
+            @click="tap(row.message, $event)"
+            @pointerleave="(event) => event.pointerType === 'mouse' && active === row.message.id && (active = null)"
+            @contextmenu="!row.message.deleted && !row.message.pending && openMenu(row.message, $event)"
           >
             <!-- Место под аватар — только у чужих сообщений в группе, как в Telegram:
                  свои прижаты к правому краю, в личном чате чужие — к левому. -->
@@ -324,6 +368,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
                 </p>
                 <template v-if="row.message.deleted">Сообщение удалено</template>
                 <template v-else>
+                  <p v-if="row.message.forwardedFrom" class="mb-0.5 flex items-center gap-1 text-[13px] text-accent"><Forward class="size-3.5" />Переслано от <b class="font-semibold">{{ person(row.message.forwardedFrom)?.name ?? "сотрудника" }}</b></p>
                   <button v-if="row.message.replyTo" type="button" class="my-1 block w-full max-w-72 rounded-lg border-l-2 border-accent bg-black/5 px-2 py-1 text-left text-[13px] dark:bg-white/5" @click.stop="jump(row.message.replyTo.id)">
                     <span class="block font-semibold text-accent">{{ person(row.message.replyTo.userId)?.name ?? "Сотрудник" }}</span>
                     <span class="block truncate text-muted">{{ row.message.replyTo.text }}</span>
@@ -384,24 +429,34 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
               </div>
             </div>
 
-            <!-- Действия: наведение или нажатие. -->
+            <!-- «⋯» сбоку пузыря: меню всех действий (то же — правый щелчок). -->
+            <div v-if="!row.message.deleted && !row.message.pending" class="flex shrink-0 items-center self-center">
+              <button
+                type="button"
+                class="flex size-8 items-center justify-center rounded-full bg-surface/80 text-muted shadow-sm backdrop-blur transition-opacity hover:text-foreground focus-visible:opacity-100"
+                :class="active === row.message.id || menu?.message.id === row.message.id ? 'opacity-100' : 'opacity-0 group-hover/msg:opacity-100'"
+                aria-label="Действия с сообщением"
+                title="Действия"
+                @click.stop="openMenu(row.message, $event)"
+              ><MoreHorizontal class="size-[18px]" /></button>
+            </div>
+
+            <!-- Над пузырём при наведении: только реакции и «Ответить». -->
             <div
               v-if="!row.message.deleted && !row.message.pending"
-              class="absolute -top-8 z-20 items-center gap-0.5 rounded-full border border-separator bg-overlay p-0.5 shadow-overlay"
-              :class="[row.message.userId === meId ? 'right-2' : chat?.type === 'group' ? 'left-12' : 'left-2', active === row.message.id ? 'flex' : 'hidden group-hover/msg:flex has-[[aria-expanded=true]]:flex']"
+              class="absolute -top-11 z-20 items-center gap-0.5 rounded-full bg-overlay p-1 shadow-overlay"
+              :class="[row.message.userId === meId ? 'right-0' : chat?.type === 'group' ? 'left-10' : 'left-0', active === row.message.id ? 'flex' : 'hidden group-hover/msg:flex has-[[aria-expanded=true]]:flex']"
               @click.stop
             >
-              <button v-for="emoji in QUICK.slice(0, 5)" :key="emoji" type="button" class="flex size-7 items-center justify-center rounded-full text-base transition hover:scale-125" :aria-label="`Реакция ${emoji}`" @click="react(row.message, emoji)">{{ emoji }}</button>
+              <button v-for="emoji in QUICK.slice(0, 6)" :key="emoji" type="button" class="flex size-9 items-center justify-center rounded-full text-[22px] leading-none transition hover:scale-125 hover:bg-default" :aria-label="`Реакция ${emoji}`" @click="react(row.message, emoji)">{{ emoji }}</button>
               <Popover :align="row.message.userId === meId ? 'right' : 'left'" width="w-auto">
                 <template #trigger="{ toggle, open }">
-                  <button type="button" class="flex size-7 items-center justify-center rounded-full text-muted hover:bg-default" aria-label="Другая реакция" :aria-expanded="open" @click="toggle"><Smile class="size-4" /></button>
+                  <button type="button" class="flex size-9 items-center justify-center rounded-full text-muted hover:bg-default hover:text-foreground" aria-label="Другая реакция" title="Другая реакция" :aria-expanded="open" @click="toggle"><Smile class="size-5" /></button>
                 </template>
                 <template #default="{ close }"><EmojiPicker @pick="(emoji) => { close(); react(row.message, emoji); }" /></template>
               </Popover>
-              <span class="mx-0.5 h-4 w-px bg-separator" />
-              <button type="button" class="flex size-7 items-center justify-center rounded-full text-muted hover:bg-default" aria-label="Ответить" title="Ответить" @click="startReply(row.message)"><Reply class="size-4" /></button>
-              <button v-if="row.message.userId === meId" type="button" class="flex size-7 items-center justify-center rounded-full text-muted hover:bg-default" aria-label="Изменить" title="Изменить" @click="startEdit(row.message)"><Pencil class="size-4" /></button>
-              <button v-if="row.message.userId === meId" type="button" class="flex h-7 items-center justify-center gap-1 rounded-full px-1.5 text-danger hover:bg-danger/10" :aria-label="confirmDelete === row.message.id ? 'Точно удалить' : 'Удалить'" :title="confirmDelete === row.message.id ? 'Нажмите ещё раз' : 'Удалить'" @click="remove(row.message)"><Trash2 class="size-4" /><span v-if="confirmDelete === row.message.id" class="text-xs font-medium">Удалить?</span></button>
+              <span class="mx-1 h-5 w-px bg-separator" />
+              <button type="button" class="flex h-9 items-center gap-1.5 rounded-full px-3 text-sm font-medium text-muted hover:bg-default hover:text-foreground" title="Ответить" @click="startReply(row.message)"><Reply class="size-[18px]" />Ответить</button>
             </div>
           </div>
         </template>
@@ -430,6 +485,23 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
       <p class="mt-2 font-semibold">Отпустите, чтобы прикрепить</p>
     </div>
 
+    <MessageMenu
+      v-if="menu"
+      :key="menu.message.id"
+      :message="menu.message"
+      :x="menu.x"
+      :y="menu.y"
+      :mine="menu.message.userId === meId"
+      :can-delete="canDelete(menu.message)"
+      @close="menu = null"
+      @react="(emoji) => { const m = menu!.message; menu = null; react(m, emoji); }"
+      @reply="menuAction('reply')"
+      @copy="menuAction('copy')"
+      @forward="menuAction('forward')"
+      @edit="menuAction('edit')"
+      @remove="menuAction('remove')"
+    />
+    <ForwardDialog :message="forwarding" @close="forwarding = null" @done="forwarded" />
     <ChatInfo :open="infoOpen" :chat="chat" @close="infoOpen = false" @left="panel ? emit('close') : emit('back')" />
 
     <Teleport to="body">
