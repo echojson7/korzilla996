@@ -27,7 +27,7 @@ async function submit() {
   <div class="photo-shade flex h-full items-center justify-center p-4">
     <form class="card card--default w-full max-w-[26rem] gap-5 p-7 shadow-overlay" @submit.prevent="submit">
       <div>
-        <h1 class="text-[26px]"><Brand /></h1>
+        <h1 class="text-[34px]"><Brand /></h1>
         <p class="mt-2 text-sm text-muted">Портал компании</p>
       </div>
       <label class="flex flex-col gap-1.5">
