@@ -4,8 +4,9 @@
 import { computed, nextTick, ref, watch } from "vue";
 import { Search, Briefcase, ListChecks, User, CornerDownLeft } from "@lucide/vue";
 import { PAGES } from "../pages";
-import { deals, tasks, WHO } from "../lib/data";
+import { deals } from "../lib/data";
 import { people } from "../lib/messenger";
+import { taskStore, nameOf } from "../lib/tasks";
 import { navigate } from "../lib/router";
 
 const props = defineProps<{ open: boolean }>();
@@ -28,7 +29,7 @@ const hits = computed<Hit[]>(() => {
   const out: Hit[] = PAGES.filter((one) => !words || has(one.title, words)).map((one) => ({ group: "Разделы", label: one.title, icon: one.icon, go: () => navigate(one.path) }));
   if (!words) return out;
   for (const one of deals) if (has(`${one.title} ${one.company} ${one.id}`, words)) out.push({ group: "Сделки", label: one.title, hint: one.company, icon: Briefcase, go: () => navigate("/deals", { funnel: one.funnel, open: one.id }) });
-  for (const one of tasks) if (has(`${one.title} ${one.id}`, words)) out.push({ group: "Задачи", label: one.title, hint: WHO[one.owner].name, icon: ListChecks, go: () => navigate("/tasks", { tab: "all", open: one.id }) });
+  for (const one of taskStore.list) if (has(`${one.title} ${one.id}`, words)) out.push({ group: "Задачи", label: one.title, hint: nameOf(one.responsibleId), icon: ListChecks, go: () => navigate("/tasks", { tab: "all", open: one.id }) });
   for (const one of people.values()) if (one.active && has(`${one.name} ${one.position ?? ""} ${one.department ?? ""}`, words)) out.push({ group: "Сотрудники", label: one.name, hint: one.position ?? undefined, icon: User, go: () => navigate("/staff", { q: one.name }) });
   return out.slice(0, 40);
 });

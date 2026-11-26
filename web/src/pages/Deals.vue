@@ -13,7 +13,12 @@ import SidePanel from "../components/SidePanel.vue";
 import Face from "../components/Face.vue";
 import HueChip from "../components/HueChip.vue";
 import PersonLine from "../components/PersonLine.vue";
-import { deals, FUNNEL, FUNNELS, WHO, tasks, TASK_STATE, ME_ID, type Deal } from "../lib/data";
+import { deals, FUNNEL, FUNNELS, WHO, ME_ID, type Deal } from "../lib/data";
+import ChatFace from "../components/messenger/ChatFace.vue";
+import MarkdownField from "../components/editor/MarkdownField.vue";
+import { taskStore, STATUS, person, nameOf } from "../lib/tasks";
+import { when as dueWhen } from "../components/tasks/when";
+import { href } from "../lib/router";
 import { compactMoney, money, plural, shortDate } from "../lib/format";
 import { route, setQuery } from "../lib/router";
 import { moveBefore } from "../lib/move";
@@ -52,7 +57,7 @@ function add(stage: string, title: string) {
 const opened = computed(() => deals.find((one) => String(one.id) === route.value.query.get("open")) ?? null);
 const open = (deal: Deal) => setQuery({ open: deal.id });
 const close = () => setQuery({ open: null });
-const dealTasks = computed(() => (opened.value ? tasks.filter((one) => one.deal === opened.value!.id) : []));
+const dealTasks = computed(() => (opened.value ? taskStore.list.filter((one) => one.dealId === opened.value!.id) : []));
 
 const nextLabel = (at: number) => (at === 0 ? "сегодня" : at === 1 ? "завтра" : at < 0 ? "просрочено" : `через ${plural(at, "день", "дня", "дней")}`);
 </script>
@@ -115,6 +120,10 @@ const nextLabel = (at: number) => (at === 0 ? "сегодня" : at === 1 ? "з�
           >{{ stage.label }}</button>
         </div>
 
+        <section class="mt-5">
+          <MarkdownField v-model="opened.text" class="-mx-3" placeholder="Описание сделки: щёлкните и пишите. Списки, чек-листы, ссылки и картинки — на панели сверху." min-height="80px" />
+        </section>
+
         <div class="mt-5 grid gap-4 md:grid-cols-2">
           <section class="card card--default gap-3 p-4">
             <h3 class="text-sm font-semibold">О сделке</h3>
@@ -134,15 +143,19 @@ const nextLabel = (at: number) => (at === 0 ? "сегодня" : at === 1 ? "з�
         </div>
 
         <section class="card card--default mt-4 gap-2 p-4">
-          <h3 class="text-sm font-semibold">Задачи по сделке</h3>
+          <h3 class="flex items-center text-sm font-semibold">Задачи по сделке
+            <a :href="href('/tasks', { open: 'new', deal: opened.id })" class="link ml-auto inline-flex items-center gap-1 text-sm font-normal text-accent"><Plus class="size-3.5" />Задача</a>
+          </h3>
           <ul v-if="dealTasks.length" class="-mx-2">
-            <li v-for="task in dealTasks" :key="task.id" class="flex items-center gap-3 rounded-xl px-2 py-2">
-              <Face :who="task.owner" size="sm" />
-              <span class="min-w-0 flex-1">
-                <span class="block truncate text-sm">{{ task.title }}</span>
-                <span class="block text-xs text-muted">{{ WHO[task.owner].name }}{{ task.deadline ? ` · до ${shortDate(task.deadline)}` : "" }}</span>
-              </span>
-              <HueChip :hue="TASK_STATE[task.state].hue">{{ TASK_STATE[task.state].label }}</HueChip>
+            <li v-for="task in dealTasks" :key="task.id">
+              <a :href="href('/tasks', { tab: 'all', open: task.id })" class="flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-surface-secondary">
+                <ChatFace :user="person(task.responsibleId)" size="sm" />
+                <span class="min-w-0 flex-1">
+                  <span class="block truncate text-sm">{{ task.title }}</span>
+                  <span class="block text-xs text-muted">{{ nameOf(task.responsibleId) }}{{ task.deadline ? ` · до ${dueWhen(task.deadline)}` : "" }}</span>
+                </span>
+                <HueChip :hue="STATUS[task.status].hue">{{ STATUS[task.status].label }}</HueChip>
+              </a>
             </li>
           </ul>
           <p v-else class="text-sm text-muted">Задач нет.</p>

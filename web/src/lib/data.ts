@@ -108,6 +108,8 @@ export interface Deal {
   owner: string;
   created: Date;
   next: { text: string; at: number } | null;
+  /* Описание в Markdown. */
+  text?: string;
 }
 const deal = (id: number, funnel: string, stage: string, title: string, company: string, sum: number, owner: string, created: number, next: [string, number] | null = null): Deal => ({
   id, funnel, stage, title, company, sum, owner, created: day(-created), next: next && { text: next[0], at: next[1] },

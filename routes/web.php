@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MessengerController;
+use App\Http\Controllers\TaskController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -39,5 +40,31 @@ Route::prefix('api')->group(function () {
         Route::delete('messages/{message}', 'destroy');
         Route::post('messages/{message}/reactions', 'react');
         Route::get('files/{file}', 'file');
+    });
+
+    /* Задачи: только для вошедших. */
+    Route::middleware('auth')->controller(TaskController::class)->group(function () {
+        Route::get('tasks', 'index');
+        Route::post('tasks', 'store');
+        Route::get('tasks/{task}', 'show');
+        Route::patch('tasks/{task}', 'update');
+        Route::delete('tasks/{task}', 'destroy');
+        Route::post('tasks/{task}/status', 'status');
+        Route::post('tasks/{task}/move', 'move');
+        Route::post('tasks/{task}/checklist', 'addCheck');
+        Route::post('tasks/{task}/checklist/order', 'orderChecks');
+        Route::patch('task-checklist/{item}', 'updateCheck');
+        Route::delete('task-checklist/{item}', 'deleteCheck');
+        Route::post('tasks/{task}/files', 'addFiles');
+        Route::get('task-files/{file}', 'getFile');
+        Route::delete('task-files/{file}', 'deleteFile');
+        Route::post('tasks/{task}/comments', 'addComment');
+        Route::patch('task-comments/{comment}', 'updateComment');
+        Route::delete('task-comments/{comment}', 'deleteComment');
+        Route::post('tasks/{task}/timer', 'timer');
+        Route::post('tasks/{task}/time', 'addTime');
+        Route::delete('task-time/{entry}', 'deleteTime');
+        Route::post('editor-images', 'uploadImage');
+        Route::get('editor-images/{name}', 'image');
     });
 });

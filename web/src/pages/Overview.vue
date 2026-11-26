@@ -6,8 +6,11 @@ import { ArrowRight, Briefcase, ListChecks, Users, TrendingUp } from "@lucide/vu
 import PageHead from "../components/PageHead.vue";
 import Face from "../components/Face.vue";
 import HueChip from "../components/HueChip.vue";
-import { deals, FUNNELS, FEED, WHO, TASK_STATE, TODAY, day, isOverdue, ME_ID, type Person } from "../lib/data";
+import { deals, FUNNELS, FEED, WHO, TODAY, day, ME_ID, type Person } from "../lib/data";
 import { people } from "../lib/messenger";
+import ChatFace from "../components/messenger/ChatFace.vue";
+import { STATUS, person, nameOf, isOverdueTask } from "../lib/tasks";
+import { when as dueWhen } from "../components/tasks/when";
 import { myOpenTasks, overdueTasks } from "../lib/counters";
 import { compactMoney, longDate, number, plural, shortDate, time } from "../lib/format";
 import { href } from "../lib/router";
@@ -40,7 +43,6 @@ const stats = computed(() => [
   { label: "Мои задачи", value: number(myOpenTasks.value.length), sub: overdueTasks.value.length ? `просрочено в компании: ${overdueTasks.value.length}` : "всё в срок", icon: ListChecks, to: href("/tasks") },
   { label: "Сотрудники", value: number(staffCount.value), sub: "учётки портала", icon: Users, to: href("/staff") },
 ]);
-const deadline = (date: Date | null) => (!date ? "без срока" : `до ${shortDate(date)}`);
 </script>
 
 <template>
@@ -64,15 +66,15 @@ const deadline = (date: Date | null) => (!date ? "без срока" : `до ${s
             <a :href="href('/tasks')" class="link inline-flex items-center gap-1 text-sm text-accent">Все задачи <ArrowRight class="size-3.5" /></a>
           </header>
           <ul class="px-2 pb-2">
-            <li v-for="task in myOpenTasks" :key="task.id">
+            <li v-for="task in myOpenTasks.slice(0, 8)" :key="task.id">
               <a :href="href('/tasks', { open: task.id })" class="flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-surface-secondary">
-                <Face :who="task.author" size="sm" />
+                <ChatFace :user="person(task.creatorId)" size="sm" />
                 <span class="min-w-0 flex-1">
                   <span class="block truncate text-sm font-medium">{{ task.title }}</span>
-                  <span class="block truncate text-xs text-muted">от {{ WHO[task.author].name }} · {{ deadline(task.deadline) }}</span>
+                  <span class="block truncate text-xs text-muted">от {{ nameOf(task.creatorId) }} · {{ task.deadline ? `до ${dueWhen(task.deadline)}` : "без срока" }}</span>
                 </span>
-                <span v-if="isOverdue(task)" class="chip chip--sm chip--soft chip--danger"><span class="chip__label">Просрочена</span></span>
-                <HueChip v-else :hue="TASK_STATE[task.state].hue">{{ TASK_STATE[task.state].label }}</HueChip>
+                <span v-if="isOverdueTask(task)" class="chip chip--sm chip--soft chip--danger"><span class="chip__label">Просрочена</span></span>
+                <HueChip v-else :hue="STATUS[task.status].hue">{{ STATUS[task.status].label }}</HueChip>
               </a>
             </li>
             <li v-if="!myOpenTasks.length" class="py-8 text-center text-sm text-muted">Задач нет — можно выдохнуть</li>
