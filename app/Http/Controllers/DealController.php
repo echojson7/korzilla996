@@ -175,6 +175,7 @@ class DealController extends Controller
             if (array_key_exists('fields', $data)) {
                 $deal->fields = $this->fieldValues($deal->fields ?? [], $data['fields'] ?? [], false, $deal, $me);
             }
+            $this->link($deal, $me, $data);
             if (isset($data['pipeline_id']) || isset($data['stage_id'])) {
                 $pipelineId = (int) ($data['pipeline_id'] ?? $deal->pipeline_id);
                 $stage = isset($data['stage_id'])
@@ -261,6 +262,9 @@ class DealController extends Controller
             'pipeline_id' => ['sometimes', 'integer', 'exists:crm_pipelines,id'],
             'stage_id' => ['sometimes', 'integer', 'exists:crm_stages,id'],
             'fields' => ['sometimes', 'nullable', 'array'],
+            'company_id' => ['sometimes', 'nullable', 'integer', 'exists:crm_companies,id'],
+            'contact_ids' => ['sometimes', 'array', 'max:50'],
+            'contact_ids.*' => ['integer', 'distinct', 'exists:crm_contacts,id'],
         ]);
         if (isset($data['title'])) {
             $data['title'] = trim($data['title']);
@@ -279,6 +283,36 @@ class DealController extends Controller
         }
 
         return $data;
+    }
+
+    /**
+     * Привязка компании и контактов из базы CRM (карточка сделки, как в
+     * Битрикс24). Текстовые company/contact держим в ладу: по ним ищут
+     * и рисуют канбан.
+     */
+    private function link(CrmDeal $deal, User $me, array $data): void
+    {
+        if (array_key_exists('company_id', $data)) {
+            $company = $data['company_id'] ? CrmCompany::query()->find($data['company_id']) : null;
+            if ((int) $deal->company_id !== (int) $company?->id) {
+                $this->log($deal, $me, 'company', $deal->company, $company?->title);
+                $deal->company_id = $company?->id;
+                $deal->company = $company?->title;
+            }
+        }
+        if (array_key_exists('contact_ids', $data)) {
+            $ids = array_values(array_map('intval', $data['contact_ids'] ?? []));
+            $was = array_column($this->contactList($deal), 'name');
+            DB::table('crm_deal_contacts')->where('deal_id', $deal->id)->delete();
+            DB::table('crm_deal_contacts')->insert(array_map(fn ($id, $i) => ['deal_id' => $deal->id, 'contact_id' => $id, 'sort' => $i], $ids, array_keys($ids)));
+            $first = $ids ? CrmContact::query()->find($ids[0]) : null;
+            $deal->contact_id = $first?->id;
+            $deal->contact = $first?->name;
+            $now = CrmContact::query()->whereIn('id', $ids)->get()->sortBy(fn ($one) => array_search($one->id, $ids))->pluck('name')->all();
+            if ($was !== $now) {
+                $this->log($deal, $me, 'contact', implode(', ', $was) ?: null, implode(', ', $now) ?: null);
+            }
+        }
     }
 
     /** Свои поля: только известные и включённые; проверка по типу, история. */
@@ -388,7 +422,7 @@ class DealController extends Controller
     {
         $one = $id ? CrmCompany::query()->find($id) : null;
 
-        return $one ? ['id' => $one->id, 'title' => $one->title, 'phones' => $one->phones ?? [], 'emails' => $one->emails ?? [], 'webs' => $one->webs ?? [], 'address' => $one->address] : null;
+        return $one ? ['id' => $one->id, 'title' => $one->title, 'industry' => $one->industry, 'responsibleId' => $one->responsible_id, 'phones' => $one->phones ?? [], 'emails' => $one->emails ?? [], 'webs' => $one->webs ?? [], 'address' => $one->address] : null;
     }
 
     /** Все контакты сделки (основной — первым). */

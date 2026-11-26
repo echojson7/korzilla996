@@ -77,6 +77,7 @@ class LeadController extends Controller
             'webs' => $lead->webs ?? [],
             'address' => $lead->address,
             'companyId' => $lead->company_id,
+            'companyInfo' => CrmClientController::companyBrief($lead->company_id),
             'contacts' => CrmContact::query()->whereIn('id', $contacts)->get()
                 ->sortBy(fn ($one) => array_search($one->id, $contacts))->values()
                 ->map(fn (CrmContact $one) => ['id' => $one->id, 'name' => $one->name, 'post' => $one->post, 'phones' => $one->phones ?? [], 'emails' => $one->emails ?? []]),

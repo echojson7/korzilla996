@@ -69,8 +69,20 @@ class CrmClientController extends Controller
         return response()->json(['data' => $this->contactRow($contact) + [
             'comments' => $contact->comments,
             'birthday' => $contact->birthday?->toDateString(),
+            'companyInfo' => self::companyBrief($contact->company_id),
             'dealList' => $this->deals($me, 'contact_id', $contact->id),
         ]]);
+    }
+
+    /** Компания для плитки в карточке контакта или лида. */
+    public static function companyBrief(?int $id): ?array
+    {
+        $one = $id ? CrmCompany::query()->find($id) : null;
+
+        return $one ? [
+            'id' => $one->id, 'title' => $one->title, 'industry' => $one->industry, 'responsibleId' => $one->responsible_id,
+            'phones' => $one->phones ?? [], 'emails' => $one->emails ?? [], 'webs' => $one->webs ?? [], 'address' => $one->address,
+        ] : null;
     }
 
     /* ---------- Внутреннее ---------- */

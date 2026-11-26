@@ -58,7 +58,7 @@ export interface DealHistory { id: number; userId: number | null; field: string;
 export interface DealFull extends DealBrief {
   comments: string | null;
   externalId: string | null;
-  companyInfo?: { id: number; title: string; phones: Contact[]; emails: Contact[]; webs: Contact[]; address: string | null } | null;
+  companyInfo?: { id: number; title: string; industry?: string | null; responsibleId?: number | null; phones: Contact[]; emails: Contact[]; webs: Contact[]; address: string | null } | null;
   products?: ProductRow[];
   invoices?: Invoice[];
   documents?: CrmDocument[];
@@ -93,6 +93,10 @@ export interface DealInput {
   pipeline_id?: number;
   stage_id?: number;
   fields?: Record<string, FieldValue>;
+  /** Компания из базы CRM (null — отвязать). */
+  company_id?: number | null;
+  /** Контакты из базы CRM, первый — основной. */
+  contact_ids?: number[];
 }
 
 export const SEMANTICS: Record<Semantic, string> = { process: "В работе", success: "Успех", failure: "Провал" };

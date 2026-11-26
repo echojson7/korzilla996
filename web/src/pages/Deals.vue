@@ -295,7 +295,7 @@ const sub = computed(() => {
       </div>
     </div>
 
-    <SidePanel :open="!!openParam" :chat="opened ? { entity: `deal:${opened.id}`, title: `Сделка: ${opened.title}` } : null" :title="opened?.title ?? (openId ? `Сделка №${openId}` : 'Сделка')" :sub="opened ? `Сделка №${opened.id}${opened.company ? ` · ${opened.company}` : ''}` : ''" @close="close">
+    <SidePanel :open="!!openParam" wide :chat="opened ? { entity: `deal:${opened.id}`, title: `Сделка: ${opened.title}` } : null" :title="opened?.title ?? (openId ? `Сделка №${openId}` : 'Сделка')" :sub="opened ? `Сделка №${opened.id}${opened.company ? ` · ${opened.company}` : ''}` : ''" @close="close">
       <DealCard v-if="openId" :key="openId" :deal-id="openId" @close="close" @loaded="(one) => (opened = one)" />
     </SidePanel>
 

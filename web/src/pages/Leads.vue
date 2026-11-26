@@ -1,36 +1,21 @@
 <!-- Лиды, как в Битрикс24 (перенесены оттуда): статусы вкладками со
      счётчиками, список с поиском по названию, имени, телефону и почте,
-     карточка справа — статус, связь, все поля по блокам, контакты, товары.
+     карточка справа (components/crm/LeadCard.vue).
      В адресе: ?stage, ?q, ?open. Пока только просмотр. -->
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { Phone, Mail, Globe, MapPin, UserRound, ShoppingCart, SlidersHorizontal, Pencil, Receipt, FileText, Layers } from "@lucide/vue";
 import PageHead from "../components/PageHead.vue";
 import SearchBox from "../components/SearchBox.vue";
 import SidePanel from "../components/SidePanel.vue";
 import HueChip from "../components/HueChip.vue";
 import ChatFace from "../components/messenger/ChatFace.vue";
-import CardBlock from "../components/tasks/CardBlock.vue";
-import FieldValue from "../components/crm/FieldValue.vue";
-import ProductRows from "../components/crm/ProductRows.vue";
-import InvoiceList from "../components/crm/InvoiceList.vue";
-import DocumentList from "../components/crm/DocumentList.vue";
-import SmartList from "../components/crm/SmartList.vue";
+import LeadCard, { type Lead } from "../components/crm/LeadCard.vue";
 import { api, ApiError } from "../lib/api";
-import { hueOf, type Contact, type Field, type FieldValue as Value, type Pipeline, type CrmDocument, type Invoice, type SmartBrief, type ProductRow, type Stage } from "../lib/crm";
+import { hueOf, type Field, type Pipeline, type Stage } from "../lib/crm";
 import { person, nameOf } from "../lib/tasks";
-import { money, plural } from "../lib/format";
-import { navigate, route, setQuery } from "../lib/router";
+import { plural } from "../lib/format";
+import { route, setQuery } from "../lib/router";
 import { toast } from "../lib/toast";
-
-interface Lead {
-  id: number; title: string; name: string | null; post: string | null; companyTitle: string | null; stageId: number; closed: boolean;
-  amount: number; currency: string; phones: Contact[]; emails: Contact[]; responsibleId: number | null; createdAt: string | null;
-}
-interface LeadFull extends Lead {
-  comments: string | null; fields: Record<string, Value>; webs: Contact[]; address: string | null;
-  contacts: { id: number; name: string; post: string | null; phones: Contact[]; emails: Contact[] }[]; products: ProductRow[]; invoices: Invoice[]; documents: CrmDocument[]; smart: SmartBrief[];
-}
 
 const fail = (error: unknown) => toast(error instanceof ApiError ? error.first : "Не получилось загрузить", "danger");
 
@@ -84,34 +69,9 @@ watch([stage, text], (_, prev) => {
 
 /* ---------- Карточка ---------- */
 const openId = computed(() => Number(route.value.query.get("open")) || 0);
-const opened = ref<LeadFull | null>(null);
-watch(openId, async (id) => {
-  opened.value = null;
-  if (!id) return;
-  try {
-    opened.value = await api<LeadFull>("GET", `crm/leads/${id}`);
-  } catch (error) {
-    fail(error);
-    setQuery({ open: null });
-  }
-}, { immediate: true });
+const opened = ref<Lead | null>(null);
+watch(openId, () => (opened.value = null));
 
-/* Поля карточки по блокам, пустые не показываем. */
-const groups = computed(() => {
-  const lead = opened.value;
-  if (!lead) return [];
-  const out = new Map<string, Field[]>();
-  for (const field of fields.value) {
-    const value = lead.fields[field.code];
-    if (value === undefined || value === null || value === "" || (Array.isArray(value) && !value.length)) continue;
-    const name = field.section || "Дополнительно";
-    out.set(name, [...(out.get(name) ?? []), field]);
-  }
-  return [...out].map(([name, list]) => ({ name, list }));
-});
-
-const tel = (value: string) => `tel:${value.replace(/[^\d+]/g, "")}`;
-const site = (value: string) => (/^https?:/i.test(value) ? value : `https://${value}`);
 const date = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("ru-RU") : "");
 const sub = computed(() => (pipeline.value ? plural(total.value, "лид", "лида", "лидов") : ""));
 </script>
@@ -171,59 +131,8 @@ const sub = computed(() => (pipeline.value ? plural(total.value, "лид", "ли
       </div>
     </div>
 
-    <SidePanel :open="!!openId" :chat="null" :title="opened?.title ?? 'Лид'" :sub="opened ? `Лид №${opened.id}${opened.createdAt ? ` · ${date(opened.createdAt)}` : ''}` : ''" @close="setQuery({ open: null })">
-      <div v-if="opened" class="space-y-3 p-3 md:p-4">
-        <CardBlock :icon="UserRound" title="Основное">
-          <div class="space-y-2 text-sm">
-            <p v-if="stageOf(opened.stageId)"><HueChip :hue="hueOf(stageOf(opened.stageId)!.color)">{{ stageOf(opened.stageId)!.title }}</HueChip></p>
-            <p v-if="opened.name" class="font-medium">{{ opened.name }}<span v-if="opened.post" class="font-normal text-muted"> · {{ opened.post }}</span></p>
-            <p v-if="opened.companyTitle" class="text-muted">{{ opened.companyTitle }}</p>
-            <p v-if="opened.amount" class="font-medium">{{ money(opened.amount) }}</p>
-            <p v-for="one in opened.phones" :key="'p' + one.value" class="flex items-center gap-2"><Phone class="size-4 shrink-0 text-muted" /><a :href="tel(one.value)" class="link">{{ one.value }}</a></p>
-            <p v-for="one in opened.emails" :key="'e' + one.value" class="flex items-center gap-2"><Mail class="size-4 shrink-0 text-muted" /><a :href="`mailto:${one.value}`" class="link">{{ one.value }}</a></p>
-            <p v-for="one in opened.webs" :key="'w' + one.value" class="flex items-center gap-2"><Globe class="size-4 shrink-0 text-muted" /><a :href="site(one.value)" target="_blank" rel="noopener" class="link">{{ one.value }}</a></p>
-            <p v-if="opened.address" class="flex items-center gap-2"><MapPin class="size-4 shrink-0 text-muted" />{{ opened.address }}</p>
-            <p v-if="opened.responsibleId" class="flex items-center gap-2 text-muted">Ответственный: <ChatFace :user="person(opened.responsibleId)" size="xs" /><span class="text-default-foreground">{{ nameOf(opened.responsibleId) }}</span></p>
-          </div>
-        </CardBlock>
-
-        <CardBlock v-for="group in groups" :key="group.name" :icon="SlidersHorizontal" :title="group.name" flush>
-          <dl class="grid grid-cols-[minmax(120px,40%)_1fr] gap-x-3 gap-y-2 px-4 pb-3 text-sm">
-            <template v-for="field in group.list" :key="field.id">
-              <dt class="text-muted">{{ field.title }}</dt>
-              <dd class="min-w-0"><FieldValue :field="field" :value="opened.fields[field.code]" :editable="false" /></dd>
-            </template>
-          </dl>
-        </CardBlock>
-
-        <CardBlock v-if="opened.contacts.length" :icon="UserRound" title="Контакты" :count="opened.contacts.length">
-          <button v-for="one in opened.contacts" :key="one.id" type="button" class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-default/60" @click="navigate('/clients', { tab: 'contacts', open: `contact:${one.id}` })">
-            <span class="min-w-0 flex-1 truncate">{{ one.name }}<span v-if="one.post" class="text-muted"> · {{ one.post }}</span></span>
-            <span class="text-xs text-muted">{{ one.phones[0]?.value }}</span>
-          </button>
-        </CardBlock>
-
-        <CardBlock v-if="opened.products.length" :icon="ShoppingCart" title="Товары" :count="opened.products.length">
-          <ProductRows :rows="opened.products" />
-        </CardBlock>
-
-        <CardBlock v-if="opened.invoices.length" :icon="Receipt" title="Счета" :count="opened.invoices.length">
-          <InvoiceList :rows="opened.invoices" />
-        </CardBlock>
-
-        <CardBlock v-if="opened.smart.length" :icon="Layers" title="Договоры и процессы" :count="opened.smart.length">
-          <SmartList :rows="opened.smart" />
-        </CardBlock>
-
-        <CardBlock v-if="opened.documents.length" :icon="FileText" title="Документы" :count="opened.documents.length">
-          <DocumentList :rows="opened.documents" />
-        </CardBlock>
-
-        <CardBlock v-if="opened.comments" :icon="Pencil" title="Комментарий">
-          <p class="text-sm whitespace-pre-line">{{ opened.comments }}</p>
-        </CardBlock>
-      </div>
-      <p v-else class="p-6 text-sm text-muted">Загружаю…</p>
+    <SidePanel :open="!!openId" :chat="null" :title="opened?.title ?? 'Лид'" :sub="opened ? `Лид №${opened.id}${opened.name ? ` · ${opened.name}` : ''}` : ''" @close="setQuery({ open: null })">
+      <LeadCard v-if="openId" :key="openId" :lead-id="openId" :pipeline="pipeline" :fields="fields" @loaded="(one) => (opened = one)" @close="setQuery({ open: null })" />
     </SidePanel>
   </div>
 </template>

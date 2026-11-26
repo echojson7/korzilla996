@@ -1,11 +1,12 @@
 <!-- Карточка сделки как в Битрикс24: полоса стадий (щелчок — перевод,
-     «Завершить» — успех или провал), основные поля, свои поля блоками
-     (блок задаёт администратор в настройках полей), комментарий, задачи
-     по сделке и история. Пустые поля блока спрятаны под «Ещё N полей»:
-     их в воронках Битрикса больше сотни. Правка сразу уходит на сервер. -->
+     «Завершить» — успех или провал), сводка (сумма, ответственный, срок),
+     блок «Клиент» с плитками компании и контактов из базы, поля сделки,
+     товары, свои поля блоками (пустые блоки свёрнуты, пустые поля — под
+     «Ещё N полей»: их в воронках Битрикса больше сотни), счета, договоры,
+     документы, комментарий, задачи и история. Правка сразу уходит на сервер. -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
-import { Check, ChevronDown, Clock, History, ListChecks, MoreHorizontal, Pencil, Plus, SlidersHorizontal, Trash2, Link2, Flag, RotateCcw, LayoutList, ShoppingCart, Users, Receipt, FileText, Layers } from "@lucide/vue";
+import { Check, ChevronDown, Clock, ListChecks, MoreHorizontal, Pencil, Plus, SlidersHorizontal, Trash2, Link2, LayoutList, ShoppingCart, Receipt, FileText, Layers, CalendarDays } from "@lucide/vue";
 import Popover from "../Popover.vue";
 import HueChip from "../HueChip.vue";
 import NoAccess from "../NoAccess.vue";
@@ -18,13 +19,15 @@ import ProductRows from "./ProductRows.vue";
 import InvoiceList from "./InvoiceList.vue";
 import DocumentList from "./DocumentList.vue";
 import SmartList from "./SmartList.vue";
+import StageBar from "./StageBar.vue";
+import ClientBlock from "./ClientBlock.vue";
 import {
   crm, getDeal, updateDeal, deleteDeal, onDealChange, pipelineById, stageById, fieldByCode, hueOf, CURRENCIES,
-  type DealFull, type DealInput, type Field, type FieldValue as Value, type Stage,
+  type DealFull, type DealInput, type Field, type FieldValue as Value, type Stage, type ProductRow,
 } from "../../lib/crm";
 import { taskStore, STATUS, person, nameOf } from "../../lib/tasks";
 import { when as dueWhen } from "../tasks/when";
-import { href, navigate } from "../../lib/router";
+import { href } from "../../lib/router";
 import { money, plural } from "../../lib/format";
 import { toast } from "../../lib/toast";
 import { ApiError } from "../../lib/api";
@@ -63,9 +66,6 @@ onBeforeUnmount(stop);
 const canEdit = computed(() => !!deal.value?.can.edit);
 const pipeline = computed(() => (deal.value ? pipelineById.value.get(deal.value.pipelineId) ?? null : null));
 const stage = computed(() => (deal.value ? stageById.value.get(deal.value.stageId) ?? null : null));
-const working = computed(() => pipeline.value?.stages.filter((one) => one.semantic === "process") ?? []);
-const finals = computed(() => pipeline.value?.stages.filter((one) => one.semantic !== "process") ?? []);
-const stageIndex = computed(() => working.value.findIndex((one) => one.id === deal.value?.stageId));
 
 async function patch(input: DealInput) {
   if (!deal.value) return;
@@ -88,20 +88,16 @@ function saveField(field: Field, value: Value) {
 /* ---------- Основные поля ---------- */
 const titleText = ref("");
 const amountText = ref("");
-const companyText = ref("");
-const contactText = ref("");
 watch(deal, (one) => {
   titleText.value = one?.title ?? "";
   amountText.value = one && one.amount ? one.amount.toLocaleString("ru-RU", { maximumFractionDigits: 2 }).replace(/\u00a0/g, " ") : "";
-  companyText.value = one?.company ?? "";
-  contactText.value = one?.contact ?? "";
 }, { immediate: true });
-function saveText(key: "title" | "company" | "contact", text: string) {
+function saveText(_key: "title", text: string) {
   if (!deal.value) return;
   const value = text.trim();
-  if ((deal.value[key] ?? "") === value) return;
-  if (key === "title" && !value) return void (titleText.value = deal.value.title);
-  patch({ [key]: value || null });
+  if (deal.value.title === value) return;
+  if (!value) return void (titleText.value = deal.value.title);
+  patch({ title: value });
 }
 function saveAmount() {
   if (!deal.value) return;
@@ -133,6 +129,14 @@ const sections = computed(() => {
 const MAIN = "О сделке";
 const mainGroup = computed(() => sections.value.find((one) => one.name === MAIN) ?? null);
 const otherGroups = computed(() => sections.value.filter((one) => one.name !== MAIN));
+/* Свёрнутые блоки: по умолчанию свёрнут блок без заполненных полей. */
+const folded = ref(new Map<string, boolean>());
+const isFolded = (name: string, count: number) => folded.value.get(name) ?? count === 0;
+function fold(name: string, count: number) {
+  const next = new Map(folded.value);
+  next.set(name, !isFolded(name, count));
+  folded.value = next;
+}
 function toggleSection(name: string) {
   const next = new Set(expanded.value);
   if (next.has(name)) next.delete(name);
@@ -153,7 +157,11 @@ async function saveComment() {
   commentEditing.value = false;
 }
 
+/* ---------- Товары ---------- */
+const productsTotal = (rows: ProductRow[]) => rows.reduce((sum, one) => sum + one.sum - one.discount, 0);
+
 /* ---------- Задачи и история ---------- */
+const activity = ref<"tasks" | "history">("tasks");
 const dealTasks = computed(() => (deal.value ? taskStore.list.filter((one) => one.dealId === deal.value!.id) : []));
 const historyAll = ref(false);
 const LABELS: Record<string, string> = {
@@ -163,6 +171,12 @@ const LABELS: Record<string, string> = {
 const historyLabel = (field: string) => LABELS[field] ?? (field.startsWith("fields.") ? fieldByCode.value.get(field.slice(7))?.title ?? "Поле" : field);
 const history = computed(() => (deal.value?.history ?? []).slice(0, historyAll.value ? undefined : 8));
 const at = (iso: string | null) => (iso ? new Date(iso).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "");
+const ago = (iso: string | null) => {
+  if (!iso) return "";
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+  return days < 1 ? "сегодня" : days < 2 ? "вчера" : `${plural(days, "день", "дня", "дней")} назад`;
+};
+const shortDay = (iso: string) => new Date(iso).toLocaleDateString("ru-RU", { day: "numeric", month: "short", year: "numeric" }).replace(" г.", "");
 const day = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" }) : "—");
 
 /* ---------- Прочее ---------- */
@@ -185,7 +199,8 @@ function copyLink() {
 <template>
   <div v-if="loading" class="flex flex-col gap-4" aria-busy="true">
     <div class="h-9 animate-pulse rounded-lg bg-surface-secondary" />
-    <div class="h-48 animate-pulse rounded-2xl bg-surface-secondary" />
+    <div class="h-20 animate-pulse rounded-2xl bg-surface-secondary" />
+    <div class="h-40 animate-pulse rounded-2xl bg-surface-secondary" />
     <div class="h-32 animate-pulse rounded-2xl bg-surface-secondary" />
   </div>
   <NoAccess v-else-if="denied" :state="denied" what="deal" @retry="load(dealId)"><button type="button" class="button button--ghost button--sm" @click="emit('close')">Закрыть</button></NoAccess>
@@ -199,38 +214,53 @@ function copyLink() {
   </div>
 
   <div v-else-if="deal" class="flex flex-col gap-4">
-    <!-- Полоса стадий -->
-    <div class="flex items-stretch gap-1">
-      <button
-        v-for="(one, i) in working"
-        :key="one.id"
-        type="button"
-        class="stage-step"
-        :class="[!deal.closed && i <= stageIndex ? 'stage-step--on' : '', !deal.closed && i === stageIndex ? 'stage-step--current' : '']"
-        :style="{ '--stage': one.color }"
-        :title="one.title"
-        :disabled="!canEdit"
-        @click="toStage(one)"
-      >{{ one.title }}</button>
-      <Popover v-if="canEdit" :ref="setPicker('finish')" width="w-64">
-        <template #trigger="{ toggle }">
-          <button type="button" class="stage-step stage-step--final" :class="deal.closed ? 'stage-step--on' : ''" :style="{ '--stage': stage?.color ?? '#7bd500' }" @click="toggle">
-            <Flag class="size-3.5 shrink-0" />{{ deal.closed ? stage?.title : "Завершить" }}<ChevronDown class="size-3.5 shrink-0" />
-          </button>
-        </template>
-        <p class="px-3 pt-2 pb-1 text-xs text-muted">Завершить сделку</p>
-        <button v-for="one in finals" :key="one.id" type="button" class="menu-row" @click="toStage(one); closePicker('finish')">
-          <span class="size-2.5 shrink-0 rounded-full" :style="{ background: one.color }" />
-          <span class="min-w-0 flex-1 truncate">{{ one.title }}</span>
-          <span class="text-xs text-muted">{{ one.semantic === "success" ? "успех" : "провал" }}</span>
-          <Check v-if="one.id === deal.stageId" class="size-4 text-accent" />
-        </button>
-        <button v-if="deal.closed && working[0]" type="button" class="menu-row" @click="toStage(working[0]); closePicker('finish')"><RotateCcw class="size-4" />Вернуть в работу</button>
-      </Popover>
-      <span v-else-if="deal.closed" class="stage-step stage-step--final stage-step--on" :style="{ '--stage': stage?.color ?? '#7bd500' }"><Flag class="size-3.5" />{{ stage?.title }}</span>
-    </div>
+    <StageBar v-if="pipeline" :stages="pipeline.stages" :current="deal.stageId" :editable="canEdit" finish-label="Завершить" @pick="toStage" />
 
-    <!-- Основное -->
+    <!-- Сводка: сумма, ответственный, срок -->
+    <section class="card card--default grid grid-cols-1 gap-0 p-0 sm:grid-cols-3">
+      <div class="summary">
+        <span class="summary__label">Сумма</span>
+        <div v-if="canEdit" class="flex min-w-0 items-baseline gap-0.5">
+          <input v-model="amountText" inputmode="decimal" class="value-input value-input--big w-full max-w-[9.5rem] min-w-0 tabular-nums" placeholder="0" aria-label="Сумма" @blur="saveAmount" @keydown.enter="($event.target as HTMLInputElement).blur()" />
+          <Popover :ref="setPicker('currency')" align="left" width="w-32">
+            <template #trigger="{ toggle }"><button type="button" class="value text-sm text-muted" @click="toggle">{{ deal.currency }}<ChevronDown class="size-3.5" /></button></template>
+            <button v-for="one in CURRENCIES" :key="one" type="button" class="menu-row" @click="patch({ currency: one }); closePicker('currency')">{{ one }}<Check v-if="one === deal.currency" class="ml-auto size-4 text-accent" /></button>
+          </Popover>
+        </div>
+        <span v-else class="text-xl font-semibold tabular-nums">{{ deal.currency === "RUB" ? money(deal.amount) : `${deal.amount.toLocaleString("ru-RU")} ${deal.currency}` }}</span>
+      </div>
+      <div class="summary">
+        <span class="summary__label">Ответственный</span>
+        <Popover v-if="canEdit" :ref="setPicker('owner')" align="left" width="w-80">
+          <template #trigger="{ toggle }">
+            <button type="button" class="value max-w-full" @click="toggle"><ChatFace :user="person(deal.responsibleId ?? 0)" size="xs" /><span class="truncate">{{ nameOf(deal.responsibleId) }}</span></button>
+          </template>
+          <UserPick single :model-value="deal.responsibleId ? [deal.responsibleId] : []" @pick="(one) => { patch({ responsible_id: one.id }); closePicker('owner'); }" />
+        </Popover>
+        <span v-else class="inline-flex min-w-0 items-center gap-2 text-sm"><ChatFace :user="person(deal.responsibleId ?? 0)" size="xs" /><span class="truncate">{{ nameOf(deal.responsibleId) }}</span></span>
+      </div>
+      <div class="summary">
+        <span class="summary__label">Дата завершения</span>
+        <label v-if="canEdit" class="value relative max-w-full cursor-pointer">
+          <CalendarDays class="size-4 shrink-0 text-muted" />
+          <span class="truncate" :class="deal.closeDate ? '' : 'text-muted'">{{ deal.closeDate ? shortDay(deal.closeDate) : "Не указана" }}</span>
+          <input type="date" :value="deal.closeDate ?? ''" class="date-overlay" aria-label="Дата завершения" @change="patch({ close_date: ($event.target as HTMLInputElement).value || null })" @click="($event.target as HTMLInputElement).showPicker?.()" />
+        </label>
+        <span v-else class="text-sm">{{ deal.closeDate ? day(deal.closeDate) : "—" }}</span>
+      </div>
+    </section>
+
+    <!-- Клиент: компания и контакты из базы -->
+    <ClientBlock
+      :company="deal.companyInfo ?? null"
+      :company-text="deal.companyInfo ? null : deal.company"
+      :contacts="deal.contactList ?? (deal.contactInfo ? [deal.contactInfo] : [])"
+      :editable="canEdit"
+      @company="(id) => patch({ company_id: id })"
+      @contacts="(ids) => patch({ contact_ids: ids })"
+    />
+
+    <!-- О сделке -->
     <CardBlock :icon="SlidersHorizontal" title="О сделке" flush>
       <template #actions>
         <Popover :ref="setPicker('more')" width="w-60">
@@ -248,21 +278,6 @@ function copyLink() {
           <span v-else class="font-medium">{{ deal.title }}</span>
         </dd>
 
-        <dt>Сумма</dt>
-        <dd class="gap-1">
-          <template v-if="canEdit">
-            <input v-model="amountText" inputmode="decimal" class="value-input w-36 font-semibold tabular-nums" placeholder="0" @blur="saveAmount" @keydown.enter="($event.target as HTMLInputElement).blur()" />
-            <Popover :ref="setPicker('currency')" align="left" width="w-32">
-              <template #trigger="{ toggle }"><button type="button" class="value text-muted" @click="toggle">{{ deal.currency }}<ChevronDown class="size-3.5" /></button></template>
-              <button v-for="one in CURRENCIES" :key="one" type="button" class="menu-row" @click="patch({ currency: one }); closePicker('currency')">{{ one }}<Check v-if="one === deal.currency" class="ml-auto size-4 text-accent" /></button>
-            </Popover>
-          </template>
-          <span v-else class="font-semibold tabular-nums">{{ deal.currency === "RUB" ? money(deal.amount) : `${deal.amount.toLocaleString("ru-RU")} ${deal.currency}` }}</span>
-        </dd>
-
-        <dt>Стадия</dt>
-        <dd><HueChip v-if="stage" :hue="hueOf(stage.color)">{{ stage.title }}</HueChip></dd>
-
         <dt>Воронка</dt>
         <dd>
           <Popover v-if="canEdit" :ref="setPicker('pipeline')" align="left" width="w-72">
@@ -277,47 +292,8 @@ function copyLink() {
           <span v-else>{{ pipeline?.title ?? "—" }}</span>
         </dd>
 
-        <dt>Ответственный</dt>
-        <dd>
-          <Popover v-if="canEdit" :ref="setPicker('owner')" align="left" width="w-80">
-            <template #trigger="{ toggle }">
-              <button type="button" class="value" @click="toggle"><ChatFace :user="person(deal.responsibleId ?? 0)" size="xs" />{{ nameOf(deal.responsibleId) }}</button>
-            </template>
-            <UserPick single :model-value="deal.responsibleId ? [deal.responsibleId] : []" @pick="(one) => { patch({ responsible_id: one.id }); closePicker('owner'); }" />
-          </Popover>
-          <span v-else class="inline-flex items-center gap-2"><ChatFace :user="person(deal.responsibleId ?? 0)" size="xs" />{{ nameOf(deal.responsibleId) }}</span>
-        </dd>
-
-        <dt>Компания</dt>
-        <dd>
-          <input v-if="canEdit" v-model="companyText" class="value-input w-full" placeholder="Не указана" @blur="saveText('company', companyText)" @keydown.enter="($event.target as HTMLInputElement).blur()" />
-          <span v-else>{{ deal.company || "—" }}</span>
-          <span v-if="deal.companyInfo" class="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs">
-            <button type="button" class="link" @click="navigate('/clients', { open: `company:${deal.companyInfo.id}` })">Карточка компании</button>
-            <a v-for="one in deal.companyInfo.phones" :key="'p' + one.value" :href="`tel:${one.value.replace(/[^\d+]/g, '')}`" class="link">{{ one.value }}</a>
-            <a v-for="one in deal.companyInfo.emails" :key="'e' + one.value" :href="`mailto:${one.value}`" class="link">{{ one.value }}</a>
-            <a v-for="one in deal.companyInfo.webs" :key="'w' + one.value" :href="/^https?:/i.test(one.value) ? one.value : `https://${one.value}`" target="_blank" rel="noopener" class="link">{{ one.value }}</a>
-            <span v-if="deal.companyInfo.address" class="text-muted">{{ deal.companyInfo.address }}</span>
-          </span>
-        </dd>
-
-        <dt>Контакт</dt>
-        <dd>
-          <input v-if="canEdit" v-model="contactText" class="value-input w-full" placeholder="Не указан" @blur="saveText('contact', contactText)" @keydown.enter="($event.target as HTMLInputElement).blur()" />
-          <span v-else>{{ deal.contact || "—" }}</span>
-          <span v-if="deal.contactInfo" class="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs">
-            <button type="button" class="link" @click="navigate('/clients', { tab: 'contacts', open: `contact:${deal.contactInfo.id}` })">Карточка контакта</button>
-            <span v-if="deal.contactInfo.post" class="text-muted">{{ deal.contactInfo.post }}</span>
-            <a v-for="one in deal.contactInfo.phones" :key="'p' + one.value" :href="`tel:${one.value.replace(/[^\d+]/g, '')}`" class="link">{{ one.value }}</a>
-            <a v-for="one in deal.contactInfo.emails" :key="'e' + one.value" :href="`mailto:${one.value}`" class="link">{{ one.value }}</a>
-          </span>
-        </dd>
-
-        <dt>Дата завершения</dt>
-        <dd>
-          <input v-if="canEdit" type="date" :value="deal.closeDate ?? ''" class="value-input" @change="patch({ close_date: ($event.target as HTMLInputElement).value || null })" />
-          <span v-else>{{ deal.closeDate ? day(deal.closeDate) : "—" }}</span>
-        </dd>
+        <dt>На стадии</dt>
+        <dd class="gap-2"><HueChip v-if="stage" :hue="hueOf(stage.color)">{{ stage.title }}</HueChip><span v-if="deal.stageChangedAt" class="text-muted">{{ ago(deal.stageChangedAt) }}</span></dd>
 
         <dt>Создана</dt>
         <dd class="text-muted">{{ day(deal.createdAt) }}<template v-if="deal.creatorId"> · {{ nameOf(deal.creatorId) }}</template></dd>
@@ -330,37 +306,38 @@ function copyLink() {
           <dd><FieldValue :field="field" :value="deal.fields[field.code]" :editable="canEdit" @save="(value) => saveField(field, value)" /></dd>
         </template>
       </dl>
-      <button v-if="mainGroup && (mainGroup.hidden || expanded.has(MAIN))" type="button" class="mx-4 mb-3 inline-flex items-center gap-1 text-sm text-accent" @click="toggleSection(MAIN)">
+      <button v-if="mainGroup && (mainGroup.hidden || expanded.has(MAIN))" type="button" class="mx-5 mb-3 inline-flex items-center gap-1 text-sm text-accent" @click="toggleSection(MAIN)">
         <template v-if="expanded.has(MAIN)">Скрыть пустые</template>
         <template v-else><Plus class="size-3.5" />Ещё {{ plural(mainGroup.hidden, "поле", "поля", "полей") }}</template>
       </button>
     </CardBlock>
 
+    <!-- Товары -->
+    <CardBlock v-if="deal.products?.length" :icon="ShoppingCart" title="Товары" :count="`${deal.products.length} · ${money(productsTotal(deal.products))}`">
+      <ProductRows :rows="deal.products" />
+    </CardBlock>
+
     <!-- Свои поля -->
-    <CardBlock v-for="group in otherGroups" :key="group.name" :icon="LayoutList" :title="group.name" :count="group.count ? `${group.count} из ${group.fields.length}` : null" flush>
+    <CardBlock
+      v-for="group in otherGroups"
+      :key="group.name"
+      :icon="LayoutList"
+      :title="group.name"
+      :count="group.count ? `${group.count} из ${group.fields.length}` : null"
+      :collapsed="isFolded(group.name, group.count)"
+      flush
+      @toggle="fold(group.name, group.count)"
+    >
       <dl v-if="group.shown.length" class="props">
         <template v-for="field in group.shown" :key="field.id">
           <dt :title="field.title"><span class="line-clamp-2">{{ field.title }}<span v-if="field.required" class="text-danger"> *</span></span></dt>
           <dd><FieldValue :field="field" :value="deal.fields[field.code]" :editable="canEdit" @save="(value) => saveField(field, value)" /></dd>
         </template>
       </dl>
-      <button v-if="group.hidden || expanded.has(group.name)" type="button" class="mx-4 mb-3 inline-flex items-center gap-1 text-sm text-accent" :class="group.shown.length ? 'mt-1' : ''" @click="toggleSection(group.name)">
+      <button v-if="group.hidden || expanded.has(group.name)" type="button" class="mx-5 mb-3 inline-flex items-center gap-1 text-sm text-accent" :class="group.shown.length ? 'mt-1' : ''" @click="toggleSection(group.name)">
         <template v-if="expanded.has(group.name)">Скрыть пустые</template>
         <template v-else><Plus class="size-3.5" />{{ group.shown.length ? "Ещё" : "Показать" }} {{ plural(group.hidden, "поле", "поля", "полей") }}</template>
       </button>
-    </CardBlock>
-
-    <!-- Все контакты (когда их больше одного) -->
-    <CardBlock v-if="(deal.contactList?.length ?? 0) > 1" :icon="Users" title="Контакты" :count="deal.contactList!.length">
-      <button v-for="one in deal.contactList" :key="one.id" type="button" class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-default/60" @click="navigate('/clients', { tab: 'contacts', open: `contact:${one.id}` })">
-        <span class="min-w-0 flex-1 truncate">{{ one.name }}<span v-if="one.post" class="text-muted"> · {{ one.post }}</span></span>
-        <span class="text-xs text-muted">{{ one.phones[0]?.value }}</span>
-      </button>
-    </CardBlock>
-
-    <!-- Товары -->
-    <CardBlock v-if="deal.products?.length" :icon="ShoppingCart" title="Товары" :count="deal.products.length">
-      <ProductRows :rows="deal.products" />
     </CardBlock>
 
     <!-- Счета -->
@@ -384,44 +361,50 @@ function copyLink() {
         <button v-if="canEdit" type="button" class="button button--ghost button--sm -mr-2" @click="editComment"><Pencil class="size-3.5" />{{ deal.comments ? "Изменить" : "Добавить" }}</button>
       </template>
       <div v-if="deal.comments" class="-mx-4 -mt-2 -mb-3" @dblclick="canEdit && editComment()"><MarkdownField :model-value="deal.comments" :editable="false" /></div>
+      <button v-else-if="canEdit" type="button" class="w-full rounded-xl border border-dashed border-separator px-3 py-3 text-left text-sm text-muted hover:border-accent hover:text-foreground" @click="editComment">Договорённости, ссылки, важные детали…</button>
       <p v-else class="text-sm text-muted">Комментария нет.</p>
     </CardBlock>
 
-    <!-- Задачи -->
-    <CardBlock :icon="ListChecks" title="Задачи по сделке" :count="dealTasks.length || null">
+    <!-- Задачи и история -->
+    <CardBlock :icon="ListChecks" :title="activity === 'tasks' ? 'Задачи' : 'История'" :count="activity === 'tasks' ? dealTasks.length || null : deal.history.length || null">
       <template #actions>
-        <a :href="href('/tasks', { open: 'new', deal: deal.id })" class="button button--ghost button--sm -mr-2"><Plus class="size-3.5" />Задача</a>
+        <div class="toggle-button-group toggle-button-group--horizontal" role="tablist">
+          <button type="button" role="tab" class="toggle-button toggle-button--sm" :aria-selected="activity === 'tasks'" :data-selected="activity === 'tasks' ? 'true' : undefined" @click="activity = 'tasks'">Задачи</button>
+          <button type="button" role="tab" class="toggle-button toggle-button--sm" :aria-selected="activity === 'history'" :data-selected="activity === 'history' ? 'true' : undefined" @click="activity = 'history'">История</button>
+        </div>
+        <a v-if="activity === 'tasks'" :href="href('/tasks', { open: 'new', deal: deal.id })" class="button button--ghost button--sm button--icon-only -mr-2" aria-label="Новая задача" title="Новая задача"><Plus class="size-4" /></a>
       </template>
-      <ul v-if="dealTasks.length" class="-mx-2">
-        <li v-for="task in dealTasks" :key="task.id">
-          <a :href="href('/tasks', { tab: 'all', open: task.id })" class="flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-surface-secondary">
-            <ChatFace :user="person(task.responsibleId ?? 0)" size="sm" />
-            <span class="min-w-0 flex-1">
-              <span class="block truncate text-sm">{{ task.title }}</span>
-              <span class="block text-xs text-muted">{{ nameOf(task.responsibleId) }}{{ task.deadline ? ` · до ${dueWhen(task.deadline)}` : "" }}</span>
-            </span>
-            <HueChip :hue="STATUS[task.status].hue">{{ STATUS[task.status].label }}</HueChip>
-          </a>
-        </li>
-      </ul>
-      <p v-else class="text-sm text-muted">Задач нет.</p>
-    </CardBlock>
-
-    <!-- История -->
-    <CardBlock :icon="History" title="История" :count="deal.history.length || null">
-      <ol class="flex flex-col gap-2.5">
-        <li v-for="one in history" :key="one.id" class="flex gap-2.5 text-sm">
-          <ChatFace :user="person(one.userId ?? 0)" size="xs" class="mt-0.5" />
-          <div class="min-w-0 flex-1">
-            <p class="min-w-0">
-              <span class="font-medium">{{ historyLabel(one.field) }}</span>
-              <template v-if="one.field !== 'created'">: <span class="text-muted line-through decoration-1">{{ one.old || "пусто" }}</span> → {{ one.new || "пусто" }}</template>
-            </p>
-            <p class="flex items-center gap-1 text-xs text-muted"><Clock class="size-3" />{{ at(one.at) }} · {{ nameOf(one.userId) }}</p>
-          </div>
-        </li>
-      </ol>
-      <button v-if="deal.history.length > 8" type="button" class="mt-3 text-sm text-accent" @click="historyAll = !historyAll">{{ historyAll ? "Свернуть" : `Вся история (${deal.history.length})` }}</button>
+      <template v-if="activity === 'tasks'">
+        <ul v-if="dealTasks.length" class="-mx-2">
+          <li v-for="task in dealTasks" :key="task.id">
+            <a :href="href('/tasks', { tab: 'all', open: task.id })" class="flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-surface-secondary">
+              <ChatFace :user="person(task.responsibleId ?? 0)" size="sm" />
+              <span class="min-w-0 flex-1">
+                <span class="block truncate text-sm">{{ task.title }}</span>
+                <span class="block text-xs text-muted">{{ nameOf(task.responsibleId) }}{{ task.deadline ? ` · до ${dueWhen(task.deadline)}` : "" }}</span>
+              </span>
+              <HueChip :hue="STATUS[task.status].hue">{{ STATUS[task.status].label }}</HueChip>
+            </a>
+          </li>
+        </ul>
+        <a v-else :href="href('/tasks', { open: 'new', deal: deal.id })" class="flex items-center gap-2 rounded-xl border border-dashed border-separator px-3 py-3 text-sm text-muted hover:border-accent hover:text-foreground"><Plus class="size-4" />Поставить задачу по сделке</a>
+      </template>
+      <template v-else>
+        <ol class="timeline">
+          <li v-for="one in history" :key="one.id" class="flex gap-2.5 text-sm">
+            <ChatFace :user="person(one.userId ?? 0)" size="xs" class="mt-0.5" />
+            <div class="min-w-0 flex-1">
+              <p class="min-w-0">
+                <span class="font-medium">{{ historyLabel(one.field) }}</span>
+                <template v-if="one.field !== 'created'">: <span class="text-muted line-through decoration-1">{{ one.old || "пусто" }}</span> → {{ one.new || "пусто" }}</template>
+              </p>
+              <p class="flex items-center gap-1 text-xs text-muted"><Clock class="size-3" />{{ at(one.at) }} · {{ nameOf(one.userId) }}</p>
+            </div>
+          </li>
+        </ol>
+        <p v-if="!deal.history.length" class="text-sm text-muted">Изменений пока не было.</p>
+        <button v-if="deal.history.length > 8" type="button" class="mt-3 text-sm text-accent" @click="historyAll = !historyAll">{{ historyAll ? "Свернуть" : `Вся история (${deal.history.length})` }}</button>
+      </template>
     </CardBlock>
 
     <div v-if="askDelete" class="card card--default flex-row items-center gap-3 border border-danger/40 p-4">
@@ -433,50 +416,41 @@ function copyLink() {
 </template>
 
 <style scoped>
-.stage-step {
-  display: inline-flex;
-  flex: 1 1 0;
+.summary {
+  display: flex;
   min-width: 0;
-  height: 2.25rem;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
   gap: 0.25rem;
-  padding: 0 0.5rem;
-  overflow: hidden;
-  border-radius: 0.5rem;
-  background: var(--surface-secondary);
+  padding: 0.75rem 1.25rem 0.875rem;
+}
+.summary + .summary {
+  border-top: 1px solid var(--separator);
+}
+@media (min-width: 640px) {
+  .summary + .summary {
+    border-top: 0;
+    border-left: 1px solid var(--separator);
+  }
+}
+.summary__label {
   color: var(--muted);
   font-size: 0.75rem;
-  font-weight: 500;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  transition: background-color 120ms, color 120ms;
 }
-.stage-step:not(:disabled):hover {
-  background: color-mix(in oklab, var(--stage) 30%, var(--surface-secondary));
-  color: var(--foreground);
+.value-input--big {
+  height: 2.25rem;
+  font-size: 1.25rem;
+  font-weight: 600;
 }
-.stage-step--on {
-  background: var(--stage);
-  color: #fff;
-  text-shadow: 0 1px 1px rgb(0 0 0 / 0.25);
+.date-overlay {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
 }
-.stage-step--on:not(:disabled):hover {
-  background: color-mix(in oklab, var(--stage) 85%, black);
-  color: #fff;
-}
-/* Узкая панель: у остальных стадий только цвет, название — в подсказке. */
-.stage-step:not(.stage-step--current):not(.stage-step--final) {
-  font-size: 0;
-}
-.stage-step--current {
-  flex: 0 1 auto;
-  min-width: 4rem;
-  padding: 0 0.75rem;
-}
-.stage-step--final {
-  flex: 0 0 auto;
-  max-width: 12rem;
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
 }
 .props {
   display: grid;
@@ -493,14 +467,14 @@ function copyLink() {
   border-top: 1px solid var(--separator);
 }
 .props > dt {
-  margin-left: 1rem;
+  margin-left: 1.25rem;
   padding-right: 0.75rem;
   color: var(--muted);
   font-size: 0.8125rem;
 }
 .props > dd {
   min-width: 0;
-  margin-right: 1rem;
+  margin-right: 1.25rem;
 }
 .props > dt:first-of-type,
 .props > dt:first-of-type + dd {
