@@ -1,0 +1,9964 @@
+{
+ "result": {
+  "ID": {
+   "type": "integer",
+   "isRequired": false,
+   "isReadOnly": true,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "ID"
+  },
+  "TITLE": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Название"
+  },
+  "TYPE_ID": {
+   "type": "crm_status",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "statusType": "DEAL_TYPE",
+   "title": "Тип"
+  },
+  "CATEGORY_ID": {
+   "type": "crm_category",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": true,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Воронка"
+  },
+  "STAGE_ID": {
+   "type": "crm_status",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "statusType": "DEAL_STAGE",
+   "title": "Стадия сделки"
+  },
+  "PREVIOUS_STAGE_ID": {
+   "type": "crm_status",
+   "isRequired": false,
+   "isReadOnly": true,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "statusType": "DEAL_STAGE",
+   "title": "Предыдущая стадия"
+  },
+  "STAGE_SEMANTIC_ID": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": true,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Группа стадии"
+  },
+  "IS_NEW": {
+   "type": "char",
+   "isRequired": false,
+   "isReadOnly": true,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Новая сделка"
+  },
+  "IS_RECURRING": {
+   "type": "char",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Регулярная сделка"
+  },
+  "IS_RETURN_CUSTOMER": {
+   "type": "char",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Повторная сделка"
+  },
+  "IS_REPEATED_APPROACH": {
+   "type": "char",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Повторное обращение"
+  },
+  "PROBABILITY": {
+   "type": "integer",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Вероятность"
+  },
+  "CURRENCY_ID": {
+   "type": "crm_currency",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Валюта"
+  },
+  "OPPORTUNITY": {
+   "type": "double",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Сумма"
+  },
+  "IS_MANUAL_OPPORTUNITY": {
+   "type": "char",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Режим расчёта суммы"
+  },
+  "TAX_VALUE": {
+   "type": "double",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Ставка налога"
+  },
+  "COMPANY_ID": {
+   "type": "crm_company",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Компания",
+   "settings": {
+    "parentEntityTypeId": 4
+   }
+  },
+  "MYCOMPANY_ID": {
+   "type": "crm_company",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Реквизиты вашей компании"
+  },
+  "CONTACT_ID": {
+   "type": "crm_contact",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "isDeprecated": true,
+   "title": "Контакт"
+  },
+  "CONTACT_IDS": {
+   "type": "crm_contact",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": true,
+   "isDynamic": false,
+   "title": "Контакты"
+  },
+  "QUOTE_ID": {
+   "type": "crm_quote",
+   "isRequired": false,
+   "isReadOnly": true,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Предложение",
+   "settings": {
+    "parentEntityTypeId": 7
+   }
+  },
+  "BEGINDATE": {
+   "type": "date",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Дата начала"
+  },
+  "CLOSEDATE": {
+   "type": "date",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Дата завершения"
+  },
+  "OPENED": {
+   "type": "char",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Доступна для всех"
+  },
+  "CLOSED": {
+   "type": "char",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Закрыта"
+  },
+  "COMMENTS": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Комментарий"
+  },
+  "ASSIGNED_BY_ID": {
+   "type": "user",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Ответственный"
+  },
+  "CREATED_BY_ID": {
+   "type": "user",
+   "isRequired": false,
+   "isReadOnly": true,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Кем создана"
+  },
+  "MODIFY_BY_ID": {
+   "type": "user",
+   "isRequired": false,
+   "isReadOnly": true,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Кем изменена"
+  },
+  "MOVED_BY_ID": {
+   "type": "user",
+   "isRequired": false,
+   "isReadOnly": true,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "MOVED_BY_ID"
+  },
+  "DATE_CREATE": {
+   "type": "datetime",
+   "isRequired": false,
+   "isReadOnly": true,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Дата создания"
+  },
+  "DATE_MODIFY": {
+   "type": "datetime",
+   "isRequired": false,
+   "isReadOnly": true,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Дата изменения"
+  },
+  "MOVED_TIME": {
+   "type": "datetime",
+   "isRequired": false,
+   "isReadOnly": true,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Когда передвинут"
+  },
+  "SOURCE_ID": {
+   "type": "crm_status",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "statusType": "SOURCE",
+   "title": "Источник"
+  },
+  "SOURCE_DESCRIPTION": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Дополнительно об источнике"
+  },
+  "LEAD_ID": {
+   "type": "crm_lead",
+   "isRequired": false,
+   "isReadOnly": true,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Лид",
+   "settings": {
+    "parentEntityTypeId": 1
+   }
+  },
+  "ADDITIONAL_INFO": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Дополнительная информация"
+  },
+  "LOCATION_ID": {
+   "type": "location",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Местоположение"
+  },
+  "ORIGINATOR_ID": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Внешний источник"
+  },
+  "ORIGIN_ID": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Идентификатор элемента во внешнем источнике"
+  },
+  "UTM_SOURCE": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Рекламная система"
+  },
+  "UTM_MEDIUM": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Тип трафика"
+  },
+  "UTM_CAMPAIGN": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Обозначение рекламной кампании"
+  },
+  "UTM_CONTENT": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Содержание кампании"
+  },
+  "UTM_TERM": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Условие поиска кампании"
+  },
+  "PARENT_ID_181": {
+   "type": "crm_entity",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Договоры",
+   "settings": {
+    "parentEntityTypeId": 181
+   }
+  },
+  "PARENT_ID_1044": {
+   "type": "crm_entity",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "Претензии",
+   "settings": {
+    "parentEntityTypeId": 1044
+   }
+  },
+  "LAST_ACTIVITY_TIME": {
+   "type": "datetime",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "LAST_ACTIVITY_TIME"
+  },
+  "LAST_ACTIVITY_BY": {
+   "type": "user",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "LAST_ACTIVITY_BY"
+  },
+  "LAST_COMMUNICATION_TIME": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": true,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": false,
+   "title": "LAST_COMMUNICATION_TIME"
+  },
+  "UF_CRM_1495110302": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1495110302",
+   "listLabel": "Номер и дата договора (НОМЕР ОТ ДАТА)",
+   "formLabel": "Номер и дата договора (НОМЕР ОТ ДАТА)",
+   "filterLabel": "Номер и дата договора (НОМЕР ОТ ДАТА)",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_B24_PORTAL": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_B24_PORTAL",
+   "listLabel": "Адрес Б24 портала",
+   "formLabel": "Адрес Б24 портала",
+   "filterLabel": "UF_CRM_B24_PORTAL",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_LICENSE_KEY": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_LICENSE_KEY",
+   "listLabel": "Лицензионный ключ портала",
+   "formLabel": "Лицензионный ключ портала",
+   "filterLabel": "UF_CRM_LICENSE_KEY",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_CITY": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_CITY",
+   "listLabel": "Город",
+   "formLabel": "Город",
+   "filterLabel": "UF_CRM_CITY",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_1546640829450": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1546640829450",
+   "listLabel": "%предоплаты",
+   "formLabel": "%предоплаты",
+   "filterLabel": "%предоплаты",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 4,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": "100"
+   }
+  },
+  "UF_CRM_1547064684753": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "1962",
+     "VALUE": "ИП Верховых"
+    },
+    {
+     "ID": "64",
+     "VALUE": "ООО Корзилла"
+    },
+    {
+     "ID": "68",
+     "VALUE": "Нал"
+    },
+    {
+     "ID": "66",
+     "VALUE": "ИП Лебедев"
+    }
+   ],
+   "title": "UF_CRM_1547064684753",
+   "listLabel": "Способ оплаты",
+   "formLabel": "Способ оплаты",
+   "filterLabel": "Способ оплаты",
+   "settings": {
+    "DISPLAY": "UI",
+    "LIST_HEIGHT": 1,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_1554325364626": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "302",
+     "VALUE": "ТОП-10"
+    },
+    {
+     "ID": "304",
+     "VALUE": "По посещаемости"
+    },
+    {
+     "ID": "1834",
+     "VALUE": "ТОП-10+"
+    },
+    {
+     "ID": "1996",
+     "VALUE": "ТОП-10 быстросайт"
+    }
+   ],
+   "title": "UF_CRM_1554325364626",
+   "listLabel": "Тариф продвижения",
+   "formLabel": "Тариф продвижения",
+   "filterLabel": "Тариф продвижения",
+   "settings": {
+    "DISPLAY": "UI",
+    "LIST_HEIGHT": 1,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_1554325912808": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "308",
+     "VALUE": "Без доработок"
+    },
+    {
+     "ID": "310",
+     "VALUE": "С доработками"
+    },
+    {
+     "ID": "312",
+     "VALUE": "Уникальный дизайн"
+    }
+   ],
+   "title": "UF_CRM_1554325912808",
+   "listLabel": "Наличие доработок",
+   "formLabel": "Наличие доработок",
+   "filterLabel": "Наличие доработок",
+   "settings": {
+    "DISPLAY": "UI",
+    "LIST_HEIGHT": 1,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_1554843884255": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1554843884255",
+   "listLabel": "Ограничение суммы 1й месяц",
+   "formLabel": "Ограничение суммы 1й месяц",
+   "filterLabel": "Ограничение суммы 1й месяц",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_1554843916644": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1554843916644",
+   "listLabel": "Ограничение суммы 2й месяц",
+   "formLabel": "Ограничение суммы 2й месяц",
+   "filterLabel": "Ограничение суммы 2й месяц",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_1554843940173": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1554843940173",
+   "listLabel": "Ограничение суммы 3й месяц",
+   "formLabel": "Ограничение суммы 3й месяц",
+   "filterLabel": "Ограничение суммы 3й месяц",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_1554843975668": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1554843975668",
+   "listLabel": "Ограничение суммы 4й месяц",
+   "formLabel": "Ограничение суммы 4й месяц",
+   "filterLabel": "Ограничение суммы 4й месяц",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_1554843999184": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1554843999184",
+   "listLabel": "Ограничение суммы 5й месяц",
+   "formLabel": "Ограничение суммы 5й месяц",
+   "filterLabel": "Ограничение суммы 5й месяц",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_1554844067936": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1554844067936",
+   "listLabel": "Ограничение суммы 6й месяц",
+   "formLabel": "Ограничение суммы 6й месяц",
+   "filterLabel": "Ограничение суммы 6й месяц",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_1554844096228": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1554844096228",
+   "listLabel": "Абонентская плата",
+   "formLabel": "Абонентская плата",
+   "filterLabel": "Абонентская плата",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_1554845300429": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1554845300429",
+   "listLabel": "Цена за посетителя (при посещалке)",
+   "formLabel": "Цена за посетителя (при посещалке)",
+   "filterLabel": "Цена за посетителя (при посещалке)",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_5CB46F1D191AB": {
+   "type": "boolean",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_5CB46F1D191AB",
+   "listLabel": "UF_CRM_SP_UNSUBSCR",
+   "formLabel": "Отписаться от рассылки",
+   "filterLabel": "UF_CRM_SP_UNSUBSCR",
+   "settings": {
+    "DEFAULT_VALUE": 0,
+    "DISPLAY": "CHECKBOX",
+    "LABEL": [
+     null,
+     null
+    ],
+    "LABEL_CHECKBOX": null
+   }
+  },
+  "UF_CRM_5CB46F1DD70CF": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "338",
+     "VALUE": "Ошибка на сайте"
+    },
+    {
+     "ID": "340",
+     "VALUE": "Вопрос по хостингу"
+    },
+    {
+     "ID": "342",
+     "VALUE": "Требуется доработка"
+    },
+    {
+     "ID": "344",
+     "VALUE": "Бухгалтерия"
+    },
+    {
+     "ID": "346",
+     "VALUE": "Другое"
+    }
+   ],
+   "title": "UF_CRM_5CB46F1DD70CF",
+   "listLabel": "Причина обращения",
+   "formLabel": "Причина обращения",
+   "filterLabel": "",
+   "settings": {
+    "DISPLAY": "UI",
+    "LIST_HEIGHT": 1,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_3696036059329": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "368",
+     "VALUE": "Общее"
+    },
+    {
+     "ID": "370",
+     "VALUE": "Общее"
+    },
+    {
+     "ID": "372",
+     "VALUE": "Внедрение CRM систем"
+    },
+    {
+     "ID": "374",
+     "VALUE": "Создание сайта"
+    },
+    {
+     "ID": "376",
+     "VALUE": "Доработка сайта"
+    },
+    {
+     "ID": "378",
+     "VALUE": "Продвижение сайта"
+    },
+    {
+     "ID": "380",
+     "VALUE": "Контекстная реклама"
+    },
+    {
+     "ID": "382",
+     "VALUE": "Домены, хостинг, лицензии"
+    },
+    {
+     "ID": "384",
+     "VALUE": "Внедрение Битрикс24"
+    }
+   ],
+   "title": "UF_CRM_3696036059329",
+   "listLabel": "Направление сделки Битрикс24",
+   "formLabel": "Направление сделки Битрикс24",
+   "filterLabel": "UF_CRM_3696036059329",
+   "settings": {
+    "DISPLAY": "LIST",
+    "LIST_HEIGHT": 1,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_3696455737911": {
+   "type": "boolean",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_3696455737911",
+   "listLabel": "Удален в 1С для Битрикс24",
+   "formLabel": "Удален в 1С для Битрикс24",
+   "filterLabel": "UF_CRM_3696455737911",
+   "settings": {
+    "DEFAULT_VALUE": 0,
+    "DISPLAY": "CHECKBOX",
+    "LABEL": [
+     null,
+     null
+    ],
+    "LABEL_CHECKBOX": null
+   }
+  },
+  "UF_CRM_3696455737918": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "404",
+     "VALUE": "Корзилла"
+    }
+   ],
+   "title": "UF_CRM_3696455737918",
+   "listLabel": "Организация для Битрикс24",
+   "formLabel": "Организация для Битрикс24",
+   "filterLabel": "UF_CRM_3696455737918",
+   "settings": {
+    "DISPLAY": "LIST",
+    "LIST_HEIGHT": 1,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_3697067732254": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "408",
+     "VALUE": "Общее"
+    },
+    {
+     "ID": "410",
+     "VALUE": "Внедрение CRM систем"
+    },
+    {
+     "ID": "412",
+     "VALUE": "Создание сайта"
+    },
+    {
+     "ID": "414",
+     "VALUE": "Доработка сайта"
+    },
+    {
+     "ID": "416",
+     "VALUE": "Продвижение сайта"
+    },
+    {
+     "ID": "418",
+     "VALUE": "Контекстная реклама"
+    },
+    {
+     "ID": "420",
+     "VALUE": "Домены, хостинг, лицензии"
+    },
+    {
+     "ID": "422",
+     "VALUE": "Внедрение Битрикс24"
+    }
+   ],
+   "title": "UF_CRM_3697067732254",
+   "listLabel": "Направление сделки Битрикс24",
+   "formLabel": "Направление сделки Битрикс24",
+   "filterLabel": "UF_CRM_3697067732254",
+   "settings": {
+    "DISPLAY": "LIST",
+    "LIST_HEIGHT": 1,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_ATTEND_EVENT": {
+   "type": "boolean",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_ATTEND_EVENT",
+   "listLabel": "Был на мероприятии (заявки)",
+   "formLabel": "Был на мероприятии (заявки)",
+   "filterLabel": "UF_CRM_ATTEND_EVENT",
+   "settings": {
+    "DEFAULT_VALUE": 0,
+    "DISPLAY": "CHECKBOX",
+    "LABEL": [
+     null,
+     null
+    ],
+    "LABEL_CHECKBOX": null
+   }
+  },
+  "UF_CRM_QUALIFICATION": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "500",
+     "VALUE": "Нецелевой"
+    },
+    {
+     "ID": "502",
+     "VALUE": "Целевой"
+    },
+    {
+     "ID": "504",
+     "VALUE": "VIP"
+    },
+    {
+     "ID": "506",
+     "VALUE": "Партнер"
+    }
+   ],
+   "title": "UF_CRM_QUALIFICATION",
+   "listLabel": "Квалификация лида (заявки)",
+   "formLabel": "Квалификация лида (заявки)",
+   "filterLabel": "UF_CRM_QUALIFICATION",
+   "settings": {
+    "DISPLAY": "LIST",
+    "LIST_HEIGHT": 1,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_1616484941402": {
+   "type": "resourcebooking",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": true,
+   "isDynamic": true,
+   "title": "UF_CRM_1616484941402",
+   "listLabel": "Бронь 1",
+   "formLabel": "Бронь 1",
+   "filterLabel": "Бронь 1",
+   "settings": {
+    "USE_USERS": "Y",
+    "USE_RESOURCES": "Y",
+    "RESOURCES": {
+     "resource": {
+      "XML_ID": "resource",
+      "NAME": "resource",
+      "SECTIONS": [
+       {
+        "ID": "470",
+        "CAL_TYPE": "resource",
+        "NAME": "1"
+       }
+      ]
+     }
+    },
+    "SELECTED_RESOURCES": [
+     {
+      "type": "resource",
+      "id": "470",
+      "title": "1"
+     }
+    ],
+    "SELECTED_USERS": [
+     22
+    ],
+    "FULL_DAY": "Y",
+    "ALLOW_OVERBOOKING": "Y",
+    "USE_SERVICES": "Y",
+    "SERVICE_LIST": [
+     {
+      "name": "Услуга 1",
+      "duration": "60"
+     }
+    ],
+    "RESOURCE_LIMIT": 24,
+    "TIMEZONE": "",
+    "USE_USER_TIMEZONE": "N"
+   }
+  },
+  "UF_CRM_1616486249": {
+   "type": "resourcebooking",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": true,
+   "isDynamic": true,
+   "title": "UF_CRM_1616486249",
+   "listLabel": "Бронь 2",
+   "formLabel": "Бронь 2",
+   "filterLabel": "Бронь 2",
+   "settings": {
+    "USE_USERS": "Y",
+    "USE_RESOURCES": "Y",
+    "RESOURCES": {
+     "resource": {
+      "XML_ID": "resource",
+      "NAME": "resource",
+      "SECTIONS": [
+       {
+        "ID": "470",
+        "CAL_TYPE": "resource",
+        "NAME": "Поброб"
+       }
+      ]
+     }
+    },
+    "SELECTED_RESOURCES": [
+     {
+      "type": "resource",
+      "id": "472",
+      "title": "2"
+     },
+     {
+      "type": "resource",
+      "id": "470",
+      "title": "Поброб"
+     }
+    ],
+    "SELECTED_USERS": [
+     22
+    ],
+    "FULL_DAY": "Y",
+    "ALLOW_OVERBOOKING": "Y",
+    "USE_SERVICES": "Y",
+    "SERVICE_LIST": [
+     {
+      "name": "ул",
+      "duration": "60"
+     },
+     {
+      "name": "ус",
+      "duration": "1440"
+     }
+    ],
+    "RESOURCE_LIMIT": 24,
+    "TIMEZONE": "",
+    "USE_USER_TIMEZONE": "N"
+   }
+  },
+  "UF_CRM_1623069619": {
+   "type": "iblock_element",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1623069619",
+   "listLabel": "Товары",
+   "formLabel": "Товары",
+   "filterLabel": "Товары",
+   "settings": {
+    "DISPLAY": "LIST",
+    "LIST_HEIGHT": 1,
+    "IBLOCK_ID": 36,
+    "DEFAULT_VALUE": "",
+    "ACTIVE_FILTER": "N"
+   }
+  },
+  "UF_CRM_1623069683": {
+   "type": "iblock_element",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": true,
+   "isDynamic": true,
+   "title": "UF_CRM_1623069683",
+   "listLabel": "Тов2",
+   "formLabel": "Тов2",
+   "filterLabel": "Тов2",
+   "settings": {
+    "DISPLAY": "LIST",
+    "LIST_HEIGHT": 1,
+    "IBLOCK_ID": 36,
+    "DEFAULT_VALUE": "",
+    "ACTIVE_FILTER": "N"
+   }
+  },
+  "UF_CRM_60D1CCC1153DA": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "994",
+     "VALUE": "10"
+    },
+    {
+     "ID": "996",
+     "VALUE": "9"
+    },
+    {
+     "ID": "998",
+     "VALUE": "8"
+    },
+    {
+     "ID": "1000",
+     "VALUE": "7"
+    },
+    {
+     "ID": "1002",
+     "VALUE": "6"
+    },
+    {
+     "ID": "1004",
+     "VALUE": "5"
+    },
+    {
+     "ID": "1006",
+     "VALUE": "4"
+    },
+    {
+     "ID": "1008",
+     "VALUE": "3"
+    },
+    {
+     "ID": "1010",
+     "VALUE": "2"
+    },
+    {
+     "ID": "1012",
+     "VALUE": "1"
+    }
+   ],
+   "title": "UF_CRM_60D1CCC1153DA",
+   "listLabel": "Довольны ли вы работой вашего менеджера?",
+   "formLabel": "Довольны ли вы работой вашего менеджера?",
+   "filterLabel": "Довольны ли вы работой вашего менеджера?",
+   "settings": {
+    "DISPLAY": "UI",
+    "LIST_HEIGHT": 1,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_60D1CCC18038E": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "1014",
+     "VALUE": "10"
+    },
+    {
+     "ID": "1016",
+     "VALUE": "9"
+    },
+    {
+     "ID": "1018",
+     "VALUE": "8"
+    },
+    {
+     "ID": "1020",
+     "VALUE": "7"
+    },
+    {
+     "ID": "1022",
+     "VALUE": "6"
+    },
+    {
+     "ID": "1024",
+     "VALUE": "5"
+    },
+    {
+     "ID": "1026",
+     "VALUE": "4"
+    },
+    {
+     "ID": "1028",
+     "VALUE": "3"
+    },
+    {
+     "ID": "1030",
+     "VALUE": "2"
+    },
+    {
+     "ID": "1032",
+     "VALUE": "1"
+    },
+    {
+     "ID": "1034",
+     "VALUE": "0"
+    }
+   ],
+   "title": "UF_CRM_60D1CCC18038E",
+   "listLabel": "Довольны ли вы работой отдела разработки?",
+   "formLabel": "Довольны ли вы работой отдела разработки?",
+   "filterLabel": "Довольны ли вы работой отдела разработки?",
+   "settings": {
+    "DISPLAY": "UI",
+    "LIST_HEIGHT": 1,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_60D1CCC1E2C8A": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "1036",
+     "VALUE": "10"
+    },
+    {
+     "ID": "1038",
+     "VALUE": "9"
+    },
+    {
+     "ID": "1040",
+     "VALUE": "8"
+    },
+    {
+     "ID": "1042",
+     "VALUE": "7"
+    },
+    {
+     "ID": "1044",
+     "VALUE": "6"
+    },
+    {
+     "ID": "1046",
+     "VALUE": "5"
+    },
+    {
+     "ID": "1048",
+     "VALUE": "4"
+    },
+    {
+     "ID": "1050",
+     "VALUE": "3"
+    },
+    {
+     "ID": "1052",
+     "VALUE": "2"
+    },
+    {
+     "ID": "1054",
+     "VALUE": "1"
+    },
+    {
+     "ID": "1056",
+     "VALUE": "0"
+    }
+   ],
+   "title": "UF_CRM_60D1CCC1E2C8A",
+   "listLabel": "Довольны ли вы дизайном сайта?",
+   "formLabel": "Довольны ли вы дизайном сайта?",
+   "filterLabel": "Довольны ли вы дизайном сайта?",
+   "settings": {
+    "DISPLAY": "UI",
+    "LIST_HEIGHT": 1,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_60D1CCC252832": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "1058",
+     "VALUE": "10"
+    },
+    {
+     "ID": "1060",
+     "VALUE": "9"
+    },
+    {
+     "ID": "1062",
+     "VALUE": "8"
+    },
+    {
+     "ID": "1064",
+     "VALUE": "7"
+    },
+    {
+     "ID": "1066",
+     "VALUE": "6"
+    },
+    {
+     "ID": "1068",
+     "VALUE": "5"
+    },
+    {
+     "ID": "1070",
+     "VALUE": "4"
+    },
+    {
+     "ID": "1072",
+     "VALUE": "3"
+    },
+    {
+     "ID": "1074",
+     "VALUE": "2"
+    },
+    {
+     "ID": "1076",
+     "VALUE": "1"
+    },
+    {
+     "ID": "1078",
+     "VALUE": "0"
+    }
+   ],
+   "title": "UF_CRM_60D1CCC252832",
+   "listLabel": "Довольны ли вы сроками разработки?",
+   "formLabel": "Довольны ли вы сроками разработки?",
+   "filterLabel": "Довольны ли вы сроками разработки?",
+   "settings": {
+    "DISPLAY": "UI",
+    "LIST_HEIGHT": 1,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_60D1CCC2C3D0D": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "1080",
+     "VALUE": "10"
+    },
+    {
+     "ID": "1082",
+     "VALUE": "9"
+    },
+    {
+     "ID": "1084",
+     "VALUE": "8"
+    },
+    {
+     "ID": "1086",
+     "VALUE": "7"
+    },
+    {
+     "ID": "1088",
+     "VALUE": "6"
+    },
+    {
+     "ID": "1090",
+     "VALUE": "5"
+    },
+    {
+     "ID": "1092",
+     "VALUE": "4"
+    },
+    {
+     "ID": "1094",
+     "VALUE": "3"
+    },
+    {
+     "ID": "1096",
+     "VALUE": "2"
+    },
+    {
+     "ID": "1098",
+     "VALUE": "1"
+    },
+    {
+     "ID": "1100",
+     "VALUE": "0"
+    }
+   ],
+   "title": "UF_CRM_60D1CCC2C3D0D",
+   "listLabel": "Насколько вероятно, что вы порекомендуете нас?",
+   "formLabel": "Насколько вероятно, что вы порекомендуете нас?",
+   "filterLabel": "Насколько вероятно, что вы порекомендуете нас?",
+   "settings": {
+    "DISPLAY": "UI",
+    "LIST_HEIGHT": 1,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_60D1CCC369189": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_60D1CCC369189",
+   "listLabel": "Текст отзыва (по желанию)",
+   "formLabel": "Текст отзыва (по желанию)",
+   "filterLabel": "Текст отзыва (по желанию)",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_60D1CCC400BC5": {
+   "type": "boolean",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_60D1CCC400BC5",
+   "listLabel": "Разрешаю опубликовать отзыв в сети Интернет (без контактов)",
+   "formLabel": "Разрешаю опубликовать отзыв в сети Интернет (без контактов)",
+   "filterLabel": "Разрешаю опубликовать отзыв в сети Интернет (без контактов)",
+   "settings": {
+    "DEFAULT_VALUE": 0,
+    "DISPLAY": "CHECKBOX",
+    "LABEL": [
+     null,
+     null
+    ],
+    "LABEL_CHECKBOX": "Разрешаю опубликовать отзыв в сети Интернет (без контактов)"
+   }
+  },
+  "UF_CRM_1628250070": {
+   "type": "crm",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1628250070",
+   "listLabel": "Контакт 2",
+   "formLabel": "Контакт 2",
+   "filterLabel": "Контакт 2",
+   "settings": {
+    "CONTACT": "Y"
+   }
+  },
+  "UF_CRM_1628250539": {
+   "type": "resourcebooking",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": true,
+   "isDynamic": true,
+   "title": "UF_CRM_1628250539",
+   "listLabel": "График",
+   "formLabel": "График",
+   "filterLabel": "График",
+   "settings": {
+    "USE_USERS": "Y",
+    "USE_RESOURCES": "Y",
+    "RESOURCES": {
+     "resource": {
+      "XML_ID": "resource",
+      "NAME": "resource",
+      "SECTIONS": [
+       {
+        "ID": "470",
+        "CAL_TYPE": "resource",
+        "NAME": "Поброб"
+       },
+       {
+        "ID": "492",
+        "CAL_TYPE": "resource",
+        "NAME": "1"
+       },
+       {
+        "ID": "494",
+        "CAL_TYPE": "resource",
+        "NAME": "2"
+       }
+      ]
+     }
+    },
+    "SELECTED_RESOURCES": [],
+    "SELECTED_USERS": [],
+    "FULL_DAY": "N",
+    "ALLOW_OVERBOOKING": "Y",
+    "USE_SERVICES": "Y",
+    "SERVICE_LIST": [
+     {
+      "name": "1",
+      "duration": "60"
+     },
+     {
+      "name": "2",
+      "duration": "30"
+     }
+    ],
+    "RESOURCE_LIMIT": 24,
+    "TIMEZONE": "Europe/Moscow",
+    "USE_USER_TIMEZONE": "N"
+   }
+  },
+  "UF_CRM_1628250733": {
+   "type": "date",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": true,
+   "isDynamic": true,
+   "title": "UF_CRM_1628250733",
+   "listLabel": "График 2",
+   "formLabel": "График 2",
+   "filterLabel": "График 2",
+   "settings": {
+    "DEFAULT_VALUE": {
+     "TYPE": "NONE",
+     "VALUE": ""
+    }
+   }
+  },
+  "UF_CRM_1628251647462": {
+   "type": "date",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1628251647462",
+   "listLabel": "Текущий",
+   "formLabel": "Текущий",
+   "filterLabel": "Текущий",
+   "settings": {
+    "DEFAULT_VALUE": {
+     "TYPE": "NONE",
+     "VALUE": ""
+    }
+   }
+  },
+  "UF_CRM_1628251690182": {
+   "type": "date",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1628251690182",
+   "listLabel": "План дата",
+   "formLabel": "План дата",
+   "filterLabel": "План дата",
+   "settings": {
+    "DEFAULT_VALUE": {
+     "TYPE": "NONE",
+     "VALUE": ""
+    }
+   }
+  },
+  "UF_CRM_1635145220299": {
+   "type": "datetime",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1635145220299",
+   "listLabel": "Дата окончания тарифа",
+   "formLabel": "Дата окончания тарифа",
+   "filterLabel": "Дата окончания тарифа",
+   "settings": {
+    "DEFAULT_VALUE": {
+     "TYPE": "NONE",
+     "VALUE": ""
+    },
+    "USE_SECOND": "Y",
+    "USE_TIMEZONE": "N"
+   }
+  },
+  "UF_CRM_61E7ADF5188A4": {
+   "type": "double",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_61E7ADF5188A4",
+   "listLabel": "Roistat (тест)",
+   "formLabel": "Roistat (тест)",
+   "filterLabel": "Roistat (тест)",
+   "settings": {
+    "PRECISION": 2,
+    "SIZE": 20,
+    "MIN_VALUE": 0,
+    "MAX_VALUE": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_1643726563": {
+   "type": "crm",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1643726563",
+   "listLabel": "Заказчик",
+   "formLabel": "Заказчик",
+   "filterLabel": "Заказчик",
+   "settings": {
+    "COMPANY": "Y"
+   }
+  },
+  "UF_CRM_1643966412": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": true,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "1474",
+     "VALUE": "1.1 пропрпо"
+    },
+    {
+     "ID": "1476",
+     "VALUE": "2.2 прпопр"
+    }
+   ],
+   "title": "UF_CRM_1643966412",
+   "listLabel": "протокол",
+   "formLabel": "протокол",
+   "filterLabel": "протокол",
+   "settings": {
+    "DISPLAY": "UI",
+    "LIST_HEIGHT": 5,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_620B86B503F80": {
+   "type": "double",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_620B86B503F80",
+   "listLabel": "ИНН компании",
+   "formLabel": "ИНН компании",
+   "filterLabel": "ИНН компании",
+   "settings": {
+    "PRECISION": 2,
+    "SIZE": 20,
+    "MIN_VALUE": 0,
+    "MAX_VALUE": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_620B86B591887": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_620B86B591887",
+   "listLabel": "Деятельность компании (ОКВЭД)",
+   "formLabel": "Деятельность компании (ОКВЭД)",
+   "filterLabel": "Деятельность компании (ОКВЭД)",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_621361CCB58DA": {
+   "type": "double",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_621361CCB58DA",
+   "listLabel": "ОКВЭД обработан",
+   "formLabel": "ОКВЭД обработан",
+   "filterLabel": "ОКВЭД обработан",
+   "settings": {
+    "PRECISION": 2,
+    "SIZE": 20,
+    "MIN_VALUE": 0,
+    "MAX_VALUE": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_62975B9E70ECA": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "1616",
+     "VALUE": "Создание сайта"
+    },
+    {
+     "ID": "1618",
+     "VALUE": "Продвижение сайта"
+    },
+    {
+     "ID": "1620",
+     "VALUE": "Создание + Продвижение"
+    }
+   ],
+   "title": "UF_CRM_62975B9E70ECA",
+   "listLabel": "",
+   "formLabel": "Выберите услугу для расценки",
+   "filterLabel": "",
+   "settings": {
+    "DISPLAY": "UI",
+    "LIST_HEIGHT": 1,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_62A1F5B589BFD": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "1722",
+     "VALUE": "Интернет-магазин"
+    },
+    {
+     "ID": "1724",
+     "VALUE": "Интернет-магазин PRO (с выгрузкой из 1С или Excel)"
+    },
+    {
+     "ID": "1726",
+     "VALUE": "Сайт-каталог"
+    },
+    {
+     "ID": "1728",
+     "VALUE": "Корпоративный (информационный)"
+    },
+    {
+     "ID": "1730",
+     "VALUE": "Сайт Лэндинг (одностраничный)"
+    }
+   ],
+   "title": "UF_CRM_62A1F5B589BFD",
+   "listLabel": "",
+   "formLabel": "Выберите вариант сайта",
+   "filterLabel": "",
+   "settings": {
+    "DISPLAY": "UI",
+    "LIST_HEIGHT": 1,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_62A1F5B5D1F9A": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "1732",
+     "VALUE": "Город (по месту нахождения)"
+    },
+    {
+     "ID": "1734",
+     "VALUE": "Домашний регион (например: Татарстан)"
+    },
+    {
+     "ID": "1736",
+     "VALUE": "Вся Россия"
+    },
+    {
+     "ID": "1738",
+     "VALUE": "Страны СНГ"
+    },
+    {
+     "ID": "1740",
+     "VALUE": "Продвижение не требуется"
+    }
+   ],
+   "title": "UF_CRM_62A1F5B5D1F9A",
+   "listLabel": "",
+   "formLabel": "Выберите регион продвижения",
+   "filterLabel": "",
+   "settings": {
+    "DISPLAY": "UI",
+    "LIST_HEIGHT": 1,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_1656415548154": {
+   "type": "address",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1656415548154",
+   "listLabel": "sdsdsds",
+   "formLabel": "sdsdsds",
+   "filterLabel": "sdsdsds",
+   "settings": {
+    "SHOW_MAP": "Y"
+   }
+  },
+  "UF_CRM_62E3C81A168F2": {
+   "type": "double",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_62E3C81A168F2",
+   "listLabel": "Новое число",
+   "formLabel": "Новое число",
+   "filterLabel": "Новое число",
+   "settings": {
+    "PRECISION": 2,
+    "SIZE": 20,
+    "MIN_VALUE": 0,
+    "MAX_VALUE": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_1659951460606": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1659951460606",
+   "listLabel": "Площадка1",
+   "formLabel": "Площадка1",
+   "filterLabel": "Площадка1",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_1660127681865": {
+   "type": "boolean",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1660127681865",
+   "listLabel": "Избранное",
+   "formLabel": "Избранное",
+   "filterLabel": "Избранное",
+   "settings": {
+    "DEFAULT_VALUE": 0,
+    "DISPLAY": "CHECKBOX",
+    "LABEL": [
+     null,
+     null
+    ],
+    "LABEL_CHECKBOX": {
+     "ru": "Избранное",
+     "en": "Избранное",
+     "de": "Избранное",
+     "ua": "Избранное",
+     "la": "Избранное",
+     "tc": "Избранное",
+     "in": "Избранное",
+     "sc": "Избранное",
+     "br": "Избранное",
+     "fr": "Избранное",
+     "pl": "Избранное",
+     "tr": "Избранное",
+     "ja": "Избранное",
+     "hi": "Избранное",
+     "id": "Избранное",
+     "it": "Избранное",
+     "ms": "Избранное",
+     "th": "Избранное",
+     "vn": "Избранное"
+    }
+   }
+  },
+  "UF_CRM_1663244214": {
+   "type": "employee",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": true,
+   "isDynamic": true,
+   "title": "UF_CRM_1663244214",
+   "listLabel": "Технолог",
+   "formLabel": "Технолог",
+   "filterLabel": "Технолог",
+   "settings": {
+    "DEFAULT_VALUE": []
+   }
+  },
+  "UF_CRM_1663244245": {
+   "type": "employee",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": true,
+   "isDynamic": true,
+   "title": "UF_CRM_1663244245",
+   "listLabel": "Дизайнер",
+   "formLabel": "Дизайнер",
+   "filterLabel": "Дизайнер",
+   "settings": {
+    "DEFAULT_VALUE": []
+   }
+  },
+  "UF_CRM_1664453630207": {
+   "type": "double",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1664453630207",
+   "listLabel": "День отчета",
+   "formLabel": "День отчета",
+   "filterLabel": "День отчета",
+   "settings": {
+    "PRECISION": 2,
+    "SIZE": 20,
+    "MIN_VALUE": 0,
+    "MAX_VALUE": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_633C2AF0AB67D": {
+   "type": "address",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_633C2AF0AB67D",
+   "listLabel": "Адрес на карте",
+   "formLabel": "Адрес на карте",
+   "filterLabel": "UF_CRM_OBJECTADRESS",
+   "settings": {
+    "SHOW_MAP": "Y"
+   }
+  },
+  "UF_CRM_1668609649457": {
+   "type": "double",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1668609649457",
+   "listLabel": "Срок разработки (дней по договору)",
+   "formLabel": "Срок разработки (дней по договору)",
+   "filterLabel": "Срок разработки (дней по договору)",
+   "settings": {
+    "PRECISION": 2,
+    "SIZE": 20,
+    "MIN_VALUE": 0,
+    "MAX_VALUE": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_1668610504760": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1668610504760",
+   "listLabel": "Ответственное лицо клиента по договору",
+   "formLabel": "Ответственное лицо клиента по договору",
+   "filterLabel": "Ответственное лицо клиента по договору",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_1668611251798": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1668611251798",
+   "listLabel": "Телефон ответственного лица клиента по договору",
+   "formLabel": "Телефон ответственного лица клиента по договору",
+   "filterLabel": "Телефон ответственного лица клиента по договору",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_1668616067596": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1668616067596",
+   "listLabel": "Города продвижения",
+   "formLabel": "Города продвижения",
+   "filterLabel": "Города продвижения",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_63A06819C978F": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_63A06819C978F",
+   "listLabel": "Instagram_WZ",
+   "formLabel": "Instagram_WZ",
+   "filterLabel": "UF_CRM_INSTAGRAM_WZ",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_63A0681A212C7": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_63A0681A212C7",
+   "listLabel": "VK_WZ",
+   "formLabel": "VK_WZ",
+   "filterLabel": "UF_CRM_VK_WZ",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_63A0681A5EA04": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_63A0681A5EA04",
+   "listLabel": "TelegramUsername_WZ",
+   "formLabel": "TelegramUsername_WZ",
+   "filterLabel": "UF_CRM_TELEGRAMUSERNAME_WZ",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_63A0681AA054E": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_63A0681AA054E",
+   "listLabel": "TelegramId_WZ",
+   "formLabel": "TelegramId_WZ",
+   "filterLabel": "UF_CRM_TELEGRAMID_WZ",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_63AAE5786372D": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_63AAE5786372D",
+   "listLabel": "Avito_WZ",
+   "formLabel": "Avito_WZ",
+   "filterLabel": "UF_CRM_AVITO_WZ",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_1673263080880": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1673263080880",
+   "listLabel": "Номер строки в реестре почты ",
+   "formLabel": "Номер строки в реестре почты ",
+   "filterLabel": "Номер строки в реестре почты ",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_1675948259592": {
+   "type": "double",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1675948259592",
+   "listLabel": "стадия 1",
+   "formLabel": "стадия 1",
+   "filterLabel": "стадия 1",
+   "settings": {
+    "PRECISION": 2,
+    "SIZE": 20,
+    "MIN_VALUE": 0,
+    "MAX_VALUE": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_1675948279628": {
+   "type": "double",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1675948279628",
+   "listLabel": "стадия 2",
+   "formLabel": "стадия 2",
+   "filterLabel": "стадия 2",
+   "settings": {
+    "PRECISION": 2,
+    "SIZE": 20,
+    "MIN_VALUE": 0,
+    "MAX_VALUE": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_1676889052176": {
+   "type": "url",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1676889052176",
+   "listLabel": "Электронное ТЗ (ССЫЛКА)  ",
+   "formLabel": "Электронное ТЗ (ССЫЛКА)  ",
+   "filterLabel": "Электронное ТЗ (ССЫЛКА)  ",
+   "settings": {
+    "POPUP": "Y",
+    "SIZE": 20,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_1684396173912": {
+   "type": "address",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1684396173912",
+   "listLabel": "ХХСсылка на электронное ТЗ",
+   "formLabel": "ХХСсылка на электронное ТЗ",
+   "filterLabel": "ХХСсылка на электронное ТЗ",
+   "settings": {
+    "SHOW_MAP": "Y"
+   }
+  },
+  "UF_CRM_1688987670": {
+   "type": "boolean",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1688987670",
+   "listLabel": "ЭДО",
+   "formLabel": "ЭДО",
+   "filterLabel": "ЭДО",
+   "settings": {
+    "DEFAULT_VALUE": 0,
+    "DISPLAY": "CHECKBOX",
+    "LABEL": [
+     "",
+     ""
+    ],
+    "LABEL_CHECKBOX": "ЭДО"
+   }
+  },
+  "UF_CRM_1689256636908": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1689256636908",
+   "listLabel": "№ Договора (для проверки)",
+   "formLabel": "№ Договора (для проверки)",
+   "filterLabel": "№ Договора (для проверки)",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_1691488182": {
+   "type": "file",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": true,
+   "isDynamic": true,
+   "title": "UF_CRM_1691488182",
+   "listLabel": "Материалы для сайта",
+   "formLabel": "Материалы для сайта",
+   "filterLabel": "Материалы для сайта",
+   "settings": {
+    "SIZE": 20,
+    "LIST_WIDTH": 0,
+    "LIST_HEIGHT": 0,
+    "MAX_SHOW_SIZE": 0,
+    "MAX_ALLOWED_SIZE": 0,
+    "EXTENSIONS": [],
+    "TARGET_BLANK": "Y"
+   }
+  },
+  "UF_CRM_1696919353705": {
+   "type": "file",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1696919353705",
+   "listLabel": "Договор на регистрацию",
+   "formLabel": "Договор на регистрацию",
+   "filterLabel": "Договор на регистрацию",
+   "settings": {
+    "SIZE": 20,
+    "LIST_WIDTH": 0,
+    "LIST_HEIGHT": 0,
+    "MAX_SHOW_SIZE": 0,
+    "MAX_ALLOWED_SIZE": 0,
+    "EXTENSIONS": [],
+    "TARGET_BLANK": "Y"
+   }
+  },
+  "UF_CRM_1697024013": {
+   "type": "iblock_element",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1697024013",
+   "listLabel": "test поле 1",
+   "formLabel": "test поле 1",
+   "filterLabel": "test поле 1",
+   "settings": {
+    "DISPLAY": "LIST",
+    "LIST_HEIGHT": 1,
+    "IBLOCK_ID": 64,
+    "DEFAULT_VALUE": "",
+    "ACTIVE_FILTER": "N"
+   }
+  },
+  "UF_CRM_1697024193": {
+   "type": "iblock_element",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": true,
+   "isDynamic": true,
+   "title": "UF_CRM_1697024193",
+   "listLabel": "test поле 2",
+   "formLabel": "test поле 2",
+   "filterLabel": "test поле 2",
+   "settings": {
+    "DISPLAY": "LIST",
+    "LIST_HEIGHT": 1,
+    "IBLOCK_ID": 64,
+    "DEFAULT_VALUE": "",
+    "ACTIVE_FILTER": "N"
+   }
+  },
+  "UF_CRM_1700558644067": {
+   "type": "address",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1700558644067",
+   "listLabel": "Город",
+   "formLabel": "Город",
+   "filterLabel": "Город",
+   "settings": {
+    "SHOW_MAP": "Y"
+   }
+  },
+  "UF_CRM_1703166481548": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1703166481548",
+   "listLabel": "Причина приостановки продвижения",
+   "formLabel": "Причина приостановки продвижения",
+   "filterLabel": "Причина приостановки продвижения",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_1704960054354": {
+   "type": "file",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": true,
+   "isDynamic": true,
+   "title": "UF_CRM_1704960054354",
+   "listLabel": "Скрины готового сайта  (главная, карточка товара, разделы, уникальные страницы) ",
+   "formLabel": "Скрины готового сайта  (главная, карточка товара, разделы, уникальные страницы) ",
+   "filterLabel": "Скрины готового сайта  (главная, карточка товара, разделы, уникальные страницы) ",
+   "settings": {
+    "SIZE": 20,
+    "LIST_WIDTH": 0,
+    "LIST_HEIGHT": 0,
+    "MAX_SHOW_SIZE": 0,
+    "MAX_ALLOWED_SIZE": 0,
+    "EXTENSIONS": [],
+    "TARGET_BLANK": "Y"
+   }
+  },
+  "UF_CRM_1706277435712": {
+   "type": "url",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1706277435712",
+   "listLabel": "Договор: ссылка на файл",
+   "formLabel": "Договор: ссылка на файл",
+   "filterLabel": "Договор: ссылка на файл",
+   "settings": {
+    "POPUP": "Y",
+    "SIZE": 20,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_65B756D438BC2": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_65B756D438BC2",
+   "listLabel": "ID домена",
+   "formLabel": "ID домена",
+   "filterLabel": "UF_CRM_DOMAIN_ID",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_65B756D48B2D5": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_65B756D48B2D5",
+   "listLabel": "Доп. комментарий",
+   "formLabel": "Доп. комментарий",
+   "filterLabel": "Доп. комментарий",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_65B756D4D4886": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_65B756D4D4886",
+   "listLabel": "ID формы на сайте",
+   "formLabel": "ID формы на сайте",
+   "filterLabel": "ID формы на сайте",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_65B756D52706D": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_65B756D52706D",
+   "listLabel": "Имя формы на сайте",
+   "formLabel": "Имя формы на сайте",
+   "filterLabel": "Имя формы на сайте",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_65B756D571858": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_65B756D571858",
+   "listLabel": "Cookie",
+   "formLabel": "Cookie",
+   "filterLabel": "Cookie",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_1707459914": {
+   "type": "crm",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1707459914",
+   "listLabel": "Регистрация договора",
+   "formLabel": "Регистрация договора",
+   "filterLabel": "Регистрация договора",
+   "settings": {
+    "DYNAMIC_181": "Y",
+    "LEAD": null
+   }
+  },
+  "UF_CRM_1712828984525": {
+   "type": "date",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1712828984525",
+   "listLabel": "Дата создания Документа",
+   "formLabel": "Дата создания Документа",
+   "filterLabel": "Дата создания Документа",
+   "settings": {
+    "DEFAULT_VALUE": {
+     "TYPE": "NONE",
+     "VALUE": ""
+    }
+   }
+  },
+  "UF_CRM_OBJECTDEALADRESS": {
+   "type": "address",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_OBJECTDEALADRESS",
+   "listLabel": "Адрес",
+   "formLabel": "Адрес",
+   "filterLabel": "UF_CRM_OBJECTDEALADRESS",
+   "settings": {
+    "SHOW_MAP": "Y"
+   }
+  },
+  "UF_CRM_PREVIOUS_DEAL": {
+   "type": "integer",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_PREVIOUS_DEAL",
+   "listLabel": "ID исходной сделки",
+   "formLabel": "ID исходной сделки",
+   "filterLabel": "UF_CRM_PREVIOUS_DEAL",
+   "settings": {
+    "SIZE": 20,
+    "MIN_VALUE": 0,
+    "MAX_VALUE": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_661FA39C21021": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_661FA39C21021",
+   "listLabel": "Услуга",
+   "formLabel": "Услуга",
+   "filterLabel": "Услуга",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_661FA39C94403": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_661FA39C94403",
+   "listLabel": "Тариф сайта",
+   "formLabel": "Тариф сайта",
+   "filterLabel": "Тариф сайта",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_661FA39CDCA32": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_661FA39CDCA32",
+   "listLabel": "Деятельность",
+   "formLabel": "Деятельность",
+   "filterLabel": "Деятельность",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_661FA39D2E4D0": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_661FA39D2E4D0",
+   "listLabel": "Регион продвижения",
+   "formLabel": "Регион продвижения",
+   "filterLabel": "Регион продвижения",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_661FA39D7B2F7": {
+   "type": "url",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_661FA39D7B2F7",
+   "listLabel": "Карточка в 2ГИС",
+   "formLabel": "Карточка в 2ГИС",
+   "filterLabel": "Карточка в 2ГИС",
+   "settings": {
+    "POPUP": "Y",
+    "SIZE": 20,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_661FA39DCA448": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_661FA39DCA448",
+   "listLabel": "Пожелания",
+   "formLabel": "Пожелания",
+   "filterLabel": "Пожелания",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_1719404662733": {
+   "type": "date",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1719404662733",
+   "listLabel": "Дата С которой новые стопы (след день после отчета)",
+   "formLabel": "Дата С которой новые стопы (след день после отчета)",
+   "filterLabel": "Дата С которой новые стопы (след день после отчета)",
+   "settings": {
+    "DEFAULT_VALUE": {
+     "TYPE": "NONE",
+     "VALUE": ""
+    }
+   }
+  },
+  "UF_CRM_1719404680578": {
+   "type": "date",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1719404680578",
+   "listLabel": "Дата ДО которой новые стопы (дата последнего отчета по новым стопам)",
+   "formLabel": "Дата ДО которой новые стопы (дата последнего отчета по новым стопам)",
+   "filterLabel": "Дата ДО которой новые стопы (дата последнего отчета по новым стопам)",
+   "settings": {
+    "DEFAULT_VALUE": {
+     "TYPE": "NONE",
+     "VALUE": ""
+    }
+   }
+  },
+  "UF_CRM_1719404798204": {
+   "type": "double",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1719404798204",
+   "listLabel": "Сумма СТОПА на период (не меньше 7000)",
+   "formLabel": "Сумма СТОПА на период (не меньше 7000)",
+   "filterLabel": "Сумма СТОПА на период (не меньше 7000)",
+   "settings": {
+    "PRECISION": 2,
+    "SIZE": 20,
+    "MIN_VALUE": 0,
+    "MAX_VALUE": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_1720697541860": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "1972",
+     "VALUE": "Яндекс"
+    },
+    {
+     "ID": "1976",
+     "VALUE": "Яндекс, Google"
+    },
+    {
+     "ID": "1974",
+     "VALUE": "Google"
+    }
+   ],
+   "title": "UF_CRM_1720697541860",
+   "listLabel": "Поисковики",
+   "formLabel": "Поисковики",
+   "filterLabel": "Поисковики",
+   "settings": {
+    "DISPLAY": "UI",
+    "LIST_HEIGHT": 1,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_1730202781331": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1730202781331",
+   "listLabel": "Разделы сайта для продвижения, если весь сайт пишите \"ВЕСЬ КАТАЛОГ\"",
+   "formLabel": "Разделы сайта для продвижения, если весь сайт пишите \"ВЕСЬ КАТАЛОГ\"",
+   "filterLabel": "Разделы сайта для продвижения, если весь сайт пишите \"ВЕСЬ КАТАЛОГ\"",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_6808A81469608": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": true,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "2010",
+     "VALUE": "Наполнение сайта контентом"
+    },
+    {
+     "ID": "2012",
+     "VALUE": "SEO продвижение"
+    },
+    {
+     "ID": "2014",
+     "VALUE": "Контекстная реклама Яндекс директ"
+    },
+    {
+     "ID": "2016",
+     "VALUE": "Внедрение CRM системы "
+    },
+    {
+     "ID": "2018",
+     "VALUE": "Купить SSL сертификат"
+    }
+   ],
+   "title": "UF_CRM_6808A81469608",
+   "listLabel": "",
+   "formLabel": "Вопрос по услуге",
+   "filterLabel": "",
+   "settings": {
+    "DISPLAY": "UI",
+    "LIST_HEIGHT": 1,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_1745414225751": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "2020",
+     "VALUE": "НЕТ (все оплачено)"
+    },
+    {
+     "ID": "2022",
+     "VALUE": "ДА (имеет долг)"
+    }
+   ],
+   "title": "UF_CRM_1745414225751",
+   "listLabel": "Заказчик имеет долг по SEO",
+   "formLabel": "Заказчик имеет долг по SEO",
+   "filterLabel": "Заказчик имеет долг по SEO",
+   "settings": {
+    "DISPLAY": "CHECKBOX",
+    "LIST_HEIGHT": 1,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_B24REG_QR": {
+   "type": "file",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_B24REG_QR",
+   "listLabel": "QR код Заказ Наряда [УП]",
+   "formLabel": "QR код Заказ Наряда [УП]",
+   "filterLabel": "UF_CRM_B24REG_QR",
+   "settings": {
+    "SIZE": 20,
+    "LIST_WIDTH": 0,
+    "LIST_HEIGHT": 0,
+    "MAX_SHOW_SIZE": 0,
+    "MAX_ALLOWED_SIZE": 0,
+    "EXTENSIONS": [],
+    "TARGET_BLANK": "Y"
+   }
+  },
+  "UF_CRM_B24REG_ACCESS_CODE": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_B24REG_ACCESS_CODE",
+   "listLabel": "Код внешнего доступа [УП]",
+   "formLabel": "Код внешнего доступа [УП]",
+   "filterLabel": "UF_CRM_B24REG_ACCESS_CODE",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_1753293661": {
+   "type": "url",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1753293661",
+   "listLabel": "Расценка (ссылка)",
+   "formLabel": "Расценка (ссылка)",
+   "filterLabel": "Расценка (ссылка)",
+   "settings": {
+    "POPUP": "Y",
+    "SIZE": 20,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": "",
+    "ROWS": 1
+   }
+  },
+  "UF_CRM_1753301848872": {
+   "type": "date",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1753301848872",
+   "listLabel": "Срок действия КП",
+   "formLabel": "Срок действия КП",
+   "filterLabel": "Срок действия КП",
+   "settings": {
+    "DEFAULT_VALUE": {
+     "TYPE": "NONE",
+     "VALUE": ""
+    }
+   }
+  },
+  "UF_CRM_1753448112": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": true,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "2082",
+     "VALUE": "Москва"
+    },
+    {
+     "ID": "2084",
+     "VALUE": "Санкт-Петербург"
+    },
+    {
+     "ID": "2086",
+     "VALUE": "Новосибирск"
+    },
+    {
+     "ID": "2088",
+     "VALUE": "Екатеринбург"
+    },
+    {
+     "ID": "2090",
+     "VALUE": "Казань"
+    },
+    {
+     "ID": "2092",
+     "VALUE": "Нижний Новгород"
+    },
+    {
+     "ID": "2094",
+     "VALUE": "Красноярск"
+    },
+    {
+     "ID": "2096",
+     "VALUE": "Челябинск"
+    },
+    {
+     "ID": "2098",
+     "VALUE": "Уфа"
+    },
+    {
+     "ID": "2100",
+     "VALUE": "Самара"
+    },
+    {
+     "ID": "2102",
+     "VALUE": "Ростов-на-Дону"
+    },
+    {
+     "ID": "2104",
+     "VALUE": "Краснодар"
+    },
+    {
+     "ID": "2106",
+     "VALUE": "Омск"
+    },
+    {
+     "ID": "2108",
+     "VALUE": "Воронеж"
+    },
+    {
+     "ID": "2110",
+     "VALUE": "Пермь"
+    },
+    {
+     "ID": "2112",
+     "VALUE": "Волгоград"
+    },
+    {
+     "ID": "2114",
+     "VALUE": "Донецк"
+    },
+    {
+     "ID": "2116",
+     "VALUE": "Саратов"
+    },
+    {
+     "ID": "2118",
+     "VALUE": "Тюмень"
+    },
+    {
+     "ID": "2120",
+     "VALUE": "Тольятти"
+    },
+    {
+     "ID": "2122",
+     "VALUE": "Барнаул"
+    },
+    {
+     "ID": "2124",
+     "VALUE": "Ижевск"
+    },
+    {
+     "ID": "2126",
+     "VALUE": "Махачкала"
+    },
+    {
+     "ID": "2128",
+     "VALUE": "Хабаровск"
+    },
+    {
+     "ID": "2130",
+     "VALUE": "Ульяновск"
+    },
+    {
+     "ID": "2132",
+     "VALUE": "Иркутск"
+    },
+    {
+     "ID": "2134",
+     "VALUE": "Владивосток"
+    },
+    {
+     "ID": "2136",
+     "VALUE": "Ярославль"
+    },
+    {
+     "ID": "2138",
+     "VALUE": "Кемерово"
+    },
+    {
+     "ID": "2140",
+     "VALUE": "Томск"
+    },
+    {
+     "ID": "2142",
+     "VALUE": "Набережные Челны"
+    },
+    {
+     "ID": "2144",
+     "VALUE": "Севастополь"
+    },
+    {
+     "ID": "2146",
+     "VALUE": "Оренбург"
+    },
+    {
+     "ID": "2148",
+     "VALUE": "Новокузнецк"
+    },
+    {
+     "ID": "2150",
+     "VALUE": "Рязань"
+    },
+    {
+     "ID": "2152",
+     "VALUE": "Балашиха"
+    },
+    {
+     "ID": "2154",
+     "VALUE": "Пенза"
+    },
+    {
+     "ID": "2156",
+     "VALUE": "Чебоксары"
+    },
+    {
+     "ID": "2158",
+     "VALUE": "Липецк"
+    },
+    {
+     "ID": "2160",
+     "VALUE": "Калининград"
+    },
+    {
+     "ID": "2162",
+     "VALUE": "Астрахань"
+    },
+    {
+     "ID": "2164",
+     "VALUE": "Тула"
+    },
+    {
+     "ID": "2166",
+     "VALUE": "Киров"
+    },
+    {
+     "ID": "2168",
+     "VALUE": "Сочи"
+    },
+    {
+     "ID": "2170",
+     "VALUE": "Мариуполь"
+    },
+    {
+     "ID": "2172",
+     "VALUE": "Курск"
+    },
+    {
+     "ID": "2174",
+     "VALUE": "Улан-Удэ"
+    },
+    {
+     "ID": "2176",
+     "VALUE": "Тверь"
+    },
+    {
+     "ID": "2178",
+     "VALUE": "Магнитогорск"
+    },
+    {
+     "ID": "2180",
+     "VALUE": "Луганск"
+    },
+    {
+     "ID": "2182",
+     "VALUE": "Ставрополь"
+    },
+    {
+     "ID": "2184",
+     "VALUE": "Сургут"
+    },
+    {
+     "ID": "2186",
+     "VALUE": "Брянск"
+    },
+    {
+     "ID": "2188",
+     "VALUE": "Иваново"
+    },
+    {
+     "ID": "2190",
+     "VALUE": "Якутск"
+    },
+    {
+     "ID": "2192",
+     "VALUE": "Макеевка"
+    },
+    {
+     "ID": "2194",
+     "VALUE": "Владимир"
+    },
+    {
+     "ID": "2196",
+     "VALUE": "Симферополь"
+    },
+    {
+     "ID": "2198",
+     "VALUE": "Белгород"
+    },
+    {
+     "ID": "2200",
+     "VALUE": "Нижний Тагил"
+    },
+    {
+     "ID": "2202",
+     "VALUE": "Калуга"
+    },
+    {
+     "ID": "2204",
+     "VALUE": "Чита"
+    },
+    {
+     "ID": "2206",
+     "VALUE": "Грозный"
+    },
+    {
+     "ID": "2208",
+     "VALUE": "Волжский"
+    },
+    {
+     "ID": "2210",
+     "VALUE": "Смоленск"
+    },
+    {
+     "ID": "2212",
+     "VALUE": "Подольск"
+    },
+    {
+     "ID": "2214",
+     "VALUE": "Саранск"
+    },
+    {
+     "ID": "2216",
+     "VALUE": "Вологда"
+    },
+    {
+     "ID": "2218",
+     "VALUE": "Курган"
+    },
+    {
+     "ID": "2220",
+     "VALUE": "Череповец"
+    },
+    {
+     "ID": "2222",
+     "VALUE": "Орёл"
+    },
+    {
+     "ID": "2224",
+     "VALUE": "Архангельск"
+    },
+    {
+     "ID": "2226",
+     "VALUE": "Владикавказ"
+    },
+    {
+     "ID": "2228",
+     "VALUE": "Нижневартовск"
+    },
+    {
+     "ID": "2230",
+     "VALUE": "Йошкар-Ола"
+    },
+    {
+     "ID": "2232",
+     "VALUE": "Стерлитамак"
+    },
+    {
+     "ID": "2234",
+     "VALUE": "Мурманск"
+    },
+    {
+     "ID": "2236",
+     "VALUE": "Кострома"
+    },
+    {
+     "ID": "2238",
+     "VALUE": "Комсомольск-на-Амуре"
+    },
+    {
+     "ID": "2240",
+     "VALUE": "Петрозаводск"
+    },
+    {
+     "ID": "2242",
+     "VALUE": "Новороссийск"
+    },
+    {
+     "ID": "2244",
+     "VALUE": "Тамбов"
+    },
+    {
+     "ID": "2246",
+     "VALUE": "Таганрог"
+    },
+    {
+     "ID": "2248",
+     "VALUE": "Химки"
+    },
+    {
+     "ID": "2250",
+     "VALUE": "Мытищи"
+    },
+    {
+     "ID": "2252",
+     "VALUE": "Братск"
+    },
+    {
+     "ID": "2254",
+     "VALUE": "Горловка"
+    },
+    {
+     "ID": "2256",
+     "VALUE": "Дзержинск"
+    },
+    {
+     "ID": "2258",
+     "VALUE": "Шахты"
+    },
+    {
+     "ID": "2260",
+     "VALUE": "Нальчик"
+    },
+    {
+     "ID": "2262",
+     "VALUE": "Орск"
+    },
+    {
+     "ID": "2264",
+     "VALUE": "Сыктывкар"
+    },
+    {
+     "ID": "2266",
+     "VALUE": "Нижнекамск"
+    },
+    {
+     "ID": "2268",
+     "VALUE": "Ангарск"
+    },
+    {
+     "ID": "2270",
+     "VALUE": "Старый Оскол"
+    },
+    {
+     "ID": "2272",
+     "VALUE": "Великий Новгород"
+    },
+    {
+     "ID": "2274",
+     "VALUE": "Благовещенск"
+    },
+    {
+     "ID": "2276",
+     "VALUE": "Прокопьевск"
+    },
+    {
+     "ID": "2278",
+     "VALUE": "Бийск"
+    },
+    {
+     "ID": "2280",
+     "VALUE": "Псков"
+    },
+    {
+     "ID": "2282",
+     "VALUE": "Энгельс"
+    },
+    {
+     "ID": "2284",
+     "VALUE": "Рыбинск"
+    },
+    {
+     "ID": "2286",
+     "VALUE": "Балаково"
+    },
+    {
+     "ID": "2288",
+     "VALUE": "Северодвинск"
+    },
+    {
+     "ID": "2290",
+     "VALUE": "Армавир"
+    },
+    {
+     "ID": "2292",
+     "VALUE": "Королёв"
+    },
+    {
+     "ID": "2294",
+     "VALUE": "Южно-Сахалинск"
+    },
+    {
+     "ID": "2296",
+     "VALUE": "Петропавловск-Камчатский"
+    },
+    {
+     "ID": "2298",
+     "VALUE": "Сызрань"
+    },
+    {
+     "ID": "2300",
+     "VALUE": "Норильск"
+    },
+    {
+     "ID": "2302",
+     "VALUE": "Златоуст"
+    },
+    {
+     "ID": "2304",
+     "VALUE": "Каменск-Уральский"
+    },
+    {
+     "ID": "2306",
+     "VALUE": "Люберцы"
+    },
+    {
+     "ID": "2308",
+     "VALUE": "Волгодонск"
+    },
+    {
+     "ID": "2310",
+     "VALUE": "Новочеркасск"
+    },
+    {
+     "ID": "2312",
+     "VALUE": "Абакан"
+    },
+    {
+     "ID": "2314",
+     "VALUE": "Находка"
+    },
+    {
+     "ID": "2316",
+     "VALUE": "Уссурийск"
+    },
+    {
+     "ID": "2318",
+     "VALUE": "Березники"
+    },
+    {
+     "ID": "2320",
+     "VALUE": "Салават"
+    },
+    {
+     "ID": "2322",
+     "VALUE": "Электросталь"
+    },
+    {
+     "ID": "2324",
+     "VALUE": "Керчь"
+    },
+    {
+     "ID": "2326",
+     "VALUE": "Миасс"
+    },
+    {
+     "ID": "2328",
+     "VALUE": "Первоуральск"
+    },
+    {
+     "ID": "2330",
+     "VALUE": "Рубцовск"
+    },
+    {
+     "ID": "2332",
+     "VALUE": "Альметьевск"
+    },
+    {
+     "ID": "2334",
+     "VALUE": "Ковров"
+    },
+    {
+     "ID": "2336",
+     "VALUE": "Коломна"
+    },
+    {
+     "ID": "2338",
+     "VALUE": "Майкоп"
+    },
+    {
+     "ID": "2340",
+     "VALUE": "Пятигорск"
+    },
+    {
+     "ID": "2342",
+     "VALUE": "Одинцово"
+    },
+    {
+     "ID": "2344",
+     "VALUE": "Колпино"
+    },
+    {
+     "ID": "2346",
+     "VALUE": "Копейск"
+    },
+    {
+     "ID": "2348",
+     "VALUE": "Хасавюрт"
+    },
+    {
+     "ID": "2350",
+     "VALUE": "Железнодорожный"
+    },
+    {
+     "ID": "2352",
+     "VALUE": "Новомосковск"
+    },
+    {
+     "ID": "2354",
+     "VALUE": "Кисловодск"
+    },
+    {
+     "ID": "2356",
+     "VALUE": "Серпухов"
+    },
+    {
+     "ID": "2358",
+     "VALUE": "Новочебоксарск"
+    },
+    {
+     "ID": "2360",
+     "VALUE": "Нефтеюганск"
+    },
+    {
+     "ID": "2362",
+     "VALUE": "Димитровград"
+    },
+    {
+     "ID": "2364",
+     "VALUE": "Нефтекамск"
+    },
+    {
+     "ID": "2366",
+     "VALUE": "Черкесск"
+    },
+    {
+     "ID": "2368",
+     "VALUE": "Орехово-Зуево"
+    },
+    {
+     "ID": "2370",
+     "VALUE": "Дербент"
+    },
+    {
+     "ID": "2372",
+     "VALUE": "Камышин"
+    },
+    {
+     "ID": "2374",
+     "VALUE": "Невинномысск"
+    },
+    {
+     "ID": "2376",
+     "VALUE": "Красногорск"
+    },
+    {
+     "ID": "2378",
+     "VALUE": "Муром"
+    },
+    {
+     "ID": "2380",
+     "VALUE": "Батайск"
+    },
+    {
+     "ID": "2382",
+     "VALUE": "Новошахтинск"
+    },
+    {
+     "ID": "2384",
+     "VALUE": "Сергиев Посад"
+    },
+    {
+     "ID": "2386",
+     "VALUE": "Ноябрьск"
+    },
+    {
+     "ID": "2388",
+     "VALUE": "Щёлково"
+    },
+    {
+     "ID": "2390",
+     "VALUE": "Кызыл"
+    },
+    {
+     "ID": "2392",
+     "VALUE": "Октябрьский"
+    },
+    {
+     "ID": "2394",
+     "VALUE": "Ачинск"
+    },
+    {
+     "ID": "2396",
+     "VALUE": "Северск"
+    },
+    {
+     "ID": "2398",
+     "VALUE": "Новокуйбышевск"
+    },
+    {
+     "ID": "2400",
+     "VALUE": "Елец"
+    },
+    {
+     "ID": "2402",
+     "VALUE": "Евпатория"
+    },
+    {
+     "ID": "2404",
+     "VALUE": "Алчевск"
+    },
+    {
+     "ID": "2406",
+     "VALUE": "Арзамас"
+    },
+    {
+     "ID": "2408",
+     "VALUE": "Обнинск"
+    },
+    {
+     "ID": "2410",
+     "VALUE": "Новый Уренгой"
+    },
+    {
+     "ID": "2412",
+     "VALUE": "Каспийск"
+    },
+    {
+     "ID": "2414",
+     "VALUE": "Элиста"
+    },
+    {
+     "ID": "2416",
+     "VALUE": "Северодонецк"
+    },
+    {
+     "ID": "2418",
+     "VALUE": "Пушкино"
+    },
+    {
+     "ID": "2420",
+     "VALUE": "Жуковский"
+    },
+    {
+     "ID": "2422",
+     "VALUE": "Артём"
+    },
+    {
+     "ID": "2424",
+     "VALUE": "Междуреченск"
+    },
+    {
+     "ID": "2426",
+     "VALUE": "Ленинск-Кузнецкий"
+    },
+    {
+     "ID": "2428",
+     "VALUE": "Сарапул"
+    },
+    {
+     "ID": "2430",
+     "VALUE": "Ессентуки"
+    },
+    {
+     "ID": "2432",
+     "VALUE": "Воткинск"
+    },
+    {
+     "ID": "2434",
+     "VALUE": "Ногинск"
+    },
+    {
+     "ID": "2436",
+     "VALUE": "Тобольск"
+    },
+    {
+     "ID": "2438",
+     "VALUE": "Ухта"
+    },
+    {
+     "ID": "2440",
+     "VALUE": "Серов"
+    },
+    {
+     "ID": "2442",
+     "VALUE": "Бердск"
+    },
+    {
+     "ID": "2444",
+     "VALUE": "Великие Луки"
+    },
+    {
+     "ID": "2446",
+     "VALUE": "Мичуринск"
+    },
+    {
+     "ID": "2448",
+     "VALUE": "Киселёвск"
+    },
+    {
+     "ID": "2450",
+     "VALUE": "Новотроицк"
+    },
+    {
+     "ID": "2452",
+     "VALUE": "Зеленодольск"
+    },
+    {
+     "ID": "2454",
+     "VALUE": "Лисичанск"
+    },
+    {
+     "ID": "2456",
+     "VALUE": "Соликамск"
+    },
+    {
+     "ID": "2458",
+     "VALUE": "Раменское"
+    },
+    {
+     "ID": "2460",
+     "VALUE": "Домодедово"
+    },
+    {
+     "ID": "2462",
+     "VALUE": "Магадан"
+    },
+    {
+     "ID": "2464",
+     "VALUE": "Глазов"
+    },
+    {
+     "ID": "2466",
+     "VALUE": "Каменск-Шахтинский"
+    },
+    {
+     "ID": "2468",
+     "VALUE": "Железногорск"
+    },
+    {
+     "ID": "2470",
+     "VALUE": "Канск"
+    },
+    {
+     "ID": "2472",
+     "VALUE": "Назрань"
+    },
+    {
+     "ID": "2474",
+     "VALUE": "Пушкин"
+    },
+    {
+     "ID": "2476",
+     "VALUE": "Гатчина"
+    },
+    {
+     "ID": "2478",
+     "VALUE": "Саров"
+    },
+    {
+     "ID": "2480",
+     "VALUE": "Новоуральск"
+    },
+    {
+     "ID": "2482",
+     "VALUE": "Воскресенск"
+    },
+    {
+     "ID": "2484",
+     "VALUE": "Долгопрудный"
+    },
+    {
+     "ID": "2486",
+     "VALUE": "Бугульма"
+    },
+    {
+     "ID": "2488",
+     "VALUE": "Кузнецк"
+    },
+    {
+     "ID": "2490",
+     "VALUE": "Губкин"
+    },
+    {
+     "ID": "2492",
+     "VALUE": "Кинешма"
+    },
+    {
+     "ID": "2494",
+     "VALUE": "Ейск"
+    },
+    {
+     "ID": "2496",
+     "VALUE": "Реутов"
+    },
+    {
+     "ID": "2498",
+     "VALUE": "Усть-Илимск"
+    },
+    {
+     "ID": "2500",
+     "VALUE": "Усолье-Сибирское"
+    },
+    {
+     "ID": "2502",
+     "VALUE": "Чайковский"
+    },
+    {
+     "ID": "2504",
+     "VALUE": "Азов"
+    },
+    {
+     "ID": "2506",
+     "VALUE": "Бузулук"
+    },
+    {
+     "ID": "2508",
+     "VALUE": "Озёрск"
+    },
+    {
+     "ID": "2510",
+     "VALUE": "Балашов"
+    },
+    {
+     "ID": "2512",
+     "VALUE": "Юрга"
+    },
+    {
+     "ID": "2514",
+     "VALUE": "Кирово-Чепецк"
+    },
+    {
+     "ID": "2516",
+     "VALUE": "Кропоткин"
+    },
+    {
+     "ID": "2518",
+     "VALUE": "Клин"
+    },
+    {
+     "ID": "2520",
+     "VALUE": "Красноуфимск"
+    },
+    {
+     "ID": "2522",
+     "VALUE": "Выборг"
+    },
+    {
+     "ID": "2524",
+     "VALUE": "Ханты-Мансийск"
+    },
+    {
+     "ID": "2526",
+     "VALUE": "Троицк"
+    },
+    {
+     "ID": "2528",
+     "VALUE": "Бор"
+    },
+    {
+     "ID": "2530",
+     "VALUE": "Шадринск"
+    },
+    {
+     "ID": "2532",
+     "VALUE": "Белово"
+    },
+    {
+     "ID": "2534",
+     "VALUE": "Минеральные Воды"
+    },
+    {
+     "ID": "2536",
+     "VALUE": "Анжеро-Судженск"
+    },
+    {
+     "ID": "2538",
+     "VALUE": "Биробиджан"
+    },
+    {
+     "ID": "2540",
+     "VALUE": "Ялта"
+    },
+    {
+     "ID": "2542",
+     "VALUE": "Лобня"
+    },
+    {
+     "ID": "2544",
+     "VALUE": "Петергоф"
+    },
+    {
+     "ID": "2546",
+     "VALUE": "Чапаевск"
+    },
+    {
+     "ID": "2548",
+     "VALUE": "Георгиевск"
+    },
+    {
+     "ID": "2550",
+     "VALUE": "Черногорск"
+    },
+    {
+     "ID": "2552",
+     "VALUE": "Минусинск"
+    },
+    {
+     "ID": "2554",
+     "VALUE": "Михайловск"
+    },
+    {
+     "ID": "2556",
+     "VALUE": "Елабуга"
+    },
+    {
+     "ID": "2558",
+     "VALUE": "Дубна"
+    },
+    {
+     "ID": "2560",
+     "VALUE": "Воркута"
+    },
+    {
+     "ID": "2562",
+     "VALUE": "Новоалтайск"
+    },
+    {
+     "ID": "2564",
+     "VALUE": "Егорьевск"
+    },
+    {
+     "ID": "2566",
+     "VALUE": "Асбест"
+    },
+    {
+     "ID": "2568",
+     "VALUE": "Ишим"
+    },
+    {
+     "ID": "2570",
+     "VALUE": "Белорецк"
+    },
+    {
+     "ID": "2572",
+     "VALUE": "Белогорск"
+    },
+    {
+     "ID": "2574",
+     "VALUE": "Кунгур"
+    },
+    {
+     "ID": "2576",
+     "VALUE": "Лысьва"
+    },
+    {
+     "ID": "2578",
+     "VALUE": "Гуково"
+    },
+    {
+     "ID": "2580",
+     "VALUE": "Ступино"
+    },
+    {
+     "ID": "2582",
+     "VALUE": "Туймазы"
+    },
+    {
+     "ID": "2584",
+     "VALUE": "Кстово"
+    },
+    {
+     "ID": "2586",
+     "VALUE": "Вольск"
+    },
+    {
+     "ID": "2588",
+     "VALUE": "Ишимбай"
+    },
+    {
+     "ID": "2590",
+     "VALUE": "Зеленогорск"
+    },
+    {
+     "ID": "2592",
+     "VALUE": "Сосновый Бор"
+    },
+    {
+     "ID": "2594",
+     "VALUE": "Буйнакск"
+    },
+    {
+     "ID": "2596",
+     "VALUE": "Борисоглебск"
+    },
+    {
+     "ID": "2598",
+     "VALUE": "Наро-Фоминск"
+    },
+    {
+     "ID": "2600",
+     "VALUE": "Будённовск"
+    },
+    {
+     "ID": "2602",
+     "VALUE": "Донской"
+    },
+    {
+     "ID": "2604",
+     "VALUE": "Полевской"
+    },
+    {
+     "ID": "2606",
+     "VALUE": "Лениногорск"
+    },
+    {
+     "ID": "2608",
+     "VALUE": "Павловский Посад"
+    },
+    {
+     "ID": "2610",
+     "VALUE": "Славянск-на-Кубани"
+    },
+    {
+     "ID": "2612",
+     "VALUE": "Заречный"
+    },
+    {
+     "ID": "2614",
+     "VALUE": "Туапсе"
+    },
+    {
+     "ID": "2616",
+     "VALUE": "Россошь"
+    },
+    {
+     "ID": "2618",
+     "VALUE": "Кумертау"
+    },
+    {
+     "ID": "2620",
+     "VALUE": "Лабинск"
+    },
+    {
+     "ID": "2622",
+     "VALUE": "Сибай"
+    },
+    {
+     "ID": "2624",
+     "VALUE": "Клинцы"
+    },
+    {
+     "ID": "2626",
+     "VALUE": "Ржев"
+    },
+    {
+     "ID": "2628",
+     "VALUE": "Тихорецк"
+    },
+    {
+     "ID": "2630",
+     "VALUE": "Нерюнгри"
+    },
+    {
+     "ID": "2632",
+     "VALUE": "Алексин"
+    },
+    {
+     "ID": "2634",
+     "VALUE": "Ревда"
+    },
+    {
+     "ID": "2636",
+     "VALUE": "Александров"
+    },
+    {
+     "ID": "2638",
+     "VALUE": "Дмитров"
+    },
+    {
+     "ID": "2640",
+     "VALUE": "Мелеуз"
+    },
+    {
+     "ID": "2642",
+     "VALUE": "Сальск"
+    },
+    {
+     "ID": "2644",
+     "VALUE": "Лесосибирск"
+    },
+    {
+     "ID": "2646",
+     "VALUE": "Гусь-Хрустальный"
+    },
+    {
+     "ID": "2648",
+     "VALUE": "Чистополь"
+    },
+    {
+     "ID": "2650",
+     "VALUE": "Павлово"
+    },
+    {
+     "ID": "2652",
+     "VALUE": "Чехов"
+    },
+    {
+     "ID": "2654",
+     "VALUE": "Котлас"
+    },
+    {
+     "ID": "2656",
+     "VALUE": "Белебей"
+    },
+    {
+     "ID": "2658",
+     "VALUE": "Искитим"
+    },
+    {
+     "ID": "2660",
+     "VALUE": "Краснотурьинск"
+    },
+    {
+     "ID": "2662",
+     "VALUE": "Апатиты"
+    },
+    {
+     "ID": "2664",
+     "VALUE": "Всеволожск"
+    },
+    {
+     "ID": "2666",
+     "VALUE": "Прохладный"
+    },
+    {
+     "ID": "2668",
+     "VALUE": "Михайловка"
+    },
+    {
+     "ID": "2670",
+     "VALUE": "Анапа"
+    },
+    {
+     "ID": "2672",
+     "VALUE": "Тихвин"
+    },
+    {
+     "ID": "2674",
+     "VALUE": "Верхняя Пышма"
+    },
+    {
+     "ID": "2676",
+     "VALUE": "Свободный"
+    },
+    {
+     "ID": "2678",
+     "VALUE": "Ивантеевка"
+    },
+    {
+     "ID": "2680",
+     "VALUE": "Шуя"
+    },
+    {
+     "ID": "2682",
+     "VALUE": "Когалым"
+    },
+    {
+     "ID": "2684",
+     "VALUE": "Щёкино"
+    },
+    {
+     "ID": "2686",
+     "VALUE": "Жигулёвск"
+    },
+    {
+     "ID": "2688",
+     "VALUE": "Крымск"
+    },
+    {
+     "ID": "2690",
+     "VALUE": "Вязьма"
+    },
+    {
+     "ID": "2692",
+     "VALUE": "Горно-Алтайск"
+    },
+    {
+     "ID": "2694",
+     "VALUE": "Видное"
+    },
+    {
+     "ID": "2696",
+     "VALUE": "Арсеньев"
+    },
+    {
+     "ID": "2698",
+     "VALUE": "Избербаш"
+    },
+    {
+     "ID": "2700",
+     "VALUE": "Выкса"
+    },
+    {
+     "ID": "2702",
+     "VALUE": "Климовск"
+    },
+    {
+     "ID": "2704",
+     "VALUE": "Лиски"
+    },
+    {
+     "ID": "2706",
+     "VALUE": "Волжскк"
+    },
+    {
+     "ID": "2708",
+     "VALUE": "Краснокаменск"
+    },
+    {
+     "ID": "2710",
+     "VALUE": "Фрязино"
+    },
+    {
+     "ID": "2712",
+     "VALUE": "Узловая"
+    },
+    {
+     "ID": "2714",
+     "VALUE": "Лыткарино"
+    },
+    {
+     "ID": "2716",
+     "VALUE": "Нягань"
+    },
+    {
+     "ID": "2718",
+     "VALUE": "Рославль"
+    },
+    {
+     "ID": "2720",
+     "VALUE": "Геленджик"
+    },
+    {
+     "ID": "2722",
+     "VALUE": "Боровичи"
+    },
+    {
+     "ID": "2724",
+     "VALUE": "Тимашёвск"
+    },
+    {
+     "ID": "2726",
+     "VALUE": "Белореченск"
+    },
+    {
+     "ID": "2728",
+     "VALUE": "Солнечногорск"
+    },
+    {
+     "ID": "2730",
+     "VALUE": "Назарово"
+    },
+    {
+     "ID": "2732",
+     "VALUE": "Кириши"
+    },
+    {
+     "ID": "2734",
+     "VALUE": "Черемхово"
+    },
+    {
+     "ID": "2736",
+     "VALUE": "Краснокамск"
+    },
+    {
+     "ID": "2738",
+     "VALUE": "Лесной"
+    },
+    {
+     "ID": "2740",
+     "VALUE": "Вышний Волочёк"
+    },
+    {
+     "ID": "2742",
+     "VALUE": "Бугуруслан"
+    },
+    {
+     "ID": "2744",
+     "VALUE": "Берёзовский"
+    },
+    {
+     "ID": "2746",
+     "VALUE": "Балахна"
+    },
+    {
+     "ID": "2748",
+     "VALUE": "Ливны"
+    },
+    {
+     "ID": "2750",
+     "VALUE": "Североморск"
+    },
+    {
+     "ID": "2752",
+     "VALUE": "Саяногорск"
+    },
+    {
+     "ID": "2754",
+     "VALUE": "Кимры"
+    },
+    {
+     "ID": "2756",
+     "VALUE": "Мегион"
+    },
+    {
+     "ID": "2758",
+     "VALUE": "Кизляр"
+    },
+    {
+     "ID": "2760",
+     "VALUE": "Урус-Мартан"
+    },
+    {
+     "ID": "2762",
+     "VALUE": "Снежинск"
+    },
+    {
+     "ID": "2764",
+     "VALUE": "Кингисепп"
+    },
+    {
+     "ID": "2766",
+     "VALUE": "Заринск"
+    },
+    {
+     "ID": "2768",
+     "VALUE": "Курганинск"
+    },
+    {
+     "ID": "2770",
+     "VALUE": "Шелехов"
+    },
+    {
+     "ID": "2772",
+     "VALUE": "Можга"
+    },
+    {
+     "ID": "2774",
+     "VALUE": "Сертолово"
+    },
+    {
+     "ID": "2776",
+     "VALUE": "Ярцево"
+    },
+    {
+     "ID": "2778",
+     "VALUE": "Шали"
+    },
+    {
+     "ID": "2780",
+     "VALUE": "Отрадный"
+    },
+    {
+     "ID": "2782",
+     "VALUE": "Торжок"
+    },
+    {
+     "ID": "2784",
+     "VALUE": "Рузаевка"
+    },
+    {
+     "ID": "2786",
+     "VALUE": "Волхов"
+    },
+    {
+     "ID": "2788",
+     "VALUE": "Куйбышев"
+    },
+    {
+     "ID": "2790",
+     "VALUE": "Дзержинский"
+    },
+    {
+     "ID": "2792",
+     "VALUE": "Грязи"
+    },
+    {
+     "ID": "2794",
+     "VALUE": "Чусовой"
+    },
+    {
+     "ID": "2796",
+     "VALUE": "Надым"
+    },
+    {
+     "ID": "2798",
+     "VALUE": "Верхняя Салда"
+    },
+    {
+     "ID": "2800",
+     "VALUE": "Сафоново"
+    },
+    {
+     "ID": "2802",
+     "VALUE": "Осинники"
+    },
+    {
+     "ID": "2804",
+     "VALUE": "Кольчугино"
+    },
+    {
+     "ID": "2806",
+     "VALUE": "Гудермес"
+    },
+    {
+     "ID": "2808",
+     "VALUE": "Канаш"
+    },
+    {
+     "ID": "2810",
+     "VALUE": "Рассказово"
+    },
+    {
+     "ID": "2812",
+     "VALUE": "Сатка"
+    },
+    {
+     "ID": "2814",
+     "VALUE": "Мончегорск"
+    },
+    {
+     "ID": "2816",
+     "VALUE": "Усть-Кут"
+    },
+    {
+     "ID": "2818",
+     "VALUE": "Тулун"
+    },
+    {
+     "ID": "2820",
+     "VALUE": "Красное Село"
+    },
+    {
+     "ID": "2822",
+     "VALUE": "Шебекино"
+    },
+    {
+     "ID": "2824",
+     "VALUE": "Спасск-Дальний"
+    },
+    {
+     "ID": "2826",
+     "VALUE": "Камень-на-Оби"
+    },
+    {
+     "ID": "2828",
+     "VALUE": "Белая Калитва"
+    },
+    {
+     "ID": "2830",
+     "VALUE": "Печора"
+    },
+    {
+     "ID": "2832",
+     "VALUE": "Чебаркуль"
+    },
+    {
+     "ID": "2834",
+     "VALUE": "Радужный"
+    },
+    {
+     "ID": "2836",
+     "VALUE": "Усть-Лабинск"
+    },
+    {
+     "ID": "2838",
+     "VALUE": "Мценск"
+    },
+    {
+     "ID": "2840",
+     "VALUE": "Мыски"
+    },
+    {
+     "ID": "2842",
+     "VALUE": "Ломоносов"
+    },
+    {
+     "ID": "2844",
+     "VALUE": "Кронштадт"
+    },
+    {
+     "ID": "2846",
+     "VALUE": "Амурск"
+    },
+    {
+     "ID": "2848",
+     "VALUE": "Курчатов"
+    },
+    {
+     "ID": "2850",
+     "VALUE": "Качканар"
+    },
+    {
+     "ID": "2852",
+     "VALUE": "Салехард"
+    },
+    {
+     "ID": "2854",
+     "VALUE": "Ефремов"
+    },
+    {
+     "ID": "2856",
+     "VALUE": "Стрежевой"
+    },
+    {
+     "ID": "2858",
+     "VALUE": "Аксай"
+    },
+    {
+     "ID": "2860",
+     "VALUE": "Переславль-Залесский"
+    },
+    {
+     "ID": "2862",
+     "VALUE": "Ахтубинск"
+    },
+    {
+     "ID": "2864",
+     "VALUE": "Кашира"
+    },
+    {
+     "ID": "2866",
+     "VALUE": "Заинск"
+    },
+    {
+     "ID": "2868",
+     "VALUE": "Советск"
+    },
+    {
+     "ID": "2870",
+     "VALUE": "Пугачёв"
+    },
+    {
+     "ID": "2872",
+     "VALUE": "Лангепас"
+    },
+    {
+     "ID": "2874",
+     "VALUE": "Бирск"
+    },
+    {
+     "ID": "2876",
+     "VALUE": "Урюпинск"
+    },
+    {
+     "ID": "2878",
+     "VALUE": "Моршанск"
+    },
+    {
+     "ID": "2880",
+     "VALUE": "Пыть-Ях"
+    },
+    {
+     "ID": "2882",
+     "VALUE": "Конаково"
+    },
+    {
+     "ID": "2884",
+     "VALUE": "Ртищево"
+    },
+    {
+     "ID": "2886",
+     "VALUE": "Вязники"
+    },
+    {
+     "ID": "2888",
+     "VALUE": "Кореновск"
+    },
+    {
+     "ID": "2890",
+     "VALUE": "Усинск"
+    },
+    {
+     "ID": "2892",
+     "VALUE": "Тутаев"
+    },
+    {
+     "ID": "2894",
+     "VALUE": "Красный Сулин"
+    },
+    {
+     "ID": "2896",
+     "VALUE": "Саянск"
+    },
+    {
+     "ID": "2898",
+     "VALUE": "Большой Камень"
+    },
+    {
+     "ID": "2900",
+     "VALUE": "Новодвинск"
+    },
+    {
+     "ID": "2902",
+     "VALUE": "Новозыбков"
+    },
+    {
+     "ID": "2904",
+     "VALUE": "Людиново"
+    },
+    {
+     "ID": "2906",
+     "VALUE": "Изобильный"
+    },
+    {
+     "ID": "2908",
+     "VALUE": "Мариинск"
+    },
+    {
+     "ID": "2910",
+     "VALUE": "Черняховск"
+    },
+    {
+     "ID": "2912",
+     "VALUE": "Заволжье"
+    },
+    {
+     "ID": "2914",
+     "VALUE": "Апшеронск"
+    },
+    {
+     "ID": "2916",
+     "VALUE": "Коряжма"
+    },
+    {
+     "ID": "2918",
+     "VALUE": "Каменка"
+    },
+    {
+     "ID": "2920",
+     "VALUE": "Елизово"
+    },
+    {
+     "ID": "2922",
+     "VALUE": "Фролово"
+    },
+    {
+     "ID": "2924",
+     "VALUE": "Урай"
+    },
+    {
+     "ID": "2926",
+     "VALUE": "Тосно"
+    },
+    {
+     "ID": "2928",
+     "VALUE": "Алексеевка"
+    },
+    {
+     "ID": "2930",
+     "VALUE": "Коркино"
+    },
+    {
+     "ID": "2932",
+     "VALUE": "Кыштым"
+    },
+    {
+     "ID": "2934",
+     "VALUE": "Лянтор"
+    },
+    {
+     "ID": "2936",
+     "VALUE": "Моздок"
+    },
+    {
+     "ID": "2938",
+     "VALUE": "Реж"
+    },
+    {
+     "ID": "2940",
+     "VALUE": "Партизанск"
+    },
+    {
+     "ID": "2942",
+     "VALUE": "Шарыпово"
+    },
+    {
+     "ID": "2944",
+     "VALUE": "Светлоград"
+    },
+    {
+     "ID": "2946",
+     "VALUE": "Сокол"
+    },
+    {
+     "ID": "2948",
+     "VALUE": "Ирбит"
+    },
+    {
+     "ID": "2950",
+     "VALUE": "Гай"
+    },
+    {
+     "ID": "2952",
+     "VALUE": "Алатырь"
+    },
+    {
+     "ID": "2954",
+     "VALUE": "Алапаевск"
+    },
+    {
+     "ID": "2956",
+     "VALUE": "Темрюк"
+    },
+    {
+     "ID": "2958",
+     "VALUE": "Южноуральск"
+    },
+    {
+     "ID": "2960",
+     "VALUE": "Учалы"
+    },
+    {
+     "ID": "2962",
+     "VALUE": "Вичуга"
+    },
+    {
+     "ID": "2964",
+     "VALUE": "Дальнегорск"
+    },
+    {
+     "ID": "2966",
+     "VALUE": "Протвино"
+    },
+    {
+     "ID": "2968",
+     "VALUE": "Мирный"
+    },
+    {
+     "ID": "2970",
+     "VALUE": "Нижнеудинск"
+    },
+    {
+     "ID": "2972",
+     "VALUE": "Лесозаводск"
+    },
+    {
+     "ID": "2974",
+     "VALUE": "Баксан"
+    },
+    {
+     "ID": "2976",
+     "VALUE": "Беслан"
+    },
+    {
+     "ID": "2978",
+     "VALUE": "Сестрорецк"
+    },
+    {
+     "ID": "2980",
+     "VALUE": "Ялуторовск"
+    },
+    {
+     "ID": "2982",
+     "VALUE": "Миллерово"
+    },
+    {
+     "ID": "2984",
+     "VALUE": "Луга"
+    },
+    {
+     "ID": "2986",
+     "VALUE": "Кизилюрт"
+    },
+    {
+     "ID": "2988",
+     "VALUE": "Фурманов"
+    },
+    {
+     "ID": "2990",
+     "VALUE": "Краснознаменск"
+    },
+    {
+     "ID": "2992",
+     "VALUE": "Зеленокумск"
+    },
+    {
+     "ID": "2994",
+     "VALUE": "Кулебаки"
+    },
+    {
+     "ID": "2996",
+     "VALUE": "Добрянка"
+    },
+    {
+     "ID": "2998",
+     "VALUE": "Кандалакша"
+    },
+    {
+     "ID": "3000",
+     "VALUE": "Тында"
+    },
+    {
+     "ID": "3002",
+     "VALUE": "Тайшет"
+    },
+    {
+     "ID": "3004",
+     "VALUE": "Тавда"
+    },
+    {
+     "ID": "3006",
+     "VALUE": "Сердобск"
+    },
+    {
+     "ID": "3008",
+     "VALUE": "Валуйки"
+    },
+    {
+     "ID": "3010",
+     "VALUE": "Гулькевичи"
+    },
+    {
+     "ID": "3012",
+     "VALUE": "Вятские Поляны"
+    },
+    {
+     "ID": "3014",
+     "VALUE": "Истра"
+    },
+    {
+     "ID": "3016",
+     "VALUE": "Тейково"
+    },
+    {
+     "ID": "3018",
+     "VALUE": "Абинск"
+    },
+    {
+     "ID": "3020",
+     "VALUE": "Азнакаево"
+    },
+    {
+     "ID": "3022",
+     "VALUE": "Новокубанск"
+    },
+    {
+     "ID": "3024",
+     "VALUE": "Сухой Лог"
+    },
+    {
+     "ID": "3026",
+     "VALUE": "Углич"
+    },
+    {
+     "ID": "3028",
+     "VALUE": "Кинель"
+    },
+    {
+     "ID": "3030",
+     "VALUE": "Югорск"
+    },
+    {
+     "ID": "3032",
+     "VALUE": "Слободской"
+    },
+    {
+     "ID": "3034",
+     "VALUE": "Острогожск"
+    },
+    {
+     "ID": "3036",
+     "VALUE": "Трёхгорный"
+    },
+    {
+     "ID": "3038",
+     "VALUE": "Сланцы"
+    },
+    {
+     "ID": "3040",
+     "VALUE": "Корсаков"
+    },
+    {
+     "ID": "3042",
+     "VALUE": "Касимов"
+    },
+    {
+     "ID": "3044",
+     "VALUE": "Шумерля"
+    },
+    {
+     "ID": "3046",
+     "VALUE": "Муравленко"
+    },
+    {
+     "ID": "3048",
+     "VALUE": "Чернушка"
+    },
+    {
+     "ID": "3050",
+     "VALUE": "Юбилейный"
+    },
+    {
+     "ID": "3052",
+     "VALUE": "Сосновоборск"
+    },
+    {
+     "ID": "3054",
+     "VALUE": "Кушва"
+    },
+    {
+     "ID": "3056",
+     "VALUE": "Кондопога"
+    },
+    {
+     "ID": "3058",
+     "VALUE": "Артёмовский"
+    },
+    {
+     "ID": "3060",
+     "VALUE": "Шатура"
+    },
+    {
+     "ID": "3062",
+     "VALUE": "Щербинка"
+    },
+    {
+     "ID": "3064",
+     "VALUE": "Благодарный"
+    },
+    {
+     "ID": "3066",
+     "VALUE": "Балтийск"
+    },
+    {
+     "ID": "3068",
+     "VALUE": "Нововоронеж"
+    },
+    {
+     "ID": "3070",
+     "VALUE": "Нурлат"
+    },
+    {
+     "ID": "3072",
+     "VALUE": "Зима"
+    },
+    {
+     "ID": "3074",
+     "VALUE": "Славгород"
+    },
+    {
+     "ID": "3076",
+     "VALUE": "Котельники"
+    },
+    {
+     "ID": "3078",
+     "VALUE": "Приморско-Ахтарск"
+    },
+    {
+     "ID": "3080",
+     "VALUE": "Старая Русса"
+    },
+    {
+     "ID": "3082",
+     "VALUE": "Инта"
+    },
+    {
+     "ID": "3084",
+     "VALUE": "Аша"
+    },
+    {
+     "ID": "3086",
+     "VALUE": "Богородицк"
+    },
+    {
+     "ID": "3088",
+     "VALUE": "Котовск"
+    },
+    {
+     "ID": "3090",
+     "VALUE": "Ростов"
+    },
+    {
+     "ID": "3092",
+     "VALUE": "Богданович"
+    },
+    {
+     "ID": "3094",
+     "VALUE": "Гагарин"
+    },
+    {
+     "ID": "3096",
+     "VALUE": "Нарткала"
+    },
+    {
+     "ID": "3098",
+     "VALUE": "Великий Устюг"
+    },
+    {
+     "ID": "3100",
+     "VALUE": "Маркс"
+    },
+    {
+     "ID": "3102",
+     "VALUE": "Можайск"
+    },
+    {
+     "ID": "3104",
+     "VALUE": "Борзя"
+    },
+    {
+     "ID": "3106",
+     "VALUE": "Ликино-Дулёво"
+    },
+    {
+     "ID": "3108",
+     "VALUE": "Дюртюли"
+    },
+    {
+     "ID": "3110",
+     "VALUE": "Петровск"
+    },
+    {
+     "ID": "3112",
+     "VALUE": "Карабулак"
+    },
+    {
+     "ID": "3114",
+     "VALUE": "Малгобек"
+    },
+    {
+     "ID": "3116",
+     "VALUE": "Удомля"
+    },
+    {
+     "ID": "3118",
+     "VALUE": "Холмск"
+    },
+    {
+     "ID": "3120",
+     "VALUE": "Кудымкар"
+    },
+    {
+     "ID": "3122",
+     "VALUE": "Городец"
+    },
+    {
+     "ID": "3124",
+     "VALUE": "Дагестанские Огни"
+    },
+    {
+     "ID": "3126",
+     "VALUE": "Усть-Джегута"
+    },
+    {
+     "ID": "3128",
+     "VALUE": "Верхний Уфалей"
+    },
+    {
+     "ID": "3130",
+     "VALUE": "Малоярославец"
+    },
+    {
+     "ID": "3132",
+     "VALUE": "Скопин"
+    },
+    {
+     "ID": "3134",
+     "VALUE": "Барабинск"
+    },
+    {
+     "ID": "3136",
+     "VALUE": "Еманжелинск"
+    },
+    {
+     "ID": "3138",
+     "VALUE": "Сорочинск"
+    },
+    {
+     "ID": "3140",
+     "VALUE": "Горячий Ключ"
+    },
+    {
+     "ID": "3142",
+     "VALUE": "Киржач"
+    },
+    {
+     "ID": "3144",
+     "VALUE": "Луховицы"
+    },
+    {
+     "ID": "3146",
+     "VALUE": "Десногорск"
+    },
+    {
+     "ID": "3148",
+     "VALUE": "Сегежа"
+    },
+    {
+     "ID": "3150",
+     "VALUE": "Аргун"
+    },
+    {
+     "ID": "3152",
+     "VALUE": "Алейск"
+    },
+    {
+     "ID": "3154",
+     "VALUE": "Дятьково"
+    },
+    {
+     "ID": "3156",
+     "VALUE": "Кохма"
+    },
+    {
+     "ID": "3158",
+     "VALUE": "Знаменск"
+    },
+    {
+     "ID": "3160",
+     "VALUE": "Дедовск"
+    },
+    {
+     "ID": "3162",
+     "VALUE": "Североуральск"
+    },
+    {
+     "ID": "3164",
+     "VALUE": "Карталы"
+    },
+    {
+     "ID": "3166",
+     "VALUE": "Карпинск"
+    },
+    {
+     "ID": "3168",
+     "VALUE": "Карасук"
+    },
+    {
+     "ID": "3170",
+     "VALUE": "Кировск"
+    },
+    {
+     "ID": "3172",
+     "VALUE": "Топки"
+    },
+    {
+     "ID": "3174",
+     "VALUE": "Кимовск"
+    },
+    {
+     "ID": "3176",
+     "VALUE": "Костомукша"
+    },
+    {
+     "ID": "3178",
+     "VALUE": "Дивногорск"
+    },
+    {
+     "ID": "3180",
+     "VALUE": "Гусев"
+    },
+    {
+     "ID": "3182",
+     "VALUE": "Похвистнево"
+    },
+    {
+     "ID": "3184",
+     "VALUE": "Сасово"
+    },
+    {
+     "ID": "3186",
+     "VALUE": "Сосногорск"
+    },
+    {
+     "ID": "3188",
+     "VALUE": "Советская Гавань"
+    },
+    {
+     "ID": "3190",
+     "VALUE": "Нефтекумск"
+    },
+    {
+     "ID": "3192",
+     "VALUE": "Морозовск"
+    },
+    {
+     "ID": "3194",
+     "VALUE": "Полысаево"
+    },
+    {
+     "ID": "3196",
+     "VALUE": "Дальнереченск"
+    },
+    {
+     "ID": "3198",
+     "VALUE": "Губаха"
+    },
+    {
+     "ID": "3200",
+     "VALUE": "Медногорск"
+    },
+    {
+     "ID": "3202",
+     "VALUE": "Октябрьск"
+    },
+    {
+     "ID": "3204",
+     "VALUE": "Бутурлиновка"
+    },
+    {
+     "ID": "3206",
+     "VALUE": "Янаул"
+    },
+    {
+     "ID": "3208",
+     "VALUE": "Лабытнанги"
+    },
+    {
+     "ID": "3210",
+     "VALUE": "Калач-на-Дону"
+    },
+    {
+     "ID": "3212",
+     "VALUE": "Камышлов"
+    },
+    {
+     "ID": "3214",
+     "VALUE": "Зерноград"
+    },
+    {
+     "ID": "3216",
+     "VALUE": "Уварово"
+    },
+    {
+     "ID": "3218",
+     "VALUE": "Новоалександровск"
+    },
+    {
+     "ID": "3220",
+     "VALUE": "Майский"
+    },
+    {
+     "ID": "3222",
+     "VALUE": "Тара"
+    },
+    {
+     "ID": "3224",
+     "VALUE": "Новопавловск"
+    },
+    {
+     "ID": "3226",
+     "VALUE": "Советский"
+    },
+    {
+     "ID": "3228",
+     "VALUE": "Балабаново"
+    },
+    {
+     "ID": "3230",
+     "VALUE": "Родники"
+    },
+    {
+     "ID": "3232",
+     "VALUE": "Соль-Илецк"
+    },
+    {
+     "ID": "3234",
+     "VALUE": "Красноармейск"
+    },
+    {
+     "ID": "3236",
+     "VALUE": "Унеча"
+    },
+    {
+     "ID": "3238",
+     "VALUE": "Кувандык"
+    },
+    {
+     "ID": "3240",
+     "VALUE": "Обь"
+    },
+    {
+     "ID": "3242",
+     "VALUE": "Железногорск-Илимский"
+    },
+    {
+     "ID": "3244",
+     "VALUE": "Татарск"
+    },
+    {
+     "ID": "3246",
+     "VALUE": "Ипатово"
+    },
+    {
+     "ID": "3248",
+     "VALUE": "Семилуки"
+    },
+    {
+     "ID": "3250",
+     "VALUE": "Исилькуль"
+    },
+    {
+     "ID": "3252",
+     "VALUE": "Озёры"
+    },
+    {
+     "ID": "3254",
+     "VALUE": "Буй"
+    },
+    {
+     "ID": "3256",
+     "VALUE": "Заводоуковск"
+    },
+    {
+     "ID": "3258",
+     "VALUE": "Аткарск"
+    },
+    {
+     "ID": "3260",
+     "VALUE": "Асино"
+    },
+    {
+     "ID": "3262",
+     "VALUE": "Киреевск"
+    },
+    {
+     "ID": "3264",
+     "VALUE": "Богородск"
+    },
+    {
+     "ID": "3266",
+     "VALUE": "Тайга"
+    },
+    {
+     "ID": "3268",
+     "VALUE": "Невьянск"
+    },
+    {
+     "ID": "3270",
+     "VALUE": "Павловск"
+    },
+    {
+     "ID": "3272",
+     "VALUE": "Зея"
+    },
+    {
+     "ID": "3274",
+     "VALUE": "Котельнич"
+    },
+    {
+     "ID": "3276",
+     "VALUE": "Красноуральск"
+    },
+    {
+     "ID": "3278",
+     "VALUE": "Ленск"
+    },
+    {
+     "ID": "3280",
+     "VALUE": "Северобайкальск"
+    },
+    {
+     "ID": "3282",
+     "VALUE": "Гурьевск"
+    },
+    {
+     "ID": "3284",
+     "VALUE": "Зарайск"
+    },
+    {
+     "ID": "3286",
+     "VALUE": "Гусиноозёрск"
+    },
+    {
+     "ID": "3288",
+     "VALUE": "Бежецк"
+    },
+    {
+     "ID": "3290",
+     "VALUE": "Железноводск"
+    },
+    {
+     "ID": "3292",
+     "VALUE": "Семёнов"
+    },
+    {
+     "ID": "3294",
+     "VALUE": "Колпашево"
+    },
+    {
+     "ID": "3296",
+     "VALUE": "Котово"
+    },
+    {
+     "ID": "3298",
+     "VALUE": "Давлеканово"
+    },
+    {
+     "ID": "3300",
+     "VALUE": "Калачинск"
+    },
+    {
+     "ID": "3302",
+     "VALUE": "Строитель"
+    },
+    {
+     "ID": "3304",
+     "VALUE": "Вельск"
+    },
+    {
+     "ID": "3306",
+     "VALUE": "Семикаракорск"
+    },
+    {
+     "ID": "3308",
+     "VALUE": "Отрадное"
+    },
+    {
+     "ID": "3310",
+     "VALUE": "Карачаевск"
+    },
+    {
+     "ID": "3312",
+     "VALUE": "Фокино"
+    },
+    {
+     "ID": "3314",
+     "VALUE": "Шарья"
+    },
+    {
+     "ID": "3316",
+     "VALUE": "Омутнинск"
+    },
+    {
+     "ID": "3318",
+     "VALUE": "Усть-Катав"
+    },
+    {
+     "ID": "3320",
+     "VALUE": "Бологое"
+    },
+    {
+     "ID": "3322",
+     "VALUE": "Волоколамск"
+    },
+    {
+     "ID": "3324",
+     "VALUE": "Губкинский"
+    },
+    {
+     "ID": "3326",
+     "VALUE": "Таштагол"
+    },
+    {
+     "ID": "3328",
+     "VALUE": "Оленегорск"
+    },
+    {
+     "ID": "3330",
+     "VALUE": "Оха"
+    },
+    {
+     "ID": "3332",
+     "VALUE": "Кубинка"
+    },
+    {
+     "ID": "3334",
+     "VALUE": "Вилючинск"
+    },
+    {
+     "ID": "3336",
+     "VALUE": "Нелидово"
+    },
+    {
+     "ID": "3338",
+     "VALUE": "Нерехта"
+    },
+    {
+     "ID": "3340",
+     "VALUE": "Николаевск-на-Амуре"
+    },
+    {
+     "ID": "3342",
+     "VALUE": "Верещагино"
+    },
+    {
+     "ID": "3344",
+     "VALUE": "Нижний Ломов"
+    },
+    {
+     "ID": "3346",
+     "VALUE": "Лосино-Петровский"
+    },
+    {
+     "ID": "3348",
+     "VALUE": "Лермонтов"
+    },
+    {
+     "ID": "3350",
+     "VALUE": "Вихоревка"
+    },
+    {
+     "ID": "3352",
+     "VALUE": "Никольск"
+    },
+    {
+     "ID": "3354",
+     "VALUE": "Оса"
+    },
+    {
+     "ID": "3356",
+     "VALUE": "Зверево"
+    },
+    {
+     "ID": "3358",
+     "VALUE": "Няндома"
+    },
+    {
+     "ID": "3360",
+     "VALUE": "Дудинка"
+    },
+    {
+     "ID": "3362",
+     "VALUE": "Электрогорск"
+    },
+    {
+     "ID": "3364",
+     "VALUE": "Бавлы"
+    },
+    {
+     "ID": "3366",
+     "VALUE": "Менделеевск"
+    },
+    {
+     "ID": "3368",
+     "VALUE": "Кировград"
+    },
+    {
+     "ID": "3370",
+     "VALUE": "Калтан"
+    },
+    {
+     "ID": "3372",
+     "VALUE": "Лысково"
+    },
+    {
+     "ID": "3374",
+     "VALUE": "Старая Купавна"
+    },
+    {
+     "ID": "3376",
+     "VALUE": "Куровское"
+    },
+    {
+     "ID": "3378",
+     "VALUE": "Ряжск"
+    },
+    {
+     "ID": "3380",
+     "VALUE": "Остров"
+    },
+    {
+     "ID": "3382",
+     "VALUE": "Хотьково"
+    },
+    {
+     "ID": "3384",
+     "VALUE": "Нижняя Тура"
+    },
+    {
+     "ID": "3386",
+     "VALUE": "Хадыженск"
+    },
+    {
+     "ID": "3388",
+     "VALUE": "Пикалёво"
+    },
+    {
+     "ID": "3390",
+     "VALUE": "Тогучин"
+    },
+    {
+     "ID": "3392",
+     "VALUE": "Льгов"
+    },
+    {
+     "ID": "3394",
+     "VALUE": "Ершов"
+    },
+    {
+     "ID": "3396",
+     "VALUE": "Сергач"
+    },
+    {
+     "ID": "3398",
+     "VALUE": "Светлый"
+    },
+    {
+     "ID": "3400",
+     "VALUE": "Онега"
+    },
+    {
+     "ID": "3402",
+     "VALUE": "Шахунья"
+    },
+    {
+     "ID": "3404",
+     "VALUE": "Ковылкино"
+    },
+    {
+     "ID": "3406",
+     "VALUE": "Нарьян-Мар"
+    },
+    {
+     "ID": "3408",
+     "VALUE": "Алдан"
+    },
+    {
+     "ID": "3410",
+     "VALUE": "Рошаль"
+    },
+    {
+     "ID": "3412",
+     "VALUE": "Козьмодемьянск"
+    },
+    {
+     "ID": "3414",
+     "VALUE": "Бронницы"
+    },
+    {
+     "ID": "3416",
+     "VALUE": "Данков"
+    },
+    {
+     "ID": "3418",
+     "VALUE": "Лодейное Поле"
+    },
+    {
+     "ID": "3420",
+     "VALUE": "Боготол"
+    },
+    {
+     "ID": "3422",
+     "VALUE": "Тырныауз"
+    },
+    {
+     "ID": "3424",
+     "VALUE": "Лебедянь"
+    },
+    {
+     "ID": "3426",
+     "VALUE": "Черноголовка"
+    },
+    {
+     "ID": "3428",
+     "VALUE": "Бакал"
+    },
+    {
+     "ID": "3430",
+     "VALUE": "Алагир"
+    },
+    {
+     "ID": "3432",
+     "VALUE": "Абдулино"
+    },
+    {
+     "ID": "3434",
+     "VALUE": "Сысерть"
+    },
+    {
+     "ID": "3436",
+     "VALUE": "Суровикино"
+    },
+    {
+     "ID": "3438",
+     "VALUE": "Райчихинск"
+    },
+    {
+     "ID": "3440",
+     "VALUE": "Котельниково"
+    },
+    {
+     "ID": "3442",
+     "VALUE": "Тарко-Сале"
+    },
+    {
+     "ID": "3444",
+     "VALUE": "Среднеуральск"
+    },
+    {
+     "ID": "3446",
+     "VALUE": "Буинск"
+    },
+    {
+     "ID": "3448",
+     "VALUE": "Белоярский"
+    },
+    {
+     "ID": "3450",
+     "VALUE": "Кизел"
+    },
+    {
+     "ID": "3452",
+     "VALUE": "Пролетарск"
+    },
+    {
+     "ID": "3454",
+     "VALUE": "Коммунар"
+    },
+    {
+     "ID": "3456",
+     "VALUE": "Пущино"
+    },
+    {
+     "ID": "3458",
+     "VALUE": "Электроугли"
+    },
+    {
+     "ID": "3460",
+     "VALUE": "Калач"
+    },
+    {
+     "ID": "3462",
+     "VALUE": "Кяхта"
+    },
+    {
+     "ID": "3464",
+     "VALUE": "Шимановск"
+    },
+    {
+     "ID": "3466",
+     "VALUE": "Бобров"
+    },
+    {
+     "ID": "3468",
+     "VALUE": "Карачев"
+    },
+    {
+     "ID": "3470",
+     "VALUE": "Юрьев-Польский"
+    },
+    {
+     "ID": "3472",
+     "VALUE": "Новый Оскол"
+    },
+    {
+     "ID": "3474",
+     "VALUE": "Собинка"
+    },
+    {
+     "ID": "3476",
+     "VALUE": "Черепаново"
+    },
+    {
+     "ID": "3478",
+     "VALUE": "Никольское"
+    },
+    {
+     "ID": "3480",
+     "VALUE": "Новомичуринск"
+    },
+    {
+     "ID": "3482",
+     "VALUE": "Агрыз"
+    },
+    {
+     "ID": "3484",
+     "VALUE": "Сортавала"
+    },
+    {
+     "ID": "3486",
+     "VALUE": "Терек"
+    },
+    {
+     "ID": "3488",
+     "VALUE": "Нытва"
+    },
+    {
+     "ID": "3490",
+     "VALUE": "Стародуб"
+    },
+    {
+     "ID": "3492",
+     "VALUE": "Суворов"
+    },
+    {
+     "ID": "3494",
+     "VALUE": "Приозерск"
+    },
+    {
+     "ID": "3496",
+     "VALUE": "Ковдор"
+    },
+    {
+     "ID": "3498",
+     "VALUE": "Куса"
+    },
+    {
+     "ID": "3500",
+     "VALUE": "Ардон"
+    },
+    {
+     "ID": "3502",
+     "VALUE": "Енисейск"
+    },
+    {
+     "ID": "3504",
+     "VALUE": "Усмань"
+    },
+    {
+     "ID": "3506",
+     "VALUE": "Нефтегорск"
+    },
+    {
+     "ID": "3508",
+     "VALUE": "Подпорожье"
+    },
+    {
+     "ID": "3510",
+     "VALUE": "Яровое"
+    },
+    {
+     "ID": "3512",
+     "VALUE": "Петровск-Забайкальский"
+    },
+    {
+     "ID": "3514",
+     "VALUE": "Инза"
+    },
+    {
+     "ID": "3516",
+     "VALUE": "Слюдянка"
+    },
+    {
+     "ID": "3518",
+     "VALUE": "Апрелевка"
+    },
+    {
+     "ID": "3520",
+     "VALUE": "Рыбное"
+    },
+    {
+     "ID": "3522",
+     "VALUE": "Талица"
+    },
+    {
+     "ID": "3524",
+     "VALUE": "Жуковка"
+    },
+    {
+     "ID": "3526",
+     "VALUE": "Харабали"
+    },
+    {
+     "ID": "3528",
+     "VALUE": "Козельск"
+    },
+    {
+     "ID": "3530",
+     "VALUE": "Арск"
+    },
+    {
+     "ID": "3532",
+     "VALUE": "Осташков"
+    },
+    {
+     "ID": "3534",
+     "VALUE": "Туринск"
+    },
+    {
+     "ID": "3536",
+     "VALUE": "Чегем"
+    },
+    {
+     "ID": "3538",
+     "VALUE": "Нижняя Салда"
+    },
+    {
+     "ID": "3540",
+     "VALUE": "Почеп"
+    },
+    {
+     "ID": "3542",
+     "VALUE": "Сельцо"
+    },
+    {
+     "ID": "3544",
+     "VALUE": "Константиновск"
+    },
+    {
+     "ID": "3546",
+     "VALUE": "Новоаннинский"
+    },
+    {
+     "ID": "3548",
+     "VALUE": "Шумиха"
+    },
+    {
+     "ID": "3550",
+     "VALUE": "Гаврилов-Ям"
+    },
+    {
+     "ID": "3552",
+     "VALUE": "Ивдель"
+    },
+    {
+     "ID": "3554",
+     "VALUE": "Покров"
+    },
+    {
+     "ID": "3556",
+     "VALUE": "Баймак"
+    },
+    {
+     "ID": "3558",
+     "VALUE": "Поворино"
+    },
+    {
+     "ID": "3560",
+     "VALUE": "Катав-Ивановск"
+    },
+    {
+     "ID": "3562",
+     "VALUE": "Мантурово"
+    },
+    {
+     "ID": "3564",
+     "VALUE": "Голицыно"
+    },
+    {
+     "ID": "3566",
+     "VALUE": "Бородино"
+    },
+    {
+     "ID": "3568",
+     "VALUE": "Московский"
+    },
+    {
+     "ID": "3570",
+     "VALUE": "Межгорье"
+    },
+    {
+     "ID": "3572",
+     "VALUE": "Галич"
+    },
+    {
+     "ID": "3574",
+     "VALUE": "Пласт"
+    },
+    {
+     "ID": "3576",
+     "VALUE": "Полярный"
+    },
+    {
+     "ID": "3578",
+     "VALUE": "Яранск"
+    },
+    {
+     "ID": "3580",
+     "VALUE": "Кирсанов"
+    },
+    {
+     "ID": "3582",
+     "VALUE": "Бикин"
+    },
+    {
+     "ID": "3584",
+     "VALUE": "Барыш"
+    },
+    {
+     "ID": "3586",
+     "VALUE": "Красновишерск"
+    },
+    {
+     "ID": "3588",
+     "VALUE": "Абаза"
+    },
+    {
+     "ID": "3590",
+     "VALUE": "Волгореченск"
+    },
+    {
+     "ID": "3592",
+     "VALUE": "Куртамыш"
+    },
+    {
+     "ID": "3594",
+     "VALUE": "Покачи"
+    },
+    {
+     "ID": "3596",
+     "VALUE": "Щигры"
+    },
+    {
+     "ID": "3598",
+     "VALUE": "Новоузенск"
+    },
+    {
+     "ID": "3600",
+     "VALUE": "Касли"
+    },
+    {
+     "ID": "3602",
+     "VALUE": "Болотное"
+    },
+    {
+     "ID": "3604",
+     "VALUE": "Жирновск"
+    },
+    {
+     "ID": "3606",
+     "VALUE": "Ясногорск"
+    },
+    {
+     "ID": "3608",
+     "VALUE": "Приволжск"
+    },
+    {
+     "ID": "3610",
+     "VALUE": "Кондрово"
+    },
+    {
+     "ID": "3612",
+     "VALUE": "Бокситогорск"
+    },
+    {
+     "ID": "3614",
+     "VALUE": "Мензелинск"
+    },
+    {
+     "ID": "3616",
+     "VALUE": "Поронайск"
+    },
+    {
+     "ID": "3618",
+     "VALUE": "Калининск"
+    },
+    {
+     "ID": "3620",
+     "VALUE": "Навашино"
+    },
+    {
+     "ID": "3622",
+     "VALUE": "Звенигород"
+    },
+    {
+     "ID": "3624",
+     "VALUE": "Агидель"
+    },
+    {
+     "ID": "3626",
+     "VALUE": "Невель"
+    },
+    {
+     "ID": "3628",
+     "VALUE": "Сухиничи"
+    },
+    {
+     "ID": "3630",
+     "VALUE": "Камызяк"
+    },
+    {
+     "ID": "3632",
+     "VALUE": "Плавск"
+    },
+    {
+     "ID": "3634",
+     "VALUE": "Кашин"
+    },
+    {
+     "ID": "3636",
+     "VALUE": "Чудово"
+    },
+    {
+     "ID": "3638",
+     "VALUE": "Иланский"
+    },
+    {
+     "ID": "3640",
+     "VALUE": "Валдай"
+    },
+    {
+     "ID": "3642",
+     "VALUE": "Ясный"
+    },
+    {
+     "ID": "3644",
+     "VALUE": "Ужур"
+    },
+    {
+     "ID": "3646",
+     "VALUE": "Новоульяновск"
+    },
+    {
+     "ID": "3648",
+     "VALUE": "Краснослободск"
+    },
+    {
+     "ID": "3650",
+     "VALUE": "Палласовка"
+    },
+    {
+     "ID": "3652",
+     "VALUE": "Светогорск"
+    },
+    {
+     "ID": "3654",
+     "VALUE": "Пестово"
+    },
+    {
+     "ID": "3656",
+     "VALUE": "Данилов"
+    },
+    {
+     "ID": "3658",
+     "VALUE": "Заполярный"
+    },
+    {
+     "ID": "3660",
+     "VALUE": "Лакинск"
+    },
+    {
+     "ID": "3662",
+     "VALUE": "Рыльск"
+    },
+    {
+     "ID": "3664",
+     "VALUE": "Медвежьегорск"
+    },
+    {
+     "ID": "3666",
+     "VALUE": "Грязовец"
+    },
+    {
+     "ID": "3668",
+     "VALUE": "Ленинск"
+    },
+    {
+     "ID": "3670",
+     "VALUE": "Дегтярск"
+    },
+    {
+     "ID": "3672",
+     "VALUE": "Купино"
+    },
+    {
+     "ID": "3674",
+     "VALUE": "Бодайбо"
+    },
+    {
+     "ID": "3676",
+     "VALUE": "Венёв"
+    },
+    {
+     "ID": "3678",
+     "VALUE": "Жердевка"
+    },
+    {
+     "ID": "3680",
+     "VALUE": "Меленки"
+    },
+    {
+     "ID": "3682",
+     "VALUE": "Петушки"
+    },
+    {
+     "ID": "3684",
+     "VALUE": "Полярные Зори"
+    },
+    {
+     "ID": "3686",
+     "VALUE": "Николаевск"
+    },
+    {
+     "ID": "3688",
+     "VALUE": "Цимлянск"
+    },
+    {
+     "ID": "3690",
+     "VALUE": "Александровск"
+    },
+    {
+     "ID": "3692",
+     "VALUE": "Трубчевск"
+    },
+    {
+     "ID": "3694",
+     "VALUE": "Очёр"
+    },
+    {
+     "ID": "3696",
+     "VALUE": "Нерчинск"
+    },
+    {
+     "ID": "3698",
+     "VALUE": "Лукоянов"
+    },
+    {
+     "ID": "3700",
+     "VALUE": "Карабаново"
+    },
+    {
+     "ID": "3702",
+     "VALUE": "Кодинск"
+    },
+    {
+     "ID": "3704",
+     "VALUE": "Белокуриха"
+    },
+    {
+     "ID": "3706",
+     "VALUE": "Емва"
+    },
+    {
+     "ID": "3708",
+     "VALUE": "Первомайск"
+    },
+    {
+     "ID": "3710",
+     "VALUE": "Вяземский"
+    },
+    {
+     "ID": "3712",
+     "VALUE": "Сим"
+    },
+    {
+     "ID": "3714",
+     "VALUE": "Мамадыш"
+    },
+    {
+     "ID": "3716",
+     "VALUE": "Красный Кут"
+    },
+    {
+     "ID": "3718",
+     "VALUE": "Струнино"
+    },
+    {
+     "ID": "3720",
+     "VALUE": "Дубовка"
+    },
+    {
+     "ID": "3722",
+     "VALUE": "Лагань"
+    },
+    {
+     "ID": "3724",
+     "VALUE": "Арамиль"
+    },
+    {
+     "ID": "3726",
+     "VALUE": "Южа"
+    },
+    {
+     "ID": "3728",
+     "VALUE": "Пересвет"
+    },
+    {
+     "ID": "3730",
+     "VALUE": "Катайск"
+    },
+    {
+     "ID": "3732",
+     "VALUE": "Гороховец"
+    },
+    {
+     "ID": "3734",
+     "VALUE": "Шилка"
+    },
+    {
+     "ID": "3736",
+     "VALUE": "Горняк"
+    },
+    {
+     "ID": "3738",
+     "VALUE": "Белёв"
+    },
+    {
+     "ID": "3740",
+     "VALUE": "Далматово"
+    },
+    {
+     "ID": "3742",
+     "VALUE": "Гвардейск"
+    },
+    {
+     "ID": "3744",
+     "VALUE": "Калязин"
+    },
+    {
+     "ID": "3746",
+     "VALUE": "Талдом"
+    },
+    {
+     "ID": "3748",
+     "VALUE": "Сясьстрой"
+    },
+    {
+     "ID": "3750",
+     "VALUE": "Свирск"
+    },
+    {
+     "ID": "3752",
+     "VALUE": "Байкальск"
+    },
+    {
+     "ID": "3754",
+     "VALUE": "Обоянь"
+    },
+    {
+     "ID": "3756",
+     "VALUE": "Руза"
+    },
+    {
+     "ID": "3758",
+     "VALUE": "Цивильск"
+    },
+    {
+     "ID": "3760",
+     "VALUE": "Ак-Довурак"
+    },
+    {
+     "ID": "3762",
+     "VALUE": "Краснозаводск"
+    },
+    {
+     "ID": "3764",
+     "VALUE": "Шлиссельбург"
+    },
+    {
+     "ID": "3766",
+     "VALUE": "Петров Вал"
+    },
+    {
+     "ID": "3768",
+     "VALUE": "Яхрома"
+    },
+    {
+     "ID": "3770",
+     "VALUE": "Могоча"
+    },
+    {
+     "ID": "3772",
+     "VALUE": "Хвалынск"
+    },
+    {
+     "ID": "3774",
+     "VALUE": "Карабаш"
+    },
+    {
+     "ID": "3776",
+     "VALUE": "Камешково"
+    },
+    {
+     "ID": "3778",
+     "VALUE": "Кемь"
+    },
+    {
+     "ID": "3780",
+     "VALUE": "Анадырь"
+    },
+    {
+     "ID": "3782",
+     "VALUE": "Торопец"
+    },
+    {
+     "ID": "3784",
+     "VALUE": "Зеленоградск"
+    },
+    {
+     "ID": "3786",
+     "VALUE": "Аркадак"
+    },
+    {
+     "ID": "3788",
+     "VALUE": "Снежногорск"
+    },
+    {
+     "ID": "3790",
+     "VALUE": "Уяр"
+    },
+    {
+     "ID": "3792",
+     "VALUE": "Кораблино"
+    },
+    {
+     "ID": "3794",
+     "VALUE": "Чаплыгин"
+    },
+    {
+     "ID": "3796",
+     "VALUE": "Киренск"
+    },
+    {
+     "ID": "3798",
+     "VALUE": "Удачный"
+    },
+    {
+     "ID": "3800",
+     "VALUE": "Юрюзань"
+    },
+    {
+     "ID": "3802",
+     "VALUE": "Балей"
+    },
+    {
+     "ID": "3804",
+     "VALUE": "Окуловка"
+    },
+    {
+     "ID": "3806",
+     "VALUE": "Малая Вишера"
+    },
+    {
+     "ID": "3808",
+     "VALUE": "Нязепетровск"
+    },
+    {
+     "ID": "3810",
+     "VALUE": "Новая Ляля"
+    },
+    {
+     "ID": "3812",
+     "VALUE": "Сосенский"
+    },
+    {
+     "ID": "3814",
+     "VALUE": "Чкаловск"
+    },
+    {
+     "ID": "3816",
+     "VALUE": "Вуктыл"
+    },
+    {
+     "ID": "3818",
+     "VALUE": "Горнозаводск"
+    },
+    {
+     "ID": "3820",
+     "VALUE": "Урень"
+    },
+    {
+     "ID": "3822",
+     "VALUE": "Печоры"
+    },
+    {
+     "ID": "3824",
+     "VALUE": "Боровск"
+    },
+    {
+     "ID": "3826",
+     "VALUE": "Лихославль"
+    },
+    {
+     "ID": "3828",
+     "VALUE": "Адыгейск"
+    },
+    {
+     "ID": "3830",
+     "VALUE": "Долинск"
+    },
+    {
+     "ID": "3832",
+     "VALUE": "Волосово"
+    },
+    {
+     "ID": "3834",
+     "VALUE": "Жуков"
+    },
+    {
+     "ID": "3836",
+     "VALUE": "Сорск"
+    },
+    {
+     "ID": "3838",
+     "VALUE": "Называевск"
+    },
+    {
+     "ID": "3840",
+     "VALUE": "Бабаево"
+    },
+    {
+     "ID": "3842",
+     "VALUE": "Тюкалинск"
+    },
+    {
+     "ID": "3844",
+     "VALUE": "Заволжск"
+    },
+    {
+     "ID": "3846",
+     "VALUE": "Чулым"
+    },
+    {
+     "ID": "3848",
+     "VALUE": "Сосновка"
+    },
+    {
+     "ID": "3850",
+     "VALUE": "Звенигово"
+    },
+    {
+     "ID": "3852",
+     "VALUE": "Углегорск"
+    },
+    {
+     "ID": "3854",
+     "VALUE": "Судогда"
+    },
+    {
+     "ID": "3856",
+     "VALUE": "Верхний Тагил"
+    },
+    {
+     "ID": "3858",
+     "VALUE": "Дрезна"
+    },
+    {
+     "ID": "3860",
+     "VALUE": "Богучар"
+    },
+    {
+     "ID": "3862",
+     "VALUE": "Неман"
+    },
+    {
+     "ID": "3864",
+     "VALUE": "Михайлов"
+    },
+    {
+     "ID": "3866",
+     "VALUE": "Невельск"
+    },
+    {
+     "ID": "3868",
+     "VALUE": "Сураж"
+    },
+    {
+     "ID": "3870",
+     "VALUE": "Ворсма"
+    },
+    {
+     "ID": "3872",
+     "VALUE": "Кремёнки"
+    },
+    {
+     "ID": "3874",
+     "VALUE": "Опочка"
+    },
+    {
+     "ID": "3876",
+     "VALUE": "Тетюши"
+    },
+    {
+     "ID": "3878",
+     "VALUE": "Закаменск"
+    },
+    {
+     "ID": "3880",
+     "VALUE": "Хилок"
+    },
+    {
+     "ID": "3882",
+     "VALUE": "Питкяранта"
+    },
+    {
+     "ID": "3884",
+     "VALUE": "Завитинск"
+    },
+    {
+     "ID": "3886",
+     "VALUE": "Болхов"
+    },
+    {
+     "ID": "3888",
+     "VALUE": "Эртиль"
+    },
+    {
+     "ID": "3890",
+     "VALUE": "Нариманов"
+    },
+    {
+     "ID": "3892",
+     "VALUE": "Петухово"
+    },
+    {
+     "ID": "3894",
+     "VALUE": "Луза"
+    },
+    {
+     "ID": "3896",
+     "VALUE": "Белая Холуница"
+    },
+    {
+     "ID": "3898",
+     "VALUE": "Беломорск"
+    },
+    {
+     "ID": "3900",
+     "VALUE": "Нижние Серги"
+    },
+    {
+     "ID": "3902",
+     "VALUE": "Заозёрск"
+    },
+    {
+     "ID": "3904",
+     "VALUE": "Зуевка"
+    },
+    {
+     "ID": "3906",
+     "VALUE": "Гаджиево"
+    },
+    {
+     "ID": "3908",
+     "VALUE": "Камбарка"
+    },
+    {
+     "ID": "3910",
+     "VALUE": "Пионерский"
+    },
+    {
+     "ID": "3912",
+     "VALUE": "Гремячинск"
+    },
+    {
+     "ID": "3914",
+     "VALUE": "Щучье"
+    },
+    {
+     "ID": "3916",
+     "VALUE": "Шагонар"
+    },
+    {
+     "ID": "3918",
+     "VALUE": "Змеиногорск"
+    },
+    {
+     "ID": "3920",
+     "VALUE": "Дигора"
+    },
+    {
+     "ID": "3922",
+     "VALUE": "Светлогорск"
+    },
+    {
+     "ID": "3924",
+     "VALUE": "Микунь"
+    },
+    {
+     "ID": "3926",
+     "VALUE": "Дорогобуж"
+    },
+    {
+     "ID": "3928",
+     "VALUE": "Заозёрный"
+    },
+    {
+     "ID": "3930",
+     "VALUE": "Высоковск"
+    },
+    {
+     "ID": "3932",
+     "VALUE": "Каргат"
+    },
+    {
+     "ID": "3934",
+     "VALUE": "Александровск-Сахалинский"
+    },
+    {
+     "ID": "3936",
+     "VALUE": "Порхов"
+    },
+    {
+     "ID": "3938",
+     "VALUE": "Суздаль"
+    },
+    {
+     "ID": "3940",
+     "VALUE": "Вытегра"
+    },
+    {
+     "ID": "3942",
+     "VALUE": "Кола"
+    },
+    {
+     "ID": "3944",
+     "VALUE": "Ожерелье"
+    },
+    {
+     "ID": "3946",
+     "VALUE": "Кирс"
+    },
+    {
+     "ID": "3948",
+     "VALUE": "Ермолино"
+    },
+    {
+     "ID": "3950",
+     "VALUE": "Козловка"
+    },
+    {
+     "ID": "3952",
+     "VALUE": "Сольцы"
+    },
+    {
+     "ID": "3954",
+     "VALUE": "Вилюйск"
+    },
+    {
+     "ID": "3956",
+     "VALUE": "Уржум"
+    },
+    {
+     "ID": "3958",
+     "VALUE": "Наволоки"
+    },
+    {
+     "ID": "3960",
+     "VALUE": "Юрьевец"
+    },
+    {
+     "ID": "3962",
+     "VALUE": "Миньяр"
+    },
+    {
+     "ID": "3964",
+     "VALUE": "Мариинский Посад"
+    },
+    {
+     "ID": "3966",
+     "VALUE": "Нюрба"
+    },
+    {
+     "ID": "3968",
+     "VALUE": "Каргополь"
+    },
+    {
+     "ID": "3970",
+     "VALUE": "Ельня"
+    },
+    {
+     "ID": "3972",
+     "VALUE": "Харовск"
+    },
+    {
+     "ID": "3974",
+     "VALUE": "Южно-Сухокумск"
+    },
+    {
+     "ID": "3976",
+     "VALUE": "Рудня"
+    },
+    {
+     "ID": "3978",
+     "VALUE": "Волчанск"
+    },
+    {
+     "ID": "3980",
+     "VALUE": "Кувшиново"
+    },
+    {
+     "ID": "3982",
+     "VALUE": "Володарск"
+    },
+    {
+     "ID": "3984",
+     "VALUE": "Нея"
+    },
+    {
+     "ID": "3986",
+     "VALUE": "Ивангород"
+    },
+    {
+     "ID": "3988",
+     "VALUE": "Тотьма"
+    },
+    {
+     "ID": "3990",
+     "VALUE": "Суоярви"
+    },
+    {
+     "ID": "3992",
+     "VALUE": "Пудож"
+    },
+    {
+     "ID": "3994",
+     "VALUE": "Задонск"
+    },
+    {
+     "ID": "3996",
+     "VALUE": "Таруса"
+    },
+    {
+     "ID": "3998",
+     "VALUE": "Болохово"
+    },
+    {
+     "ID": "4000",
+     "VALUE": "Белозерск"
+    },
+    {
+     "ID": "4002",
+     "VALUE": "Ядрин"
+    },
+    {
+     "ID": "4004",
+     "VALUE": "Городовиковск"
+    },
+    {
+     "ID": "4006",
+     "VALUE": "Сковородино"
+    },
+    {
+     "ID": "4008",
+     "VALUE": "Нолинск"
+    },
+    {
+     "ID": "4010",
+     "VALUE": "Покровск"
+    },
+    {
+     "ID": "4012",
+     "VALUE": "Олёкминск"
+    },
+    {
+     "ID": "4014",
+     "VALUE": "Устюжна"
+    },
+    {
+     "ID": "4016",
+     "VALUE": "Верхняя Тура"
+    },
+    {
+     "ID": "4018",
+     "VALUE": "Верхнеуральск"
+    },
+    {
+     "ID": "4020",
+     "VALUE": "Ардатов"
+    },
+    {
+     "ID": "4022",
+     "VALUE": "Облучье"
+    },
+    {
+     "ID": "4024",
+     "VALUE": "Западная Двина"
+    },
+    {
+     "ID": "4026",
+     "VALUE": "Серафимович"
+    },
+    {
+     "ID": "4028",
+     "VALUE": "Перевоз"
+    },
+    {
+     "ID": "4030",
+     "VALUE": "Костерёво"
+    },
+    {
+     "ID": "4032",
+     "VALUE": "Теберда"
+    },
+    {
+     "ID": "4034",
+     "VALUE": "Дно"
+    },
+    {
+     "ID": "4036",
+     "VALUE": "Олонец"
+    },
+    {
+     "ID": "4038",
+     "VALUE": "Чадан"
+    },
+    {
+     "ID": "4040",
+     "VALUE": "Бирюсинск"
+    },
+    {
+     "ID": "4042",
+     "VALUE": "Ветлуга"
+    },
+    {
+     "ID": "4044",
+     "VALUE": "Новая Ладога"
+    },
+    {
+     "ID": "4046",
+     "VALUE": "Верхотурье"
+    },
+    {
+     "ID": "4048",
+     "VALUE": "Починок"
+    },
+    {
+     "ID": "4050",
+     "VALUE": "Липки"
+    },
+    {
+     "ID": "4052",
+     "VALUE": "Комсомольск"
+    },
+    {
+     "ID": "4054",
+     "VALUE": "Инсар"
+    },
+    {
+     "ID": "4056",
+     "VALUE": "Болгар"
+    },
+    {
+     "ID": "4058",
+     "VALUE": "Старица"
+    },
+    {
+     "ID": "4060",
+     "VALUE": "Пучеж"
+    },
+    {
+     "ID": "4062",
+     "VALUE": "Белинский"
+    },
+    {
+     "ID": "4064",
+     "VALUE": "Анива"
+    },
+    {
+     "ID": "4066",
+     "VALUE": "Белоусово"
+    },
+    {
+     "ID": "4068",
+     "VALUE": "Шахтёрск"
+    },
+    {
+     "ID": "4070",
+     "VALUE": "Макушино"
+    },
+    {
+     "ID": "4072",
+     "VALUE": "Медынь"
+    },
+    {
+     "ID": "4074",
+     "VALUE": "Малмыж"
+    },
+    {
+     "ID": "4076",
+     "VALUE": "Андреаполь"
+    },
+    {
+     "ID": "4078",
+     "VALUE": "Салаир"
+    },
+    {
+     "ID": "4080",
+     "VALUE": "Новосокольники"
+    },
+    {
+     "ID": "4082",
+     "VALUE": "Сычёвка"
+    },
+    {
+     "ID": "4084",
+     "VALUE": "Городище"
+    },
+    {
+     "ID": "4086",
+     "VALUE": "Томмот"
+    },
+    {
+     "ID": "4088",
+     "VALUE": "Мглин"
+    },
+    {
+     "ID": "4090",
+     "VALUE": "Бирюч"
+    },
+    {
+     "ID": "4092",
+     "VALUE": "Лахденпохья"
+    },
+    {
+     "ID": "4094",
+     "VALUE": "Мамоново"
+    },
+    {
+     "ID": "4096",
+     "VALUE": "Спасск-Рязанский"
+    },
+    {
+     "ID": "4098",
+     "VALUE": "Кириллов"
+    },
+    {
+     "ID": "4100",
+     "VALUE": "Лаишево"
+    },
+    {
+     "ID": "4102",
+     "VALUE": "Дмитриев"
+    },
+    {
+     "ID": "4104",
+     "VALUE": "Велиж"
+    },
+    {
+     "ID": "4106",
+     "VALUE": "Оханск"
+    },
+    {
+     "ID": "4108",
+     "VALUE": "Полесск"
+    },
+    {
+     "ID": "4110",
+     "VALUE": "Спасск"
+    },
+    {
+     "ID": "4112",
+     "VALUE": "Демидов"
+    },
+    {
+     "ID": "4114",
+     "VALUE": "Весьегонск"
+    },
+    {
+     "ID": "4116",
+     "VALUE": "Севск"
+    },
+    {
+     "ID": "4118",
+     "VALUE": "Темников"
+    },
+    {
+     "ID": "4120",
+     "VALUE": "Макарьев"
+    },
+    {
+     "ID": "4122",
+     "VALUE": "Юхнов"
+    },
+    {
+     "ID": "4124",
+     "VALUE": "Сурск"
+    },
+    {
+     "ID": "4126",
+     "VALUE": "Красавино"
+    },
+    {
+     "ID": "4128",
+     "VALUE": "Орлов"
+    },
+    {
+     "ID": "4130",
+     "VALUE": "Сенгилей"
+    },
+    {
+     "ID": "4132",
+     "VALUE": "Зубцов"
+    },
+    {
+     "ID": "4134",
+     "VALUE": "Сретенск"
+    },
+    {
+     "ID": "4136",
+     "VALUE": "Новохопёрск"
+    },
+    {
+     "ID": "4138",
+     "VALUE": "Курлово"
+    },
+    {
+     "ID": "4140",
+     "VALUE": "Макаров"
+    },
+    {
+     "ID": "4142",
+     "VALUE": "Каменногорск"
+    },
+    {
+     "ID": "4144",
+     "VALUE": "Мураши"
+    },
+    {
+     "ID": "4146",
+     "VALUE": "Алзамай"
+    },
+    {
+     "ID": "4148",
+     "VALUE": "Княгинино"
+    },
+    {
+     "ID": "4150",
+     "VALUE": "Шацк"
+    },
+    {
+     "ID": "4152",
+     "VALUE": "Солигалич"
+    },
+    {
+     "ID": "4154",
+     "VALUE": "Гаврилов Посад"
+    },
+    {
+     "ID": "4156",
+     "VALUE": "Багратионовск"
+    },
+    {
+     "ID": "4158",
+     "VALUE": "Себеж"
+    },
+    {
+     "ID": "4160",
+     "VALUE": "Грайворон"
+    },
+    {
+     "ID": "4162",
+     "VALUE": "Игарка"
+    },
+    {
+     "ID": "4164",
+     "VALUE": "Приморск"
+    },
+    {
+     "ID": "4166",
+     "VALUE": "Пошехонье"
+    },
+    {
+     "ID": "4168",
+     "VALUE": "Шиханы"
+    },
+    {
+     "ID": "4170",
+     "VALUE": "Суджа"
+    },
+    {
+     "ID": "4172",
+     "VALUE": "Дмитровск"
+    },
+    {
+     "ID": "4174",
+     "VALUE": "Мышкин"
+    },
+    {
+     "ID": "4176",
+     "VALUE": "Спас-Клепики"
+    },
+    {
+     "ID": "4178",
+     "VALUE": "Короча"
+    },
+    {
+     "ID": "4180",
+     "VALUE": "Сусуман"
+    },
+    {
+     "ID": "4182",
+     "VALUE": "Пыталово"
+    },
+    {
+     "ID": "4184",
+     "VALUE": "Шенкурск"
+    },
+    {
+     "ID": "4186",
+     "VALUE": "Усолье"
+    },
+    {
+     "ID": "4188",
+     "VALUE": "Красный Холм"
+    },
+    {
+     "ID": "4190",
+     "VALUE": "Жиздра"
+    },
+    {
+     "ID": "4192",
+     "VALUE": "Любим"
+    },
+    {
+     "ID": "4194",
+     "VALUE": "Злынка"
+    },
+    {
+     "ID": "4196",
+     "VALUE": "Билибино"
+    },
+    {
+     "ID": "4198",
+     "VALUE": "Фатеж"
+    },
+    {
+     "ID": "4200",
+     "VALUE": "Верея"
+    },
+    {
+     "ID": "4202",
+     "VALUE": "Чухлома"
+    },
+    {
+     "ID": "4204",
+     "VALUE": "Туран"
+    },
+    {
+     "ID": "4206",
+     "VALUE": "Чердынь"
+    },
+    {
+     "ID": "4208",
+     "VALUE": "Спас-Деменск"
+    },
+    {
+     "ID": "4210",
+     "VALUE": "Бабушкин"
+    },
+    {
+     "ID": "4212",
+     "VALUE": "Кадников"
+    },
+    {
+     "ID": "4214",
+     "VALUE": "Пустошка"
+    },
+    {
+     "ID": "4216",
+     "VALUE": "Славск"
+    },
+    {
+     "ID": "4218",
+     "VALUE": "Нестеров"
+    },
+    {
+     "ID": "4220",
+     "VALUE": "Томари"
+    },
+    {
+     "ID": "4222",
+     "VALUE": "Гдов"
+    },
+    {
+     "ID": "4224",
+     "VALUE": "Духовщина"
+    },
+    {
+     "ID": "4226",
+     "VALUE": "Правдинск"
+    },
+    {
+     "ID": "4228",
+     "VALUE": "Мосальск"
+    },
+    {
+     "ID": "4230",
+     "VALUE": "Любань"
+    },
+    {
+     "ID": "4232",
+     "VALUE": "Певек"
+    },
+    {
+     "ID": "4234",
+     "VALUE": "Мещовск"
+    },
+    {
+     "ID": "4236",
+     "VALUE": "Чёрмоз"
+    },
+    {
+     "ID": "4238",
+     "VALUE": "Малоархангельск"
+    },
+    {
+     "ID": "4240",
+     "VALUE": "Холм"
+    },
+    {
+     "ID": "4242",
+     "VALUE": "Новосиль"
+    },
+    {
+     "ID": "4244",
+     "VALUE": "Ладушкин"
+    },
+    {
+     "ID": "4246",
+     "VALUE": "Белый"
+    },
+    {
+     "ID": "4248",
+     "VALUE": "Новоржев"
+    },
+    {
+     "ID": "4250",
+     "VALUE": "Мезень"
+    },
+    {
+     "ID": "4252",
+     "VALUE": "Среднеколымск"
+    },
+    {
+     "ID": "4254",
+     "VALUE": "Кологрив"
+    },
+    {
+     "ID": "4256",
+     "VALUE": "Магас"
+    },
+    {
+     "ID": "4258",
+     "VALUE": "Сольвычегодск"
+    },
+    {
+     "ID": "4260",
+     "VALUE": "Кедровый"
+    },
+    {
+     "ID": "4262",
+     "VALUE": "Северо-Курильск"
+    },
+    {
+     "ID": "4264",
+     "VALUE": "Плёс"
+    },
+    {
+     "ID": "4266",
+     "VALUE": "Горбатов"
+    },
+    {
+     "ID": "4268",
+     "VALUE": "Артёмовск"
+    },
+    {
+     "ID": "4270",
+     "VALUE": "Островной"
+    },
+    {
+     "ID": "4272",
+     "VALUE": "Курильск"
+    },
+    {
+     "ID": "4274",
+     "VALUE": "Верхоянск"
+    },
+    {
+     "ID": "4276",
+     "VALUE": "Высоцк"
+    },
+    {
+     "ID": "4278",
+     "VALUE": "Чекалин"
+    },
+    {
+     "ID": "4280",
+     "VALUE": "Мелитополь"
+    },
+    {
+     "ID": "4282",
+     "VALUE": "Антрацит"
+    },
+    {
+     "ID": "9538",
+     "VALUE": "Феодосия"
+    },
+    {
+     "ID": "9542",
+     "VALUE": "Запорожье"
+    },
+    {
+     "ID": "9546",
+     "VALUE": "Бердянск"
+    },
+    {
+     "ID": "9548",
+     "VALUE": "Энергодар"
+    },
+    {
+     "ID": "9550",
+     "VALUE": "Токмак"
+    },
+    {
+     "ID": "9552",
+     "VALUE": "Херсон"
+    },
+    {
+     "ID": "9554",
+     "VALUE": "Новая каховка"
+    },
+    {
+     "ID": "9556",
+     "VALUE": "Каховка"
+    },
+    {
+     "ID": "9570",
+     "VALUE": "Олешки"
+    },
+    {
+     "ID": "9572",
+     "VALUE": "Гениченск"
+    }
+   ],
+   "title": "UF_CRM_1753448112",
+   "listLabel": "Города",
+   "formLabel": "Города",
+   "filterLabel": "Города",
+   "settings": {
+    "DISPLAY": "UI",
+    "LIST_HEIGHT": 5,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_1753449051": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "4284",
+     "VALUE": "5"
+    },
+    {
+     "ID": "4286",
+     "VALUE": "10"
+    },
+    {
+     "ID": "4288",
+     "VALUE": "15"
+    },
+    {
+     "ID": "4290",
+     "VALUE": "20"
+    },
+    {
+     "ID": "4292",
+     "VALUE": "25"
+    },
+    {
+     "ID": "4294",
+     "VALUE": "30"
+    },
+    {
+     "ID": "4296",
+     "VALUE": "30+"
+    }
+   ],
+   "title": "UF_CRM_1753449051",
+   "listLabel": "Количество разделов каталога",
+   "formLabel": "Количество разделов каталога",
+   "filterLabel": "Количество разделов каталога",
+   "settings": {
+    "DISPLAY": "UI",
+    "LIST_HEIGHT": 5,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_1753449186": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "4298",
+     "VALUE": "Авто и мото"
+    },
+    {
+     "ID": "4300",
+     "VALUE": "Легковые запчасти"
+    },
+    {
+     "ID": "4302",
+     "VALUE": "Легковые авто"
+    },
+    {
+     "ID": "4304",
+     "VALUE": "Грузовые авто"
+    },
+    {
+     "ID": "4306",
+     "VALUE": "Грузовые запчасти"
+    },
+    {
+     "ID": "4308",
+     "VALUE": "Мототехника"
+    },
+    {
+     "ID": "4310",
+     "VALUE": "Автосервис"
+    },
+    {
+     "ID": "4312",
+     "VALUE": "Автоуслуги и мойки"
+    },
+    {
+     "ID": "4314",
+     "VALUE": "Товары для авто, аксессуары"
+    },
+    {
+     "ID": "4316",
+     "VALUE": "Спецтехника"
+    },
+    {
+     "ID": "4318",
+     "VALUE": "Колеса, шины"
+    },
+    {
+     "ID": "4320",
+     "VALUE": "Запчасти для спецтехники"
+    },
+    {
+     "ID": "4322",
+     "VALUE": "Автомузыка"
+    },
+    {
+     "ID": "4324",
+     "VALUE": "Строительство и ремонт"
+    },
+    {
+     "ID": "4326",
+     "VALUE": "Ремонт"
+    },
+    {
+     "ID": "4328",
+     "VALUE": "Стройматериалы"
+    },
+    {
+     "ID": "4330",
+     "VALUE": "Строительство домов"
+    },
+    {
+     "ID": "4332",
+     "VALUE": "Бассейны"
+    },
+    {
+     "ID": "4334",
+     "VALUE": "Потолки"
+    },
+    {
+     "ID": "4336",
+     "VALUE": "Двери"
+    },
+    {
+     "ID": "4338",
+     "VALUE": "Окна"
+    },
+    {
+     "ID": "4340",
+     "VALUE": "Инструмент"
+    },
+    {
+     "ID": "4342",
+     "VALUE": "Крепеж"
+    },
+    {
+     "ID": "4344",
+     "VALUE": "Сантехника"
+    },
+    {
+     "ID": "4346",
+     "VALUE": "Напольные покрытия, плинтуса"
+    },
+    {
+     "ID": "4348",
+     "VALUE": "Электротовары"
+    },
+    {
+     "ID": "4350",
+     "VALUE": "Инжиниринг"
+    },
+    {
+     "ID": "4352",
+     "VALUE": "Металлоконструкции"
+    },
+    {
+     "ID": "4354",
+     "VALUE": "Заборы"
+    },
+    {
+     "ID": "4356",
+     "VALUE": "Быстровозводимые здания / сооружения"
+    },
+    {
+     "ID": "4358",
+     "VALUE": "Бетон, цементный раствор"
+    },
+    {
+     "ID": "4360",
+     "VALUE": "Системы отопления / водоснабжения / канализации"
+    },
+    {
+     "ID": "4362",
+     "VALUE": "Дизайн и Реклама"
+    },
+    {
+     "ID": "4364",
+     "VALUE": "Полиграфия"
+    },
+    {
+     "ID": "4366",
+     "VALUE": "Интерьеры"
+    },
+    {
+     "ID": "4368",
+     "VALUE": "Реклама"
+    },
+    {
+     "ID": "4370",
+     "VALUE": "Вывески, стенды, банеры"
+    },
+    {
+     "ID": "4372",
+     "VALUE": "Дом, семья, дети"
+    },
+    {
+     "ID": "4374",
+     "VALUE": "Товары для детей, игрушки"
+    },
+    {
+     "ID": "4376",
+     "VALUE": "Садоводство"
+    },
+    {
+     "ID": "4378",
+     "VALUE": "Культура и Искусство"
+    },
+    {
+     "ID": "4380",
+     "VALUE": "Творчество и рукоделие"
+    },
+    {
+     "ID": "4382",
+     "VALUE": "Мебель и интерьер"
+    },
+    {
+     "ID": "4384",
+     "VALUE": "Кухни"
+    },
+    {
+     "ID": "4386",
+     "VALUE": "Корпусная мебель"
+    },
+    {
+     "ID": "4388",
+     "VALUE": "Мягкая мебель"
+    },
+    {
+     "ID": "4390",
+     "VALUE": "Предметы интерьера"
+    },
+    {
+     "ID": "4392",
+     "VALUE": "Шторы, жалюзи"
+    },
+    {
+     "ID": "4394",
+     "VALUE": "Светильники"
+    },
+    {
+     "ID": "4396",
+     "VALUE": "Картины"
+    },
+    {
+     "ID": "4398",
+     "VALUE": "Фурнитура"
+    },
+    {
+     "ID": "4400",
+     "VALUE": "Офисная мебель"
+    },
+    {
+     "ID": "4402",
+     "VALUE": "Здоровье, Медицина"
+    },
+    {
+     "ID": "4404",
+     "VALUE": "Стоматология"
+    },
+    {
+     "ID": "4406",
+     "VALUE": "Больница, клиника, санаторий"
+    },
+    {
+     "ID": "4408",
+     "VALUE": "Лекарства"
+    },
+    {
+     "ID": "4410",
+     "VALUE": "Оптика, зрение"
+    },
+    {
+     "ID": "4412",
+     "VALUE": "Товары для здоровья"
+    },
+    {
+     "ID": "4414",
+     "VALUE": "Массаж"
+    },
+    {
+     "ID": "4416",
+     "VALUE": "Мода и красота"
+    },
+    {
+     "ID": "4418",
+     "VALUE": "Украшения"
+    },
+    {
+     "ID": "4420",
+     "VALUE": "Аксессуары и косметика"
+    },
+    {
+     "ID": "4422",
+     "VALUE": "Салон красоты"
+    },
+    {
+     "ID": "4424",
+     "VALUE": "Цветы"
+    },
+    {
+     "ID": "4426",
+     "VALUE": "Наука и обучение"
+    },
+    {
+     "ID": "4428",
+     "VALUE": "Учебные заведения"
+    },
+    {
+     "ID": "4430",
+     "VALUE": "Тренинги"
+    },
+    {
+     "ID": "4432",
+     "VALUE": "Недвижимость"
+    },
+    {
+     "ID": "4434",
+     "VALUE": "Агентство недвижимости"
+    },
+    {
+     "ID": "4436",
+     "VALUE": "Аренда жилья"
+    },
+    {
+     "ID": "4438",
+     "VALUE": "Аренда коммерческой недвижимости"
+    },
+    {
+     "ID": "4440",
+     "VALUE": "Промышленность"
+    },
+    {
+     "ID": "4442",
+     "VALUE": "Нефтехимическая продукция"
+    },
+    {
+     "ID": "4444",
+     "VALUE": "Оборудование"
+    },
+    {
+     "ID": "4446",
+     "VALUE": "Промышленное"
+    },
+    {
+     "ID": "4448",
+     "VALUE": "Для дома"
+    },
+    {
+     "ID": "4450",
+     "VALUE": "Контрольно-кассовая техника / Расходные материалы"
+    },
+    {
+     "ID": "4452",
+     "VALUE": "Системы безопасности и охраны"
+    },
+    {
+     "ID": "4454",
+     "VALUE": "Одежда и Обувь"
+    },
+    {
+     "ID": "4456",
+     "VALUE": "Женская одежда"
+    },
+    {
+     "ID": "4458",
+     "VALUE": "Мужская одежда"
+    },
+    {
+     "ID": "4460",
+     "VALUE": "Детская одежда"
+    },
+    {
+     "ID": "4462",
+     "VALUE": "Спецодежда"
+    },
+    {
+     "ID": "4464",
+     "VALUE": "Питание"
+    },
+    {
+     "ID": "4466",
+     "VALUE": "Продукты питания"
+    },
+    {
+     "ID": "4468",
+     "VALUE": "Доставка еды"
+    },
+    {
+     "ID": "4470",
+     "VALUE": "Рестораны, кафе"
+    },
+    {
+     "ID": "4472",
+     "VALUE": "Напитки"
+    },
+    {
+     "ID": "4474",
+     "VALUE": "Потребительские товары"
+    },
+    {
+     "ID": "4476",
+     "VALUE": "Посуда"
+    },
+    {
+     "ID": "4478",
+     "VALUE": "Хозтовары"
+    },
+    {
+     "ID": "4480",
+     "VALUE": "Бытовая техника"
+    },
+    {
+     "ID": "4482",
+     "VALUE": "Электронные гаджеты, аксессуары"
+    },
+    {
+     "ID": "4484",
+     "VALUE": "Канцтовары"
+    },
+    {
+     "ID": "4486",
+     "VALUE": "Постельное белье"
+    },
+    {
+     "ID": "4488",
+     "VALUE": "Подарки"
+    },
+    {
+     "ID": "4490",
+     "VALUE": "Развлечения"
+    },
+    {
+     "ID": "4492",
+     "VALUE": "Спорт"
+    },
+    {
+     "ID": "4494",
+     "VALUE": "Товары для спорта"
+    },
+    {
+     "ID": "4496",
+     "VALUE": "Спорт-организация"
+    },
+    {
+     "ID": "4498",
+     "VALUE": "Фитнес"
+    },
+    {
+     "ID": "4500",
+     "VALUE": "Бассейн"
+    },
+    {
+     "ID": "4502",
+     "VALUE": "Транспортные услуги"
+    },
+    {
+     "ID": "4504",
+     "VALUE": "Грузоперевозки"
+    },
+    {
+     "ID": "4506",
+     "VALUE": "Пассажирские перевозки"
+    },
+    {
+     "ID": "4508",
+     "VALUE": "Туризм и отдых"
+    },
+    {
+     "ID": "4510",
+     "VALUE": "Отели, хостелы, гостиницы"
+    },
+    {
+     "ID": "4512",
+     "VALUE": "Базы отдыха"
+    },
+    {
+     "ID": "4514",
+     "VALUE": "Туристическое агентство"
+    },
+    {
+     "ID": "4516",
+     "VALUE": "О путешествиях"
+    },
+    {
+     "ID": "4518",
+     "VALUE": "Сауны, бани"
+    },
+    {
+     "ID": "4520",
+     "VALUE": "Услуги"
+    },
+    {
+     "ID": "4522",
+     "VALUE": "Клининг"
+    },
+    {
+     "ID": "4524",
+     "VALUE": "Интернет"
+    },
+    {
+     "ID": "4526",
+     "VALUE": "Логистика, перевозки"
+    },
+    {
+     "ID": "4528",
+     "VALUE": "Аренда вещей"
+    },
+    {
+     "ID": "4530",
+     "VALUE": "Ремонт электротехники"
+    },
+    {
+     "ID": "4532",
+     "VALUE": "Плазменная резка листового металла"
+    },
+    {
+     "ID": "4534",
+     "VALUE": "Безопасность"
+    },
+    {
+     "ID": "4536",
+     "VALUE": "Животные"
+    },
+    {
+     "ID": "4538",
+     "VALUE": "Товары для животных"
+    },
+    {
+     "ID": "4540",
+     "VALUE": "Услуги для животных"
+    }
+   ],
+   "title": "UF_CRM_1753449186",
+   "listLabel": "Тематика",
+   "formLabel": "Тематика",
+   "filterLabel": "Тематика",
+   "settings": {
+    "DISPLAY": "UI",
+    "LIST_HEIGHT": 5,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_1753450469": {
+   "type": "double",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1753450469",
+   "listLabel": "Города миллионники",
+   "formLabel": "Города миллионники",
+   "filterLabel": "Города миллионники",
+   "settings": {
+    "PRECISION": 2,
+    "SIZE": 20,
+    "MIN_VALUE": 0,
+    "MAX_VALUE": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_1753450535": {
+   "type": "double",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1753450535",
+   "listLabel": "Города с особым статусом",
+   "formLabel": "Города с особым статусом",
+   "filterLabel": "Города с особым статусом",
+   "settings": {
+    "PRECISION": 2,
+    "SIZE": 20,
+    "MIN_VALUE": 0,
+    "MAX_VALUE": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_1753450553": {
+   "type": "double",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1753450553",
+   "listLabel": "Население выбранных городов",
+   "formLabel": "Население выбранных городов",
+   "filterLabel": "Население выбранных городов",
+   "settings": {
+    "PRECISION": 2,
+    "SIZE": 20,
+    "MIN_VALUE": 0,
+    "MAX_VALUE": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_1753724757826": {
+   "type": "double",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1753724757826",
+   "listLabel": "Общее количество городов",
+   "formLabel": "Общее количество городов",
+   "filterLabel": "Общее количество городов",
+   "settings": {
+    "PRECISION": 2,
+    "SIZE": 20,
+    "MIN_VALUE": 0,
+    "MAX_VALUE": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_1755006461": {
+   "type": "double",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1755006461",
+   "listLabel": "Ограничение суммы 1й месяц ТОП10+",
+   "formLabel": "Ограничение суммы 1й месяц ТОП10+",
+   "filterLabel": "Ограничение суммы 1й месяц ТОП10+",
+   "settings": {
+    "PRECISION": 2,
+    "SIZE": 20,
+    "MIN_VALUE": 0,
+    "MAX_VALUE": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_1755006496": {
+   "type": "double",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1755006496",
+   "listLabel": "Ограничение суммы 2й месяц ТОП10+",
+   "formLabel": "Ограничение суммы 2й месяц ТОП10+",
+   "filterLabel": "Ограничение суммы 2й месяц ТОП10+",
+   "settings": {
+    "PRECISION": 2,
+    "SIZE": 20,
+    "MIN_VALUE": 0,
+    "MAX_VALUE": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_1755006513": {
+   "type": "double",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1755006513",
+   "listLabel": "Ограничение суммы 3й месяц ТОП10+",
+   "formLabel": "Ограничение суммы 3й месяц ТОП10+",
+   "filterLabel": "Ограничение суммы 3й месяц ТОП10+",
+   "settings": {
+    "PRECISION": 2,
+    "SIZE": 20,
+    "MIN_VALUE": 0,
+    "MAX_VALUE": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_1755006528": {
+   "type": "double",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1755006528",
+   "listLabel": "Ограничение суммы 4й месяц ТОП10+",
+   "formLabel": "Ограничение суммы 4й месяц ТОП10+",
+   "filterLabel": "Ограничение суммы 4й месяц ТОП10+",
+   "settings": {
+    "PRECISION": 2,
+    "SIZE": 20,
+    "MIN_VALUE": 0,
+    "MAX_VALUE": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_1755006542": {
+   "type": "double",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1755006542",
+   "listLabel": "Ограничение суммы 5й месяц ТОП10+",
+   "formLabel": "Ограничение суммы 5й месяц ТОП10+",
+   "filterLabel": "Ограничение суммы 5й месяц ТОП10+",
+   "settings": {
+    "PRECISION": 2,
+    "SIZE": 20,
+    "MIN_VALUE": 0,
+    "MAX_VALUE": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_1755006557": {
+   "type": "double",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1755006557",
+   "listLabel": "Ограничение суммы 6й месяц ТОП10+",
+   "formLabel": "Ограничение суммы 6й месяц ТОП10+",
+   "filterLabel": "Ограничение суммы 6й месяц ТОП10+",
+   "settings": {
+    "PRECISION": 2,
+    "SIZE": 20,
+    "MIN_VALUE": 0,
+    "MAX_VALUE": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_1757590615472": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "9478",
+     "VALUE": "Standard (1 мес.)"
+    },
+    {
+     "ID": "9480",
+     "VALUE": "Standard (6 мес.)"
+    },
+    {
+     "ID": "9482",
+     "VALUE": "Standard (12 мес.)"
+    },
+    {
+     "ID": "9484",
+     "VALUE": "PRO (1 мес.)"
+    },
+    {
+     "ID": "9486",
+     "VALUE": "PRO (6 мес.)"
+    },
+    {
+     "ID": "9488",
+     "VALUE": "PRO (12 мес.)"
+    }
+   ],
+   "title": "UF_CRM_1757590615472",
+   "listLabel": "Тариф Биткэт",
+   "formLabel": "Тариф Биткэт",
+   "filterLabel": "Тариф Биткэт",
+   "settings": {
+    "DISPLAY": "UI",
+    "LIST_HEIGHT": 1,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_1757590692655": {
+   "type": "double",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1757590692655",
+   "listLabel": "Кол-во оплаченных месяцев ",
+   "formLabel": "Кол-во оплаченных месяцев ",
+   "filterLabel": "Кол-во оплаченных месяцев ",
+   "settings": {
+    "PRECISION": 2,
+    "SIZE": 20,
+    "MIN_VALUE": 0,
+    "MAX_VALUE": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_68C3BE81C9DC5": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_68C3BE81C9DC5",
+   "listLabel": "UF_CRM_CHECKBOX",
+   "formLabel": "Checkbox",
+   "filterLabel": "UF_CRM_CHECKBOX",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_68C3BE825DEE0": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_68C3BE825DEE0",
+   "listLabel": "UF_CRM_CHECKBOX2",
+   "formLabel": "Checkbox_2",
+   "filterLabel": "UF_CRM_CHECKBOX2",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_68C3BE82DBE40": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_68C3BE82DBE40",
+   "listLabel": "MaxUsername_WZ",
+   "formLabel": "MaxUsername_WZ",
+   "filterLabel": "UF_CRM_MAXUSERNAME_WZ",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_68C3BE835A0B8": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_68C3BE835A0B8",
+   "listLabel": "MaxId_WZ",
+   "formLabel": "MaxId_WZ",
+   "filterLabel": "UF_CRM_MAXID_WZ",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_1758019730162": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "9514",
+     "VALUE": "Ушли к конкурентам"
+    },
+    {
+     "ID": "9516",
+     "VALUE": "Дорого"
+    },
+    {
+     "ID": "9518",
+     "VALUE": "Интересна другая CMS"
+    },
+    {
+     "ID": "9520",
+     "VALUE": "Не устраивают сроки"
+    }
+   ],
+   "title": "UF_CRM_1758019730162",
+   "listLabel": "Причина отказа",
+   "formLabel": "Причина отказа",
+   "filterLabel": "Причина отказа",
+   "settings": {
+    "DISPLAY": "UI",
+    "LIST_HEIGHT": 1,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_1764576299654": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "9588",
+     "VALUE": "ДА"
+    },
+    {
+     "ID": "9594",
+     "VALUE": "Подписано"
+    },
+    {
+     "ID": "9592",
+     "VALUE": "Отложено"
+    },
+    {
+     "ID": "9590",
+     "VALUE": "Нет"
+    },
+    {
+     "ID": "9604",
+     "VALUE": "Не трогаем (высок риск отвала)"
+    }
+   ],
+   "title": "UF_CRM_1764576299654",
+   "listLabel": "Поднятие стопов",
+   "formLabel": "Поднятие стопов",
+   "filterLabel": "Поднятие стопов",
+   "settings": {
+    "DISPLAY": "UI",
+    "LIST_HEIGHT": 1,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_697B3414C5B79": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_697B3414C5B79",
+   "listLabel": "UF_CRM_UTMREFERER",
+   "formLabel": "utm_referer",
+   "filterLabel": "UF_CRM_UTMREFERER",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_697B3414E5D61": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_697B3414E5D61",
+   "listLabel": "UF_CRM_UTMYACAMPAIGN",
+   "formLabel": "utm_ya_campaign",
+   "filterLabel": "UF_CRM_UTMYACAMPAIGN",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_697B341507215": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_697B341507215",
+   "listLabel": "UF_CRM_UTMCANDIDATE",
+   "formLabel": "utm_candidate",
+   "filterLabel": "UF_CRM_UTMCANDIDATE",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_69CF6F012634F": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_69CF6F012634F",
+   "listLabel": "Рубрика в 2гис",
+   "formLabel": "Рубрика в 2гис",
+   "filterLabel": "Рубрика в 2гис",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_69CF6F0149263": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_69CF6F0149263",
+   "listLabel": "WhatsappUsername_WZ",
+   "formLabel": "WhatsappUsername_WZ",
+   "filterLabel": "UF_CRM_WHATSAPPUSERNAME_WZ",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_69CF6F01620AE": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_69CF6F01620AE",
+   "listLabel": "WhatsappLid_WZ",
+   "formLabel": "WhatsappLid_WZ",
+   "filterLabel": "UF_CRM_WHATSAPPLID_WZ",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_69CF6F01794DD": {
+   "type": "url",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_69CF6F01794DD",
+   "listLabel": "Метрика",
+   "formLabel": "Метрика",
+   "filterLabel": "Метрика",
+   "settings": {
+    "POPUP": "Y",
+    "SIZE": 20,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": "",
+    "ROWS": 1
+   }
+  },
+  "UF_CRM_1776685489827": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1776685489827",
+   "listLabel": "Услуга для назначения платежа",
+   "formLabel": "Услуга для назначения платежа",
+   "filterLabel": "Услуга для назначения платежа",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_1778752063979": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "12624",
+     "VALUE": "Lite 13000"
+    },
+    {
+     "ID": "12626",
+     "VALUE": "Pro 18000"
+    },
+    {
+     "ID": "12628",
+     "VALUE": "Premium 23000"
+    }
+   ],
+   "title": "UF_CRM_1778752063979",
+   "listLabel": "Тариф",
+   "formLabel": "Тариф",
+   "filterLabel": "Тариф",
+   "settings": {
+    "DISPLAY": "UI",
+    "LIST_HEIGHT": 1,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_6A19459CC82EE": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_6A19459CC82EE",
+   "listLabel": "CianProfileId_WZ",
+   "formLabel": "CianProfileId_WZ",
+   "filterLabel": "UF_CRM_CIANPROFILEID_WZ",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_1782983059095": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1782983059095",
+   "listLabel": "SSL Сертификат установлен",
+   "formLabel": "SSL Сертификат установлен",
+   "filterLabel": "SSL Сертификат установлен",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_1786535426": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1786535426",
+   "listLabel": "Директор исполнителя",
+   "formLabel": "Директор исполнителя",
+   "filterLabel": "Директор исполнителя",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 3,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_1786535963042": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1786535963042",
+   "listLabel": "Директор заказчика",
+   "formLabel": "Директор заказчика",
+   "filterLabel": "Директор заказчика",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": "",
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": ""
+   }
+  },
+  "UF_CRM_1786536087281": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "12642",
+     "VALUE": "Исполнитель"
+    },
+    {
+     "ID": "12644",
+     "VALUE": "Лицензиар"
+    }
+   ],
+   "title": "UF_CRM_1786536087281",
+   "listLabel": "Исполнитель / Лицензиар",
+   "formLabel": "Исполнитель / Лицензиар",
+   "filterLabel": "Исполнитель / Лицензиар",
+   "settings": {
+    "DISPLAY": "LIST",
+    "LIST_HEIGHT": 1,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_1786536163720": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "12646",
+     "VALUE": "Заказчик"
+    },
+    {
+     "ID": "12648",
+     "VALUE": "Лицензиат"
+    }
+   ],
+   "title": "UF_CRM_1786536163720",
+   "listLabel": "Заказчик / Лицензиат",
+   "formLabel": "Заказчик / Лицензиат",
+   "filterLabel": "Заказчик / Лицензиат",
+   "settings": {
+    "DISPLAY": "LIST",
+    "LIST_HEIGHT": 1,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_1791295386646": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "12674",
+     "VALUE": "до 100"
+    },
+    {
+     "ID": "12676",
+     "VALUE": "от 101 до 500"
+    },
+    {
+     "ID": "12678",
+     "VALUE": "от 501 до 5000"
+    },
+    {
+     "ID": "12680",
+     "VALUE": "от 5001"
+    },
+    {
+     "ID": "12682",
+     "VALUE": "Не учитывать"
+    }
+   ],
+   "title": "UF_CRM_1791295386646",
+   "listLabel": "Количество страниц на сайте",
+   "formLabel": "Количество страниц на сайте",
+   "filterLabel": "Количество страниц на сайте",
+   "settings": {
+    "DISPLAY": "UI",
+    "LIST_HEIGHT": 1,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_1791369645976": {
+   "type": "address",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1791369645976",
+   "listLabel": "ПОСЧИТАТЬ КОЛ-ВО СТРАНИЦ",
+   "formLabel": "ПОСЧИТАТЬ КОЛ-ВО СТРАНИЦ",
+   "filterLabel": "ПОСЧИТАТЬ КОЛ-ВО СТРАНИЦ",
+   "settings": {
+    "SHOW_MAP": "Y"
+   }
+  },
+  "UF_CRM_1793707050112": {
+   "type": "url",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1793707050112",
+   "listLabel": "Работы по продвижению",
+   "formLabel": "Работы по продвижению",
+   "filterLabel": "Работы по продвижению",
+   "settings": {
+    "POPUP": "Y",
+    "SIZE": 20,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": "",
+    "ROWS": 1
+   }
+  },
+  "UF_CRM_REVENUE": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_REVENUE",
+   "listLabel": "Годовой оборот",
+   "formLabel": "Годовой оборот",
+   "filterLabel": "Годовой оборот",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_PHONE_HOME": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_PHONE_HOME",
+   "listLabel": "Домашний телефон",
+   "formLabel": "Домашний телефон",
+   "filterLabel": "Домашний телефон",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_EMAIL_OTHER": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_EMAIL_OTHER",
+   "listLabel": "Другой E-mail ",
+   "formLabel": "Другой E-mail ",
+   "filterLabel": "Другой E-mail ",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_IM_OTHER": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_IM_OTHER",
+   "listLabel": "Другой контакт",
+   "formLabel": "Другой контакт",
+   "filterLabel": "Другой контакт",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_WEB_OTHER": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_WEB_OTHER",
+   "listLabel": "Сайт",
+   "formLabel": "Сайт",
+   "filterLabel": "Сайт",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_PHONE_OTHER": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_PHONE_OTHER",
+   "listLabel": "Другой телефон",
+   "formLabel": "Другой телефон",
+   "filterLabel": "Другой телефон",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_IM_INSTAGRAM": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_IM_INSTAGRAM",
+   "listLabel": "Комментарии Instagram",
+   "formLabel": "Комментарии Instagram",
+   "filterLabel": "Комментарии Instagram",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_IM_FACEBOOK": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_IM_FACEBOOK",
+   "listLabel": "Контакт Facebook",
+   "formLabel": "Контакт Facebook",
+   "filterLabel": "Контакт Facebook",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_IM_ICQ": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_IM_ICQ",
+   "listLabel": "Контакт ICQ",
+   "formLabel": "Контакт ICQ",
+   "filterLabel": "Контакт ICQ",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_IM_JABBER": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_IM_JABBER",
+   "listLabel": "Контакт Jabber",
+   "formLabel": "Контакт Jabber",
+   "filterLabel": "Контакт Jabber",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_IM_MSN": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_IM_MSN",
+   "listLabel": "Контакт MSN/Live!",
+   "formLabel": "Контакт MSN/Live!",
+   "filterLabel": "Контакт MSN/Live!",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_IM_SKYPE": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_IM_SKYPE",
+   "listLabel": "Контакт Skype",
+   "formLabel": "Контакт Skype",
+   "filterLabel": "Контакт Skype",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_IM_TELEGRAM": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_IM_TELEGRAM",
+   "listLabel": "Контакт Telegram",
+   "formLabel": "Контакт Telegram",
+   "filterLabel": "Контакт Telegram",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_IM_VIBER": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_IM_VIBER",
+   "listLabel": "Контакт Viber",
+   "formLabel": "Контакт Viber",
+   "filterLabel": "Контакт Viber",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_IM_BITRIX24": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_IM_BITRIX24",
+   "listLabel": "Контакт Битрикс24.Network",
+   "formLabel": "Контакт Битрикс24.Network",
+   "filterLabel": "Контакт Битрикс24.Network",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_IM_VK": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_IM_VK",
+   "listLabel": "Контакт ВКонтакте ",
+   "formLabel": "Контакт ВКонтакте ",
+   "filterLabel": "Контакт ВКонтакте ",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_IM_IMOL": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_IM_IMOL",
+   "listLabel": "Контакт Открытая линия",
+   "formLabel": "Контакт Открытая линия",
+   "filterLabel": "Контакт Открытая линия",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_WEB_WORK": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_WEB_WORK",
+   "listLabel": "Корпоративный сайт",
+   "formLabel": "Корпоративный сайт",
+   "filterLabel": "Корпоративный сайт",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_WEB_HOME": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_WEB_HOME",
+   "listLabel": "Личная страница",
+   "formLabel": "Личная страница",
+   "filterLabel": "Личная страница",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_LOGO": {
+   "type": "file",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_LOGO",
+   "listLabel": "Логотип",
+   "formLabel": "Логотип",
+   "filterLabel": "Логотип",
+   "settings": {
+    "SIZE": 20,
+    "LIST_WIDTH": 0,
+    "LIST_HEIGHT": 0,
+    "MAX_SHOW_SIZE": 0,
+    "MAX_ALLOWED_SIZE": 0,
+    "EXTENSIONS": []
+   }
+  },
+  "UF_CRM_WEB_TWITTER": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_WEB_TWITTER",
+   "listLabel": "Микроблог Twitter",
+   "formLabel": "Микроблог Twitter",
+   "filterLabel": "Микроблог Twitter",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_PHONE_MOBILE": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_PHONE_MOBILE",
+   "listLabel": "Мобильный телефон",
+   "formLabel": "Мобильный телефон",
+   "filterLabel": "Мобильный телефон",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_PHONE_PAGER": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_PHONE_PAGER",
+   "listLabel": "Номер пейджера",
+   "formLabel": "Номер пейджера",
+   "filterLabel": "Номер пейджера",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_PHONE_FAX": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_PHONE_FAX",
+   "listLabel": "Номер факса",
+   "formLabel": "Номер факса",
+   "filterLabel": "Номер факса",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_IM_OPENLINE": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_IM_OPENLINE",
+   "listLabel": "Онлайн-чат",
+   "formLabel": "Онлайн-чат",
+   "filterLabel": "Онлайн-чат",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_EMAIL_WORK": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_EMAIL_WORK",
+   "listLabel": "Рабочий e-mail",
+   "formLabel": "Рабочий e-mail",
+   "filterLabel": "Рабочий e-mail",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_PHONE_WORK": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_PHONE_WORK",
+   "listLabel": "Рабочий телефон",
+   "formLabel": "Рабочий телефон",
+   "filterLabel": "Рабочий телефон",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_WEB_FACEBOOK": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_WEB_FACEBOOK",
+   "listLabel": "Страница Facebook",
+   "formLabel": "Страница Facebook",
+   "filterLabel": "Страница Facebook",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_WEB_VK": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_WEB_VK",
+   "listLabel": "Страница ВКонтакте",
+   "formLabel": "Страница ВКонтакте",
+   "filterLabel": "Страница ВКонтакте",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_ADDRESS": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_ADDRESS",
+   "listLabel": "Фактический адрес",
+   "formLabel": "Фактический адрес",
+   "filterLabel": "Фактический адрес",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_EMAIL_HOME": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_EMAIL_HOME",
+   "listLabel": "E-mail ответственного в договоре",
+   "formLabel": "E-mail ответственного в договоре",
+   "filterLabel": "E-mail ответственного в договоре",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_ADDRESS_LEGAL": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_ADDRESS_LEGAL",
+   "listLabel": "Юридический адрес",
+   "formLabel": "Юридический адрес",
+   "filterLabel": "Юридический адрес",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_EMPLOYEES": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "70",
+     "VALUE": "менее 50"
+    },
+    {
+     "ID": "72",
+     "VALUE": "50-250"
+    },
+    {
+     "ID": "74",
+     "VALUE": "250-500"
+    },
+    {
+     "ID": "76",
+     "VALUE": "более 500"
+    }
+   ],
+   "title": "UF_CRM_EMPLOYEES",
+   "listLabel": "Кол-во сотрудников",
+   "formLabel": "Кол-во сотрудников",
+   "filterLabel": "Кол-во сотрудников",
+   "settings": {
+    "DISPLAY": "LIST",
+    "LIST_HEIGHT": 1,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_INDUSTRY": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "78",
+     "VALUE": "Авто"
+    },
+    {
+     "ID": "80",
+     "VALUE": "Строительство"
+    },
+    {
+     "ID": "82",
+     "VALUE": "Производство"
+    },
+    {
+     "ID": "84",
+     "VALUE": "Товары и услуги"
+    },
+    {
+     "ID": "86",
+     "VALUE": "Банковские услуги"
+    },
+    {
+     "ID": "88",
+     "VALUE": "Консалтинг"
+    },
+    {
+     "ID": "90",
+     "VALUE": "Финансы"
+    },
+    {
+     "ID": "92",
+     "VALUE": "Правительство"
+    },
+    {
+     "ID": "94",
+     "VALUE": "Развлечения"
+    },
+    {
+     "ID": "96",
+     "VALUE": "Не для получения прибыли"
+    },
+    {
+     "ID": "98",
+     "VALUE": "Другое"
+    },
+    {
+     "ID": "100",
+     "VALUE": "Новое поле"
+    }
+   ],
+   "title": "UF_CRM_INDUSTRY",
+   "listLabel": "Сфера деятельности",
+   "formLabel": "Сфера деятельности",
+   "filterLabel": "Сфера деятельности",
+   "settings": {
+    "DISPLAY": "LIST",
+    "LIST_HEIGHT": 1,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_COMPANY_TYPE": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "102",
+     "VALUE": "Клиент"
+    },
+    {
+     "ID": "104",
+     "VALUE": "Поставщик"
+    },
+    {
+     "ID": "106",
+     "VALUE": "Партнер"
+    },
+    {
+     "ID": "108",
+     "VALUE": "Другое"
+    }
+   ],
+   "title": "UF_CRM_COMPANY_TYPE",
+   "listLabel": "Тип компании",
+   "formLabel": "Тип компании",
+   "filterLabel": "Тип компании",
+   "settings": {
+    "DISPLAY": "LIST",
+    "LIST_HEIGHT": 1,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_1546651670170": {
+   "type": "file",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": true,
+   "isDynamic": true,
+   "title": "UF_CRM_1546651670170",
+   "listLabel": "Скан документов (договор, допник, подписанное ядро)",
+   "formLabel": "Скан документов (договор, допник, подписанное ядро)",
+   "filterLabel": "Скан документов (договор, допник, подписанное ядро)",
+   "settings": {
+    "SIZE": 20,
+    "LIST_WIDTH": 0,
+    "LIST_HEIGHT": 0,
+    "MAX_SHOW_SIZE": 0,
+    "MAX_ALLOWED_SIZE": 0,
+    "EXTENSIONS": [],
+    "TARGET_BLANK": "Y",
+    "DEFAULT_VIEW": null
+   }
+  },
+  "UF_CRM_1495181912": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1495181912",
+   "listLabel": "Контактное лицо",
+   "formLabel": "Контактное лицо",
+   "filterLabel": "Контактное лицо",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_1510296268": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1510296268",
+   "listLabel": "Контактное лицо",
+   "formLabel": "Контактное лицо",
+   "filterLabel": "Контактное лицо",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_59D8D6D0730F9": {
+   "type": "string",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_59D8D6D0730F9",
+   "listLabel": "ЛИДОГЕНЕРАТОР ID",
+   "formLabel": "ЛИДОГЕНЕРАТОР ID",
+   "filterLabel": "ЛИДОГЕНЕРАТОР ID",
+   "settings": {
+    "SIZE": 20,
+    "ROWS": 1,
+    "REGEXP": null,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_1510044967": {
+   "type": "file",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1510044967",
+   "listLabel": "Скрин письма об остановке продвижения",
+   "formLabel": "Скрин письма об остановке продвижения",
+   "filterLabel": "Скрин письма об остановке продвижения",
+   "settings": {
+    "SIZE": 20,
+    "LIST_WIDTH": 0,
+    "LIST_HEIGHT": 0,
+    "MAX_SHOW_SIZE": 0,
+    "MAX_ALLOWED_SIZE": 0,
+    "EXTENSIONS": []
+   }
+  },
+  "UF_CRM_5BFD26C34EA4E": {
+   "type": "enumeration",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "items": [
+    {
+     "ID": "110",
+     "VALUE": "Из рассылки Корзиллы"
+    },
+    {
+     "ID": "112",
+     "VALUE": "Из социальных сетей"
+    },
+    {
+     "ID": "114",
+     "VALUE": "На сайте 1С-Битрикс"
+    },
+    {
+     "ID": "116",
+     "VALUE": "Из рассылки 1С-Битрикс"
+    },
+    {
+     "ID": "118",
+     "VALUE": "Из рекламы на chelny-biz.ru"
+    }
+   ],
+   "title": "UF_CRM_5BFD26C34EA4E",
+   "listLabel": "Откуда узнали о семинаре",
+   "formLabel": "Откуда узнали о семинаре",
+   "filterLabel": "Откуда узнали о семинаре",
+   "settings": {
+    "DISPLAY": "LIST",
+    "LIST_HEIGHT": 1,
+    "CAPTION_NO_VALUE": "",
+    "SHOW_NO_VALUE": "Y"
+   }
+  },
+  "UF_CRM_1510045768": {
+   "type": "url",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": false,
+   "isDynamic": true,
+   "title": "UF_CRM_1510045768",
+   "listLabel": "Ссылка на материалы",
+   "formLabel": "Ссылка на материалы",
+   "filterLabel": "Ссылка на материалы",
+   "settings": {
+    "POPUP": "Y",
+    "SIZE": 20,
+    "MIN_LENGTH": 0,
+    "MAX_LENGTH": 0,
+    "DEFAULT_VALUE": null
+   }
+  },
+  "UF_CRM_1506612521": {
+   "type": "file",
+   "isRequired": false,
+   "isReadOnly": false,
+   "isImmutable": false,
+   "isMultiple": true,
+   "isDynamic": true,
+   "title": "UF_CRM_1506612521",
+   "listLabel": "ТЗ",
+   "formLabel": "ТЗ",
+   "filterLabel": "ТЗ",
+   "settings": {
+    "SIZE": 20,
+    "LIST_WIDTH": 0,
+    "LIST_HEIGHT": 0,
+    "MAX_SHOW_SIZE": 0,
+    "MAX_ALLOWED_SIZE": 0,
+    "EXTENSIONS": [],
+    "TARGET_BLANK": "Y",
+    "DEFAULT_VIEW": null
+   }
+  }
+ },
+ "time": {
+  "start": 1795025476,
+  "finish": 1795025476.482833,
+  "duration": 0.4828329086303711,
+  "processing": 0,
+  "date_start": "2026-11-18T21:11:16+03:00",
+  "date_finish": "2026-11-18T21:11:16+03:00",
+  "operating_reset_at": 1795026060,
+  "operating": 0
+ }
+}

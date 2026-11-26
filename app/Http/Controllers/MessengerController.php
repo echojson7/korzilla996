@@ -711,7 +711,7 @@ class MessengerController extends Controller
         [$kind, $id] = explode(':', $entity, 2);
         $ok = match ($kind) {
             'task' => ($task = Task::query()->find((int) $id)) ? $me->can('view', $task) : abort(404),
-            'deal' => Access::allows($me, 'crm', 'view'),
+            'deal' => ($deal = \App\Models\CrmDeal::query()->find((int) $id)) ? \App\Support\DealAccess::can($me, 'view', $deal) : abort(404),
             'process' => Access::allows($me, 'processes', 'view'),
             'staff' => Access::allows($me, 'staff', 'view'),
             default => true,

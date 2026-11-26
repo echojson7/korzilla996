@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\AccessController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CrmController;
+use App\Http\Controllers\DealController;
 use App\Http\Controllers\GifController;
 use App\Http\Controllers\MessengerController;
 use App\Http\Controllers\ProfileController;
@@ -80,6 +82,31 @@ Route::prefix('api')->group(function () {
         Route::get('gifs/favorites', 'favorites');
         Route::post('gifs/favorites', 'addFavorite');
         Route::delete('gifs/favorites', 'removeFavorite');
+    });
+
+    /* CRM: сделки, воронки, стадии и свои поля (как в Битрикс24). */
+    Route::middleware('auth')->group(function () {
+        Route::get('crm/schema', [CrmController::class, 'schema']);
+        Route::post('crm/pipelines', [CrmController::class, 'storePipeline']);
+        Route::post('crm/pipelines/order', [CrmController::class, 'orderPipelines']);
+        Route::patch('crm/pipelines/{pipeline}', [CrmController::class, 'updatePipeline']);
+        Route::delete('crm/pipelines/{pipeline}', [CrmController::class, 'destroyPipeline']);
+        Route::post('crm/pipelines/{pipeline}/stages', [CrmController::class, 'storeStage']);
+        Route::post('crm/pipelines/{pipeline}/stages/order', [CrmController::class, 'orderStages']);
+        Route::patch('crm/stages/{stage}', [CrmController::class, 'updateStage']);
+        Route::delete('crm/stages/{stage}', [CrmController::class, 'destroyStage']);
+        Route::post('crm/fields', [CrmController::class, 'storeField']);
+        Route::post('crm/fields/order', [CrmController::class, 'orderFields']);
+        Route::patch('crm/fields/{field}', [CrmController::class, 'updateField']);
+        Route::delete('crm/fields/{field}', [CrmController::class, 'destroyField']);
+
+        Route::get('crm/deals', [DealController::class, 'index']);
+        Route::get('crm/summary', [DealController::class, 'summary']);
+        Route::post('crm/deals', [DealController::class, 'store']);
+        Route::get('crm/deals/{deal}', [DealController::class, 'show']);
+        Route::patch('crm/deals/{deal}', [DealController::class, 'update']);
+        Route::post('crm/deals/{deal}/move', [DealController::class, 'move']);
+        Route::delete('crm/deals/{deal}', [DealController::class, 'destroy']);
     });
 
     /* Задачи: только для вошедших. */

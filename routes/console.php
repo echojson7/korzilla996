@@ -156,3 +156,22 @@ Artisan::command('chats:prune-orphans {--force : удалить, без этог
 Artisan::command('staff:greet-all', function () {
     $this->info('Заведено личных чатов: '.\App\Support\GeneralChat::greetAll());
 })->purpose('Завести недостающие личные чаты между сотрудниками («… теперь в команде»)');
+
+/* Настройки CRM из Битрикс24: воронки, стадии, поля сделок (см. App\Support\BitrixImport). */
+Artisan::command('crm:import-bitrix {--dir= : папка с deal-stages.json и deal-fields.json (по умолчанию database/bitrix24)}', function () {
+    $dir = rtrim($this->option('dir') ?: database_path('bitrix24'), '/');
+    $read = function (string $name) use ($dir) {
+        $path = "{$dir}/{$name}";
+        if (! is_file($path)) {
+            throw new RuntimeException("Нет файла {$path}");
+        }
+
+        return json_decode(file_get_contents($path), true, flags: JSON_THROW_ON_ERROR);
+    };
+    $report = (new App\Support\BitrixImport)->run($read('deal-stages.json'), $read('deal-fields.json'));
+    $this->info("Воронок: +{$report['pipelines']}, стадий: +{$report['stages']}, полей: +{$report['fields']}.");
+    if ($report['skipped']) {
+        $this->line('Не перенесены (привязки к CRM, товары, бронь — этап 2): '.implode('; ', $report['skipped']));
+    }
+    App\Support\Realtime::changed('crm', App\Support\DealAccess::everyone());
+})->purpose('Перенести воронки, стадии и поля сделок из выгрузки Битрикс24');

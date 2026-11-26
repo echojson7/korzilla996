@@ -84,6 +84,9 @@ class MessengerTest extends TestCase
     {
         $anna = $this->user('Анна Иванова');
         $boris = $this->user('Борис Петров');
+        $stage = \App\Models\CrmStage::query()->first();
+        \Illuminate\Support\Facades\DB::table('crm_deals')->insert(['id' => 12, 'pipeline_id' => $stage->pipeline_id, 'stage_id' => $stage->id, 'title' => 'Сайт', 'responsible_id' => $anna->id]);
+        $this->actingAs($anna)->postJson('/api/messenger/entity-chats', ['entity' => 'deal:999', 'title' => 'Нет такой'])->assertNotFound();
 
         $chat = $this->actingAs($anna)->postJson('/api/messenger/entity-chats', ['entity' => 'deal:12', 'title' => 'Сделка: Сайт'])
             ->assertCreated()->assertJsonPath('data.entity', 'deal:12')->assertJsonPath('data.type', 'group')->json('data');

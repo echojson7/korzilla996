@@ -40,6 +40,7 @@ class Access
                 'create' => ['title' => 'Создавать сделки', 'levels' => self::FLAG],
                 'edit' => ['title' => 'Менять сделки', 'levels' => self::SCOPE],
                 'delete' => ['title' => 'Удалять сделки', 'levels' => self::SCOPE],
+                'settings' => ['title' => 'Настраивать воронки, стадии и поля', 'levels' => self::FLAG],
             ]],
             'staff' => ['title' => 'Сотрудники', 'actions' => [
                 'view' => ['title' => 'Видеть список сотрудников и профили', 'levels' => self::FLAG],
@@ -63,7 +64,7 @@ class Access
     {
         return [
             'tasks' => ['view' => 'own', 'create' => 'all', 'edit' => 'own', 'delete' => 'own'],
-            'crm' => ['view' => 'all', 'create' => 'all', 'edit' => 'own', 'delete' => 'own'],
+            'crm' => ['view' => 'all', 'create' => 'all', 'edit' => 'own', 'delete' => 'own', 'settings' => 'none'],
             'staff' => ['view' => 'all', 'edit' => 'none'],
             'messenger' => ['chats' => 'all', 'general' => 'all', 'moderate' => 'none'],
             'processes' => ['view' => 'all', 'start' => 'all', 'templates' => 'none'],
