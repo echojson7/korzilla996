@@ -406,3 +406,9 @@ body {
 .panel-tab:hover {
   color: var(--foreground);
 }
+.panel-tab--left {
+  padding-right: 0;
+  padding-left: 0.125rem;
+  border-radius: 0.875rem 0 0 0.875rem;
+  box-shadow: -6px 4px 14px -6px oklch(0 0 0 / 0.35);
+}
