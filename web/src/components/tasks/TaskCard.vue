@@ -47,10 +47,33 @@ const blank = (): TaskInput & { checklist: string[] } => ({
 });
 const form = reactive(blank());
 
+/* Свои быстрые правки чек-листа: пока запросы в пути (и после, если они
+   были позже начала загрузки), отметки в карточке — наши, а не из ответа. */
+let opSeq = 0;
+const checkOps = new Map<number, { seq: number; pending: number; done: boolean; chain: Promise<unknown> }>();
+/* Задача с сервера: отметки пунктов, которые щёлкнули после since или ещё
+   сохраняются, оставляем свои — в ответе они могут быть старыми. */
+function adopt(fresh: TaskFull, since = -1) {
+  let touched = false;
+  for (const item of fresh.checklistItems) {
+    const op = checkOps.get(item.id);
+    if (op && (op.pending > 0 || (since >= 0 && op.seq > since))) {
+      item.done = op.done;
+      touched = true;
+    }
+  }
+  if (touched) fresh.checklist = { done: fresh.checklistItems.filter((one) => one.done).length, total: fresh.checklistItems.length };
+  return fresh;
+}
+async function adoptFrom(run: () => Promise<TaskFull>) {
+  const since = opSeq;
+  return adopt(await run(), since);
+}
 async function load(id: number) {
   loading.value = !task.value || task.value.id !== id;
+  const since = opSeq;
   try {
-    task.value = await getTask(id);
+    task.value = adopt(await getTask(id), since);
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) {
       toast("Задача не найдена или удалена", "danger");
@@ -84,7 +107,7 @@ watch(() => props.taskId, (id) => {
 const listed = computed(() => taskStore.list.find((one) => one.id === props.taskId));
 watch(() => listed.value && { version: listed.value.version, at: listed.value.updatedAt }, (next) => {
   const t = task.value;
-  if (!next || !t || saving.value) return;
+  if (!next || !t || saving.value || [...checkOps.values()].some((op) => op.pending > 0)) return;
   if ((next.version ?? 0) > (t.version ?? 0) || (next.version == null && next.at !== t.updatedAt)) load(t.id);
 });
 
@@ -120,7 +143,7 @@ async function patch(input: TaskInput) {
   if (!task.value) return;
   saving.value = true;
   try {
-    task.value = await updateTask(task.value.id, input);
+    task.value = await adoptFrom(() => updateTask(task.value!.id, input));
   } catch (error) {
     fail(error);
   } finally {
@@ -178,7 +201,7 @@ async function go(to: Status) {
   if (!task.value) return;
   saving.value = true;
   try {
-    task.value = await setStatus(task.value.id, to);
+    task.value = await adoptFrom(() => setStatus(task.value!.id, to));
     if (task.value.status === "done") toast(`Задача завершена: «${task.value.title}»`, "success");
     else if (task.value.status === "review" && to === "done") toast("Задача ушла на контроль постановщику", "success");
   } catch (error) {
@@ -217,7 +240,7 @@ const spentTotal = computed(() => {
 async function timer() {
   if (!task.value) return;
   try {
-    task.value = await toggleTimer(task.value.id);
+    task.value = await adoptFrom(() => toggleTimer(task.value!.id));
   } catch (error) {
     fail(error);
   }
@@ -278,17 +301,42 @@ async function addCheckItem() {
     fail(error);
   }
 }
+/* Быстрые щелчки: отметка меняется сразу, ответ сервера применяется,
+   только если после него по этому пункту ничего не щёлкали; пока есть
+   запросы в пути, карточка не перечитывается (иначе старый ответ снимет
+   свежие галочки). Когда всё дошло — одна сверка с сервером. */
 async function toggleCheck(id: number, done: boolean) {
   if (draft.value || !task.value) return;
   const item = task.value.checklistItems.find((one) => one.id === id);
   if (!item) return;
+  const before = item.done;
   item.done = done;
+  syncBrief(false);
+  const op = checkOps.get(id) ?? { seq: 0, pending: 0, done, chain: Promise.resolve() };
+  const mySeq = ++opSeq;
+  Object.assign(op, { seq: mySeq, done, pending: op.pending + 1 });
+  checkOps.set(id, op);
+  /* По одному пункту запросы идут строго друг за другом: на сервер они
+     приходят в том же порядке, что и щелчки. */
+  const request = op.chain.catch(() => undefined).then(() => updateCheck(id, { done }));
+  op.chain = request;
   try {
-    Object.assign(item, await updateCheck(id, { done }));
-    syncBrief();
+    const saved = await request;
+    if (op.seq === mySeq) Object.assign(item, saved, { done: op.done });
   } catch (error) {
-    item.done = !done;
+    if (op.seq === mySeq) {
+      item.done = before;
+      op.done = before;
+    }
     fail(error);
+  } finally {
+    op.pending--;
+    syncBrief(false);
+    if (![...checkOps.values()].some((one) => one.pending > 0) && task.value) {
+      const t = task.value;
+      const listedVersion = taskStore.list.find((one) => one.id === t.id)?.version ?? 0;
+      if (listedVersion > (t.version ?? 0)) load(t.id);
+    }
   }
 }
 async function renameCheck(id: number) {
@@ -314,13 +362,18 @@ async function removeCheck(id: number) {
     fail(error);
   }
 }
-function syncBrief() {
+function syncBrief(push = true) {
   const t = task.value;
   if (!t) return;
   t.checklist = { done: t.checklistItems.filter((one) => one.done).length, total: t.checklistItems.length };
   t.files = t.fileItems.length;
   t.comments = t.commentItems.length;
-  upsert(t);
+  if (push) upsert(t);
+  else {
+    /* Только счётчик на карточке доски, без версии — её принесёт сверка. */
+    const row = taskStore.list.find((one) => one.id === t.id);
+    if (row) row.checklist = { ...t.checklist };
+  }
 }
 
 /* ---------- Подзадачи ---------- */
@@ -413,7 +466,7 @@ function copyLink() {
 }
 const childDue = (one: TaskBrief) => dueLook(one.status, one.deadline);
 const onActivityChanged = (next?: TaskFull) => {
-  if (next) task.value = next;
+  if (next) task.value = adopt(next);
   else if (task.value) load(task.value.id);
 };
 const priorityLabel = (id: Priority) => PRIORITIES.find((one) => one.id === id)?.label ?? id;
