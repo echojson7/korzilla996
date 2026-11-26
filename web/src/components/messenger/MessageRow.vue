@@ -148,7 +148,7 @@ const emit = defineEmits<{
         <template v-if="!message.deleted && !message.pending">
         <!-- Наведение на кружок — быстрые реакции; в конце, за чертой, «ещё» —
              вложенная панель со всеми эмодзи по группам. -->
-        <Popover hover class="!absolute -bottom-2.5 z-10 transition-opacity" :class="[right ? '-left-3' : '-right-3', active ? 'opacity-100' : 'opacity-0 group-hover/msg:opacity-100 has-[[aria-expanded=true]]:opacity-100']" :align="right ? 'right' : 'left'" up width="w-auto">
+        <Popover hover class="!absolute -bottom-2.5 z-10 transition-opacity" :class="[right ? '-left-3' : '-right-3', active ? 'opacity-100' : 'opacity-0 group-hover/msg:opacity-100 has-[[aria-expanded=true]]:opacity-100']" align="center" up width="w-auto">
           <template #trigger="{ toggle, open }">
             <button type="button" class="msg-side-btn !size-7" aria-label="Поставить реакцию" title="Реакция" :aria-expanded="open" @click="toggle"><Smile class="size-4" /></button>
           </template>

@@ -9,11 +9,15 @@
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { autoUpdate, computePosition, flip, offset, shift, size, type Placement } from "@floating-ui/dom";
 
-const props = withDefaults(defineProps<{ align?: "left" | "right"; width?: string; up?: boolean; hover?: boolean }>(), { align: "right", width: "w-72", up: false, hover: false });
+const props = withDefaults(defineProps<{ align?: "left" | "right" | "center"; width?: string; up?: boolean; hover?: boolean }>(), { align: "right", width: "w-72", up: false, hover: false });
 const open = ref(false);
 const root = ref<HTMLElement | null>(null);
 const panel = ref<HTMLElement | null>(null);
-const placement = computed<Placement>(() => `${props.up ? "top" : "bottom"}-${props.align === "right" ? "end" : "start"}`);
+const placement = computed<Placement>(() => {
+  const side = props.up ? "top" : "bottom";
+  /* center — панель ровно над (под) кнопкой, по её середине. */
+  return props.align === "center" ? side : `${side}-${props.align === "right" ? "end" : "start"}`;
+});
 const side = ref<"top" | "bottom">("bottom");
 let stop: (() => void) | null = null;
 
