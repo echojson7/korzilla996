@@ -58,5 +58,10 @@ class BitrixLeadsTest extends TestCase
         $row = DB::table('crm_product_rows')->first();
         $this->assertSame(['lead', $lead->id, 'Лендинг'], [$row->owner_type, (int) $row->owner_id, $row->name]);
         $this->assertNotNull($row->product_id);
+
+        $owner = \App\Models\User::factory()->create(['role' => 'owner']);
+        $this->actingAs($owner->fresh())->getJson('/api/crm/lead-schema')->assertOk()->assertJsonCount(2, 'data.pipeline.stages');
+        $this->getJson('/api/crm/leads?q=петров')->assertOk()->assertJsonPath('data.total', 1);
+        $this->getJson('/api/crm/leads/'.$lead->id)->assertOk()->assertJsonPath('data.contacts.1.name', 'Сидоров')->assertJsonPath('data.products.0.sum', 60000);
     }
 }

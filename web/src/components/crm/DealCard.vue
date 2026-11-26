@@ -5,7 +5,7 @@
      их в воронках Битрикса больше сотни. Правка сразу уходит на сервер. -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
-import { Check, ChevronDown, Clock, History, ListChecks, MoreHorizontal, Pencil, Plus, SlidersHorizontal, Trash2, Link2, Flag, RotateCcw, LayoutList } from "@lucide/vue";
+import { Check, ChevronDown, Clock, History, ListChecks, MoreHorizontal, Pencil, Plus, SlidersHorizontal, Trash2, Link2, Flag, RotateCcw, LayoutList, ShoppingCart } from "@lucide/vue";
 import Popover from "../Popover.vue";
 import HueChip from "../HueChip.vue";
 import NoAccess from "../NoAccess.vue";
@@ -14,6 +14,7 @@ import MarkdownField from "../editor/MarkdownField.vue";
 import CardBlock from "../tasks/CardBlock.vue";
 import UserPick from "../tasks/UserPick.vue";
 import FieldValue from "./FieldValue.vue";
+import ProductRows from "./ProductRows.vue";
 import {
   crm, getDeal, updateDeal, deleteDeal, onDealChange, pipelineById, stageById, fieldByCode, hueOf, CURRENCIES,
   type DealFull, type DealInput, type Field, type FieldValue as Value, type Stage,
@@ -344,6 +345,11 @@ function copyLink() {
         <template v-if="expanded.has(group.name)">Скрыть пустые</template>
         <template v-else><Plus class="size-3.5" />{{ group.shown.length ? "Ещё" : "Показать" }} {{ plural(group.hidden, "поле", "поля", "полей") }}</template>
       </button>
+    </CardBlock>
+
+    <!-- Товары -->
+    <CardBlock v-if="deal.products?.length" :icon="ShoppingCart" title="Товары" :count="deal.products.length">
+      <ProductRows :rows="deal.products" />
     </CardBlock>
 
     <!-- Комментарий -->

@@ -59,6 +59,7 @@ export interface DealFull extends DealBrief {
   comments: string | null;
   externalId: string | null;
   companyInfo?: { id: number; title: string; phones: Contact[]; emails: Contact[]; webs: Contact[]; address: string | null } | null;
+  products?: ProductRow[];
   contactInfo?: { id: number; name: string; post: string | null; phones: Contact[]; emails: Contact[] } | null;
   history: DealHistory[];
   can: { edit: boolean; delete: boolean };
@@ -68,6 +69,8 @@ export interface Contact {
   value: string;
   type: string;
 }
+/** Товар в сделке или лиде. */
+export interface ProductRow { id: number; productId: number | null; name: string; price: number; quantity: number; discount: number; tax: number | null; measure: string | null; sum: number }
 export interface DealInput {
   title?: string;
   amount?: number | null;

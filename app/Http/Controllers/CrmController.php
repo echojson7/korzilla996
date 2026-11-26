@@ -339,7 +339,7 @@ class CrmController extends Controller
         Realtime::changed('crm', DealAccess::everyone());
     }
 
-    private function pipeline(CrmPipeline $one): array
+    public function pipeline(CrmPipeline $one): array
     {
         return [
             'id' => $one->id,
@@ -355,7 +355,7 @@ class CrmController extends Controller
         return ['id' => $one->id, 'pipelineId' => $one->pipeline_id, 'title' => $one->title, 'color' => $one->color, 'semantic' => $one->semantic, 'sort' => $one->sort];
     }
 
-    private function field(CrmField $one): array
+    public function field(CrmField $one): array
     {
         return [
             'id' => $one->id,

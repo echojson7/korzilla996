@@ -405,6 +405,7 @@ class DealController extends Controller
             'externalId' => $deal->external_id,
             'companyInfo' => $this->companyInfo($deal->company_id),
             'contactInfo' => $this->contactInfo($deal->contact_id),
+            'products' => ProductRows::of('deal', $deal->id),
             'history' => $deal->history()->orderByDesc('id')->limit(200)->get()->map(fn (CrmDealHistory $one) => [
                 'id' => $one->id, 'userId' => $one->user_id, 'field' => $one->field, 'old' => $one->old, 'new' => $one->new,
                 'at' => $one->created_at?->toIso8601String(),

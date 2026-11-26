@@ -4,6 +4,7 @@ use App\Http\Controllers\AccessController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CrmClientController;
 use App\Http\Controllers\CrmController;
+use App\Http\Controllers\LeadController;
 use App\Http\Controllers\DealController;
 use App\Http\Controllers\GifController;
 use App\Http\Controllers\MessengerController;
@@ -101,6 +102,9 @@ Route::prefix('api')->group(function () {
         Route::patch('crm/fields/{field}', [CrmController::class, 'updateField']);
         Route::delete('crm/fields/{field}', [CrmController::class, 'destroyField']);
 
+        Route::get('crm/lead-schema', [LeadController::class, 'schema']);
+        Route::get('crm/leads', [LeadController::class, 'index']);
+        Route::get('crm/leads/{lead}', [LeadController::class, 'show']);
         Route::get('crm/companies', [CrmClientController::class, 'companies']);
         Route::get('crm/companies/{company}', [CrmClientController::class, 'showCompany']);
         Route::get('crm/contacts', [CrmClientController::class, 'contacts']);
