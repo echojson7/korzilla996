@@ -17,7 +17,7 @@ web/                       интерфейс: Vue 3 + Vite + Tailwind 4 + ст�
                            и таблица), сотрудники, процессы
   src/shell/ChatRail.vue   колонка чатов справа: обложки, счётчики, быстрый чат
   src/lib/data.ts          демо-данные, пока их нет на сервере
-  public/bg/               фоны (свои, web/scripts/backgrounds.py)
+  public/bg/               фоны-фотографии (wallhaven.cc)
 public/portal/             готовая сборка web/ (коммитится: на стенде нет node)
 public/app/index.html      старый адрес, уводит на /portal/
 ```

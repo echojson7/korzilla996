@@ -15,9 +15,9 @@
       var dark = theme === "dark" || (theme === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
       root.classList.toggle("dark", dark);
       root.dataset.theme = dark ? "dark" : "light";
-      var colors = { synthwave: "rgb(110 39 101)", dusk: "rgb(116 69 114)", aurora: "rgb(15 44 65)", waves: "rgb(148 164 159)", dunes: "rgb(221 140 132)", nightforest: "rgb(37 51 97)", candy: "rgb(210 152 192)", lagoon: "rgb(75 182 210)" };
+      var colors = { lake: "rgb(123 132 131)", campfire: "rgb(80 106 108)", cloudpeak: "rgb(44 60 36)", evening: "rgb(73 67 72)", meadow: "rgb(58 97 113)", race: "rgb(121 116 100)" };
       var bg = get("bg");
-      if (!colors[bg]) bg = "dusk";
+      if (!colors[bg]) bg = "lake";
       var size = Math.max(screen.width, screen.height) * devicePixelRatio > 1600 ? "" : "-1280";
       root.style.setProperty("--bg-color", colors[bg]);
       root.style.setProperty("--bg-image", 'url("' + new URL("./bg/" + bg + size + ".webp", location.href).href + '")');
