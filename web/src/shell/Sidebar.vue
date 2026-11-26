@@ -33,11 +33,11 @@ const narrow = computed(() => props.collapsed && !props.mobileOpen);
   </Transition>
   <nav
     class="glass on-photo fixed inset-y-0 left-0 z-40 flex flex-col transition-[width,transform] duration-200 lg:static lg:z-auto lg:translate-x-0"
-    :class="[narrow ? 'w-[68px]' : 'w-[224px]', mobileOpen ? 'translate-x-0' : '-translate-x-full']"
+    :class="[narrow ? 'w-[68px] min-w-[68px] max-w-[68px]' : 'w-[224px] min-w-[224px] max-w-[224px]', mobileOpen ? 'translate-x-0' : '-translate-x-full']"
     aria-label="Разделы портала"
   >
-    <div class="flex h-14 shrink-0 items-center gap-2.5 px-4">
-      <Brand v-if="narrow" compact class="mx-auto" />
+    <div class="flex h-14 shrink-0 items-center gap-2.5" :class="narrow ? 'justify-center px-0' : 'px-4'">
+      <Brand v-if="narrow" compact />
       <span v-else class="min-w-0 flex-1 truncate text-[19px]"><Brand /></span>
       <button v-if="mobileOpen" type="button" class="flex size-8 items-center justify-center rounded-lg hover:bg-white/15 lg:hidden" aria-label="Закрыть меню" @click="emit('closeMobile')">
         <X class="size-4" />

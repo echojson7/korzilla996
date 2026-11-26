@@ -33,9 +33,9 @@ defineProps<{ compact?: boolean }>();
   padding: 0.14em 0.22em 0.12em;
 }
 .brand--compact .brand__num {
-  font-size: 13px;
-  border-width: 2px;
-  border-radius: 7px;
-  padding: 7px 5px 6px;
+  font-size: 11px;
+  border-width: 1.5px;
+  border-radius: 6px;
+  padding: 5px 4px 4px;
 }
 </style>
