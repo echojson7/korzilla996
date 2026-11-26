@@ -14,7 +14,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        /* APCu у консоли свой и обычно выключен (apc.enable_cli=0): artisan
+           и планировщик (withoutOverlapping держит блокировку в кэше)
+           работают с файловым кэшем. */
+        if ($this->app->runningInConsole() && config('cache.default') === 'apc') {
+            config(['cache.default' => 'file']);
+        }
     }
 
     /**

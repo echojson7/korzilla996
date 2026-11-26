@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\User;
+use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -38,7 +39,7 @@ class Realtime
 
     public static function stamp(int $userId): int
     {
-        return (int) Cache::get(self::key($userId), 0);
+        return (int) self::cache()->get(self::key($userId), 0);
     }
 
     /** Событие участникам: метка — всем, Mercure — если включён. */
@@ -50,7 +51,7 @@ class Realtime
         }
         if ($stamp) {
             $now = (int) floor(microtime(true) * 1000);
-            Cache::putMany($ids->mapWithKeys(fn ($id) => [self::key($id) => $now])->all(), now()->addDays(30));
+            self::cache()->putMany($ids->mapWithKeys(fn ($id) => [self::key($id) => $now])->all(), now()->addDays(30));
         }
         if (! self::enabled()) {
             return;
@@ -136,7 +137,7 @@ class Realtime
             return $sent;
         });
         foreach ($sent as $userId => [$ev, $ids]) {
-            Cache::put(self::lastKey($userId), $ev, now()->addHours(self::KEEP_HOURS));
+            self::cache()->put(self::lastKey($userId), $ev, now()->addHours(self::KEEP_HOURS));
             self::send([$userId], ['type' => $type, 'ev' => $ev, 'ids' => $ids]);
         }
         if (random_int(1, 200) === 1) {
@@ -153,16 +154,16 @@ class Realtime
      */
     public static function since(int $userId, ?int $after): array
     {
-        $cached = Cache::get(self::lastKey($userId));
+        $cached = self::cache()->get(self::lastKey($userId));
         if ($after !== null && $cached !== null && (int) $cached <= $after) {
             return ['last' => $after, 'changes' => [], 'reset' => false];
         }
         $last = (int) DB::table('realtime_events')->where('user_id', $userId)->max('id');
-        Cache::put(self::lastKey($userId), $last, now()->addHours(self::KEEP_HOURS));
+        self::cache()->put(self::lastKey($userId), $last, now()->addHours(self::KEEP_HOURS));
         if ($after === null || $last <= $after) {
             return ['last' => max($last, (int) $after), 'changes' => [], 'reset' => false];
         }
-        if ($after < (int) Cache::get('realtime:floor', 0)) {
+        if ($after < (int) self::cache()->get('realtime:floor', 0)) {
             return ['last' => $last, 'changes' => [], 'reset' => true];
         }
         $rows = DB::table('realtime_events')->where('user_id', $userId)->where('id', '>', $after)
@@ -210,7 +211,7 @@ class Realtime
             return 0;
         }
         /* Сначала граница: кто отстал за неё, тот грузит всё заново, а не ждёт стёртых событий. */
-        Cache::forever('realtime:floor', max($edge, (int) Cache::get('realtime:floor', 0)));
+        self::cache()->forever('realtime:floor', max($edge, (int) self::cache()->get('realtime:floor', 0)));
         $total = 0;
         do {
             $ids = DB::table('realtime_events')->where('id', '<=', $edge)->orderBy('id')->limit($batch)->pluck('id');
@@ -220,6 +221,16 @@ class Realtime
         } while ($ids->count() === $batch);
 
         return $total;
+    }
+
+    /**
+     * Метки и номера событий — в общем кэше (файлы): их пишут и веб,
+     * и консоль (планировщик, changelog:post), а APCu у каждого процесса
+     * свой. Файл маленький и читается из кэша ОС, в SQLite не пишет.
+     */
+    private static function cache(): Repository
+    {
+        return Cache::store(config('cache.shared'));
     }
 
     private static function lastKey(int $userId): string

@@ -55,7 +55,10 @@
   (`SESSION_DRIVER=file`). Таблицы `cache` и `sessions` не используются:
   «выйти на других устройствах» — `App\Http\Middleware\CheckSignIn`
   (отпечаток пароля в сессии + выключенная учётка), строки из `sessions`
-  не удалять. В CLI APCu свой и обычно выключен — консоль кэш веба не видит.
+  не удалять. APCu у каждого процесса свой: консоль (artisan, планировщик)
+  работает с файловым кэшем, а всё, что пишут и веб, и консоль (метки
+  real-time в `App\Support\Realtime`), — в `Cache::store(config('cache.shared'))`
+  (файлы).
 - SQLite в режиме WAL: рядом с `database.sqlite` лежат `-wal` и `-shm`.
   Копию базы снимать не `cp`, а `VACUUM INTO`: `~/korzilla996-env/bin/php -r
   '(new PDO("sqlite:database/database.sqlite"))->exec("VACUUM INTO \"/путь/копия.sqlite\"");'`.

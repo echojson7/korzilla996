@@ -34,6 +34,10 @@ return [
     |
     */
 
+    /* Общий для веба и консоли (APCu у каждого процесса свой): метки
+       real-time и мессенджера, App\Support\Realtime. */
+    'shared' => env('CACHE_SHARED_STORE', 'file'),
+
     'stores' => [
 
         'apc' => [
