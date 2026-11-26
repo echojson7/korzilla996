@@ -269,7 +269,7 @@ defineExpose({ openAdd });
       :style="{ '--hue': column.hue }"
     >
       <header class="shrink-0">
-        <div class="hue-bar flex h-8 items-center gap-2 rounded-xl px-3 text-white transition-shadow" :class="dragging != null && over?.column === column.id ? 'shadow-[0_0_0_2px_rgb(255_255_255/0.85)]' : ''">
+        <div class="hue-bar flex h-8 items-center gap-2 rounded-xl px-3 text-white transition-shadow" :class="dragging != null && over?.column === column.id ? 'shadow-[inset_0_0_0_2px_rgb(255_255_255/0.9)]' : ''">
           <h2 class="min-w-0 flex-1 truncate text-sm font-semibold">{{ column.label }}</h2>
           <span class="rounded-full bg-black/15 px-1.5 text-xs font-semibold tabular-nums">{{ inColumn(column.id).length }}</span>
           <button v-if="addPlaceholder" type="button" class="-mr-1.5 flex size-6 items-center justify-center rounded-lg hover:bg-black/15" :aria-label="`Добавить в «${column.label}»`" @click="openAdd(column.id)">
