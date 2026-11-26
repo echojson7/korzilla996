@@ -10,6 +10,8 @@ import { toast } from "./toast";
 export interface ChatUser {
   id: number;
   name: string;
+  email?: string;
+  role?: "owner" | "admin" | "staff";
   initials: string;
   position: string | null;
   department: string | null;

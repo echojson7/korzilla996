@@ -1,51 +1,88 @@
-<!-- Сотрудники: отделы вкладками, карточки или таблица, поиск по имени,
-     должности и телефону. Щелчок открывает карточку сотрудника справа. -->
+<!-- Сотрудники: настоящие учётки портала (staff:create), без выключенных.
+     Отделы вкладками — из поля «отдел» учёток, карточки или таблица, поиск
+     по имени, должности и почте. Щелчок открывает карточку справа. -->
 <script setup lang="ts">
-import { computed } from "vue";
-import { Phone, Mail, LayoutGrid, Table2, Crown } from "@lucide/vue";
+import { computed, onMounted, ref } from "vue";
+import { Mail, LayoutGrid, Table2, Crown, MessageSquare } from "@lucide/vue";
 import PageHead from "../components/PageHead.vue";
 import Segmented from "../components/Segmented.vue";
 import SearchBox from "../components/SearchBox.vue";
 import SidePanel from "../components/SidePanel.vue";
 import DataTable from "../components/DataTable.vue";
-import Face from "../components/Face.vue";
-import { STAFF, DEPARTMENTS, DEPT, tasks, deals, isOpen, type Person } from "../lib/data";
-import { plural, money } from "../lib/format";
-import { route, setQuery } from "../lib/router";
+import ChatFace from "../components/messenger/ChatFace.vue";
+import { people, meId, enabled, loadPeople, startDirect, type ChatUser } from "../lib/messenger";
+import { plural } from "../lib/format";
+import { route, setQuery, navigate } from "../lib/router";
 import { local } from "../lib/prefs";
+import { toast } from "../lib/toast";
 import type { Column } from "../lib/move";
 
-const dept = computed(() => (DEPT[route.value.query.get("dept") ?? ""] ? route.value.query.get("dept")! : "all"));
+const ROLE: Record<string, string> = { owner: "Владелец", admin: "Администратор", staff: "Сотрудник" };
+const NO_DEPT = "Без отдела";
+
+const loading = ref(!people.size);
+const failed = ref(false);
+onMounted(async () => {
+  if (!enabled.value) return void (loading.value = false);
+  try {
+    await loadPeople();
+  } catch {
+    failed.value = !people.size;
+  } finally {
+    loading.value = false;
+  }
+});
+
+const staff = computed(() => [...people.values()].filter((one) => one.active).sort((a, b) => a.name.localeCompare(b.name, "ru")));
+const deptOf = (one: ChatUser) => one.department?.trim() || NO_DEPT;
+const departments = computed(() => [...new Set(staff.value.map(deptOf))].sort((a, b) => (a === NO_DEPT ? 1 : b === NO_DEPT ? -1 : a.localeCompare(b, "ru"))));
+const roleOf = (one: ChatUser) => ROLE[one.role ?? "staff"] ?? ROLE.staff;
+
+const dept = computed(() => {
+  const asked = route.value.query.get("dept") ?? "";
+  return departments.value.includes(asked) ? asked : "all";
+});
 const text = computed({ get: () => route.value.query.get("q") ?? "", set: (q) => setQuery({ q }) });
 const view = local<"cards" | "table">("staff.view", "cards");
 
-const tabs = computed(() => [{ key: "all", label: "Все", count: STAFF.length }, ...DEPARTMENTS.map((one) => ({ key: one.id, label: one.name, count: STAFF.filter((who) => who.dept === one.id).length }))]);
+const tabs = computed(() => [{ key: "all", label: "Все", count: staff.value.length }, ...departments.value.map((name) => ({ key: name, label: name, count: staff.value.filter((one) => deptOf(one) === name).length }))]);
 const visible = computed(() => {
   const words = text.value.trim().toLowerCase();
-  return STAFF.filter((one) => (dept.value === "all" || one.dept === dept.value) && (!words || `${one.name} ${one.role} ${one.phone} ${one.email}`.toLowerCase().includes(words)));
+  return staff.value.filter((one) => (dept.value === "all" || deptOf(one) === dept.value) && (!words || `${one.name} ${one.position ?? ""} ${one.department ?? ""} ${one.email ?? ""}`.toLowerCase().includes(words)));
 });
-const tel = (phone: string) => `tel:${phone.replace(/[^\d+]/g, "")}`;
+const sub = computed(() => {
+  const count = plural(staff.value.length, "сотрудник", "сотрудника", "сотрудников");
+  const named = departments.value.filter((one) => one !== NO_DEPT).length;
+  return named ? `${count} в ${plural(named, "отделе", "отделах", "отделах")}` : count;
+});
 
-const TABLE: Column<Person>[] = [
+const TABLE: Column<ChatUser>[] = [
   { key: "name", label: "Сотрудник", sort: (one) => one.name, class: "min-w-[260px]" },
-  { key: "dept", label: "Отдел", sort: (one) => DEPT[one.dept].name },
-  { key: "phone", label: "Телефон" },
-  { key: "email", label: "Почта" },
-  { key: "now", label: "Сейчас", sort: (one) => (one.away ? 1 : 0) },
+  { key: "dept", label: "Отдел", sort: (one) => deptOf(one) },
+  { key: "email", label: "Почта или логин" },
+  { key: "role", label: "Доступ", sort: (one) => roleOf(one) },
 ];
 
-const opened = computed(() => STAFF.find((one) => one.id === route.value.query.get("open")) ?? null);
-const open = (one: Person) => setQuery({ open: one.id });
-const workload = computed(() => (opened.value ? tasks.filter((one) => one.owner === opened.value!.id && isOpen(one)).length : 0));
-const theirDeals = computed(() => (opened.value ? deals.filter((one) => one.owner === opened.value!.id) : []));
+const opened = computed(() => staff.value.find((one) => String(one.id) === route.value.query.get("open")) ?? null);
+const open = (one: ChatUser) => setQuery({ open: one.id });
+const isMail = (value?: string) => !!value && value.includes("@");
+
+async function write(one: ChatUser) {
+  try {
+    const chat = await startDirect(one.id);
+    navigate("/messenger", { chat: chat.id });
+  } catch {
+    toast("Не получилось открыть чат", "danger");
+  }
+}
 </script>
 
 <template>
   <div class="flex h-full min-h-0 flex-col">
-    <PageHead title="Сотрудники" :sub="`${plural(STAFF.length, 'сотрудник', 'сотрудника', 'сотрудников')} в ${plural(DEPARTMENTS.length, 'отделе', 'отделах', 'отделах')}`">
+    <PageHead title="Сотрудники" :sub="loading ? 'Загрузка…' : sub">
       <template #toolbar>
-        <Segmented label="Отделы" :items="tabs" :model-value="dept" @update:model-value="(key) => setQuery({ dept: key === 'all' ? null : key })" />
-        <SearchBox v-model="text" placeholder="Имя, должность или телефон" class="w-full min-w-0 sm:w-auto sm:flex-1" />
+        <Segmented v-if="departments.length > 1" label="Отделы" :items="tabs" :model-value="dept" @update:model-value="(key) => setQuery({ dept: key === 'all' ? null : key })" />
+        <SearchBox v-model="text" placeholder="Имя, должность или почта" class="w-full min-w-0 sm:w-auto sm:flex-1" />
         <div class="toggle-button-group toggle-button-group--horizontal" role="radiogroup" aria-label="Вид">
           <button type="button" role="radio" class="toggle-button toggle-button--sm toggle-button--icon-only" :aria-checked="view === 'cards'" :data-selected="view === 'cards' ? 'true' : undefined" aria-label="Карточки" @click="view = 'cards'"><LayoutGrid class="size-4" /></button>
           <button type="button" role="radio" class="toggle-button toggle-button--sm toggle-button--icon-only" :aria-checked="view === 'table'" :data-selected="view === 'table' ? 'true' : undefined" aria-label="Таблица" @click="view = 'table'"><Table2 class="size-4" /></button>
@@ -56,44 +93,41 @@ const theirDeals = computed(() => (opened.value ? deals.filter((one) => one.owne
     <div class="min-h-0 flex-1 overflow-y-auto px-3 pb-4 md:px-5 photo-scroll">
       <div v-if="view === 'cards'" class="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-3">
         <button v-for="one in visible" :key="one.id" type="button" class="sheet flex flex-col items-center rounded-2xl p-5 text-center shadow-surface transition hover:-translate-y-0.5 hover:shadow-md" @click="open(one)">
-          <Face :who="one" size="lg" />
-          <p class="mt-3 flex items-center gap-1 font-semibold">{{ one.name }}<Crown v-if="one.head" class="size-3.5 text-warning" aria-label="Руководитель отдела" /></p>
-          <p class="text-sm text-muted">{{ one.role }}</p>
-          <p class="mt-0.5 text-xs text-muted">{{ DEPT[one.dept].name }}</p>
-          <span class="chip chip--sm chip--soft mt-3" :class="one.away ? 'chip--warning' : 'chip--success'"><span class="chip__label">{{ one.away ?? "На работе" }}</span></span>
+          <ChatFace :user="one" size="lg" />
+          <p class="mt-3 flex items-center gap-1 font-semibold">{{ one.name }}<Crown v-if="one.role === 'owner'" class="size-3.5 text-warning" aria-label="Владелец" /></p>
+          <p v-if="one.position" class="text-sm text-muted">{{ one.position }}</p>
+          <p class="mt-0.5 text-xs text-muted">{{ deptOf(one) }}</p>
+          <span class="mt-3 flex flex-wrap justify-center gap-1.5">
+            <span class="chip chip--sm chip--soft" :class="one.role === 'staff' ? 'chip--default' : 'chip--accent'"><span class="chip__label">{{ roleOf(one) }}</span></span>
+            <span v-if="one.id === meId" class="chip chip--sm chip--soft chip--success"><span class="chip__label">Это вы</span></span>
+          </span>
         </button>
       </div>
-      <DataTable v-else :columns="TABLE" :rows="visible" :key-of="(one) => one.id" label="Сотрудники" class="sheet" @open="open">
+      <DataTable v-else :columns="TABLE" :rows="visible" :key-of="(one) => String(one.id)" label="Сотрудники" class="sheet" @open="open">
         <template #name="{ row }">
           <span class="flex items-center gap-3">
-            <Face :who="row" size="sm" />
-            <span><span class="block font-medium">{{ row.name }}</span><span class="block text-xs text-muted">{{ row.role }}</span></span>
+            <ChatFace :user="row" size="sm" />
+            <span><span class="block font-medium">{{ row.name }}</span><span v-if="row.position" class="block text-xs text-muted">{{ row.position }}</span></span>
           </span>
         </template>
-        <template #dept="{ row }">{{ DEPT[row.dept].name }}</template>
-        <template #phone="{ row }"><a :href="tel(row.phone)" class="link whitespace-nowrap" @click.stop>{{ row.phone }}</a></template>
-        <template #email="{ row }"><a :href="`mailto:${row.email}`" class="link" @click.stop>{{ row.email }}</a></template>
-        <template #now="{ row }">
-          <span class="chip chip--sm chip--soft" :class="row.away ? 'chip--warning' : 'chip--success'"><span class="chip__label">{{ row.away ?? "На работе" }}</span></span>
-        </template>
+        <template #dept="{ row }">{{ deptOf(row) }}</template>
+        <template #email="{ row }"><a v-if="isMail(row.email)" :href="`mailto:${row.email}`" class="link" @click.stop>{{ row.email }}</a><span v-else class="text-muted">{{ row.email }}</span></template>
+        <template #role="{ row }">{{ roleOf(row) }}</template>
       </DataTable>
-      <p v-if="!visible.length" class="on-photo py-16 text-center">Никого не нашлось</p>
+      <p v-if="!loading && !visible.length" class="on-photo py-16 text-center">{{ failed ? "Не получилось загрузить сотрудников" : !enabled ? "Сотрудники видны после входа" : "Никого не нашлось" }}</p>
     </div>
 
-    <SidePanel :open="!!opened" :title="opened?.name ?? ''" :sub="opened ? `${opened.role} · ${DEPT[opened.dept].name}` : ''" @close="setQuery({ open: null })">
+    <SidePanel :open="!!opened" :title="opened?.name ?? ''" :sub="opened ? [opened.position, deptOf(opened)].filter(Boolean).join(' · ') : ''" @close="setQuery({ open: null })">
       <template v-if="opened">
         <div class="flex items-center gap-4">
-          <Face :who="opened" size="lg" />
+          <ChatFace :user="opened" size="lg" />
           <div class="text-sm">
-            <a :href="tel(opened.phone)" class="link flex items-center gap-2"><Phone class="size-4" />{{ opened.phone }}</a>
-            <a :href="`mailto:${opened.email}`" class="link mt-1 flex items-center gap-2"><Mail class="size-4" />{{ opened.email }}</a>
+            <a v-if="isMail(opened.email)" :href="`mailto:${opened.email}`" class="link flex items-center gap-2"><Mail class="size-4" />{{ opened.email }}</a>
+            <p v-else class="text-muted">Логин: {{ opened.email }}</p>
+            <p class="mt-1 text-muted">Доступ: {{ roleOf(opened) }}</p>
           </div>
         </div>
-        <div class="mt-5 grid grid-cols-2 gap-3">
-          <div class="card card--default p-4"><p class="text-xs text-muted">Открытых задач</p><p class="mt-1 text-2xl font-semibold">{{ workload }}</p></div>
-          <div class="card card--default p-4"><p class="text-xs text-muted">Сделок</p><p class="mt-1 text-2xl font-semibold">{{ theirDeals.length }}</p><p class="text-xs text-muted">на {{ money(theirDeals.reduce((s, d) => s + d.sum, 0)) }}</p></div>
-        </div>
-        <p class="mt-4 text-sm"><span class="chip chip--sm chip--soft" :class="opened.away ? 'chip--warning' : 'chip--success'"><span class="chip__label">{{ opened.away ?? "На работе" }}</span></span></p>
+        <button v-if="opened.id !== meId" type="button" class="button button--primary button--sm mt-5" @click="write(opened)"><MessageSquare class="size-4" />Написать</button>
       </template>
     </SidePanel>
   </div>

@@ -6,7 +6,8 @@ import { ArrowRight, Briefcase, ListChecks, Users, TrendingUp } from "@lucide/vu
 import PageHead from "../components/PageHead.vue";
 import Face from "../components/Face.vue";
 import HueChip from "../components/HueChip.vue";
-import { deals, FUNNELS, FEED, WHO, STAFF, TASK_STATE, TODAY, day, isOverdue, ME_ID } from "../lib/data";
+import { deals, FUNNELS, FEED, WHO, TASK_STATE, TODAY, day, isOverdue, ME_ID, type Person } from "../lib/data";
+import { people } from "../lib/messenger";
 import { myOpenTasks, overdueTasks } from "../lib/counters";
 import { compactMoney, longDate, number, plural, shortDate, time } from "../lib/format";
 import { href } from "../lib/router";
@@ -18,7 +19,9 @@ const greeting = hour < 6 ? "Доброй ночи" : hour < 12 ? "Доброе 
 const firstName = computed(() => (auth.me?.name ?? WHO[ME_ID].name).split(" ")[0]);
 
 const fresh = computed(() => deals.filter((one) => one.created >= day(-6)));
-const away = STAFF.filter((one) => one.away);
+/* Статусов «в отпуске» у учёток пока нет: список пуст. */
+const away: Person[] = [];
+const staffCount = computed(() => [...people.values()].filter((one) => one.active).length);
 const when = (date: Date) => (date >= TODAY ? time(date) : date >= day(-1) ? `вчера, ${time(date)}` : `${shortDate(date)}, ${time(date)}`);
 
 const funnel = computed(() => {
@@ -35,7 +38,7 @@ const stats = computed(() => [
   { label: "Сделки в работе", value: number(deals.length), sub: `на ${compactMoney(sum(deals))}`, icon: Briefcase, to: href("/deals") },
   { label: "Новые за неделю", value: number(fresh.value.length), sub: `на ${compactMoney(sum(fresh.value))}`, icon: TrendingUp, to: href("/deals") },
   { label: "Мои задачи", value: number(myOpenTasks.value.length), sub: overdueTasks.value.length ? `просрочено в компании: ${overdueTasks.value.length}` : "всё в срок", icon: ListChecks, to: href("/tasks") },
-  { label: "Сотрудники", value: number(STAFF.length), sub: away.length ? `в отпуске: ${away.length}` : "все на месте", icon: Users, to: href("/staff") },
+  { label: "Сотрудники", value: number(staffCount.value), sub: "учётки портала", icon: Users, to: href("/staff") },
 ]);
 const deadline = (date: Date | null) => (!date ? "без срока" : `до ${shortDate(date)}`);
 </script>
