@@ -517,16 +517,19 @@ defineExpose({ create });
       @cancel="cancelDesc"
     />
     <template v-else>
-    <!-- Описание — просто текст задачи, без рамки; «Изменить» видна всегда,
-         если есть права, текст обтекает её. -->
+    <!-- Описание — просто текст задачи, без рамки; под ним «Изменить»
+         (видна всегда, если есть права). -->
     <section class="flow-root px-1 pt-3 pb-4">
       <template v-if="v.description">
-        <button v-if="canEdit" type="button" class="button button--ghost button--sm float-right -mt-1 -mr-1 mb-1 ml-3" @click="editDesc"><Pencil class="size-3.5" />Изменить</button>
         <div class="desc-plain" @dblclick="canEdit && editDesc()">
           <MarkdownField :model-value="v.description" :editable="false" />
         </div>
+        <button v-if="canEdit" type="button" class="button button--secondary button--sm mt-3" @click="editDesc"><Pencil class="size-3.5" />Изменить</button>
       </template>
-      <button v-else-if="canEdit" type="button" class="flex w-full items-center gap-2 rounded-xl py-1 text-left text-sm text-muted transition-colors hover:text-accent" @click="editDesc"><Pencil class="size-3.5" />Добавить описание</button>
+      <template v-else-if="canEdit">
+        <p class="py-1 text-sm text-muted">Описания нет.</p>
+        <button type="button" class="button button--secondary button--sm mt-2" @click="editDesc"><Pencil class="size-3.5" />Добавить описание</button>
+      </template>
       <p v-else class="py-1 text-sm text-muted">Описания нет.</p>
     </section>
 
