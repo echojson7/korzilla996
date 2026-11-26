@@ -3,7 +3,7 @@
 import { ref } from "vue";
 import { login, ApiError } from "../lib/api";
 import { auth } from "../lib/session";
-import Logo from "../components/Logo.vue";
+import Brand from "../components/Brand.vue";
 
 const email = ref("");
 const password = ref("");
@@ -26,12 +26,9 @@ async function submit() {
 <template>
   <div class="photo-shade flex h-full items-center justify-center p-4">
     <form class="card card--default w-full max-w-[26rem] gap-5 p-7 shadow-overlay" @submit.prevent="submit">
-      <div class="flex items-center gap-3">
-        <Logo class="size-12 shrink-0" />
-        <div>
-          <h1 class="font-brand text-[22px] leading-none tracking-[0.01em]">Korzilla <span class="opacity-55">996</span></h1>
-          <p class="mt-1.5 text-sm text-muted">Портал компании</p>
-        </div>
+      <div>
+        <h1 class="text-[26px]"><Brand /></h1>
+        <p class="mt-2 text-sm text-muted">Портал компании</p>
       </div>
       <label class="flex flex-col gap-1.5">
         <span class="label">Почта или логин</span>

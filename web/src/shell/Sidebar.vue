@@ -8,7 +8,7 @@ import { PAGES } from "../pages";
 import { route, href } from "../lib/router";
 import { myOpenTasks, myOverdue, newDeals } from "../lib/counters";
 import { totalUnread } from "../lib/messenger";
-import Logo from "../components/Logo.vue";
+import Brand from "../components/Brand.vue";
 
 const props = defineProps<{ collapsed: boolean; mobileOpen: boolean }>();
 const emit = defineEmits<{ toggle: []; closeMobile: [] }>();
@@ -37,8 +37,8 @@ const narrow = computed(() => props.collapsed && !props.mobileOpen);
     aria-label="Разделы портала"
   >
     <div class="flex h-14 shrink-0 items-center gap-2.5 px-4">
-      <Logo class="size-9 shrink-0 drop-shadow" />
-      <span v-if="!narrow" class="font-brand min-w-0 flex-1 truncate text-[16px] leading-none tracking-[0.01em]">Korzilla <span class="opacity-60">996</span></span>
+      <Brand v-if="narrow" compact class="mx-auto" />
+      <span v-else class="min-w-0 flex-1 truncate text-[19px]"><Brand /></span>
       <button v-if="mobileOpen" type="button" class="flex size-8 items-center justify-center rounded-lg hover:bg-white/15 lg:hidden" aria-label="Закрыть меню" @click="emit('closeMobile')">
         <X class="size-4" />
       </button>
