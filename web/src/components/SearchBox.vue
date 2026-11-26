@@ -11,7 +11,7 @@ defineEmits<{ "update:modelValue": [string] }>();
     <div class="search-field__group">
       <Search class="search-field__search-icon size-4" data-slot="search-field-search-icon" aria-hidden="true" />
       <input
-        class="search-field__input"
+        class="search-field__input min-w-0"
         type="search"
         :placeholder="placeholder"
         :value="modelValue"

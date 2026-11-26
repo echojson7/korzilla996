@@ -634,7 +634,7 @@ defineExpose({ create });
             <span v-else-if="v.dealId" class="text-muted">Сделка №{{ v.dealId }}</span>
             <Popover v-if="canEdit" :ref="setPicker('deal')" align="left" width="w-80">
               <template #trigger="{ toggle }">
-                <button type="button" class="value shrink-0 text-muted" @click="toggle">{{ v.dealId ? "Сменить" : "Привязать сделку" }}</button>
+                <button type="button" class="value shrink-0 text-muted" :class="v.dealId ? 'value--after' : ''" @click="toggle">{{ v.dealId ? "Сменить" : "Привязать сделку" }}</button>
               </template>
               <div class="p-1">
                 <input v-model="dealQ" class="input input--full-width h-9 text-sm" placeholder="Название, компания или номер" autofocus />
@@ -670,7 +670,7 @@ defineExpose({ create });
             </button>
             <Popover v-if="canEdit" :ref="setPicker('parent')" align="left" width="w-80">
               <template #trigger="{ toggle }">
-                <button type="button" class="value shrink-0 text-muted" @click="toggle">{{ v.parentId ? "Сменить" : "Сделать подзадачей" }}</button>
+                <button type="button" class="value shrink-0 text-muted" :class="parentInfo ? 'value--after' : ''" @click="toggle">{{ v.parentId ? "Сменить" : "Сделать подзадачей" }}</button>
               </template>
               <div class="p-1">
                 <input v-model="parentQ" class="input input--full-width h-9 text-sm" placeholder="Название или номер задачи" autofocus />
@@ -838,6 +838,11 @@ defineExpose({ create });
 }
 .value:hover {
   background: var(--default);
+}
+/* Кнопка после названия (сделка, надзадача): без сдвига влево, иначе её
+   подсветка при наведении наезжает на название. */
+.value--after {
+  margin-left: 0.25rem;
 }
 .value-input {
   min-width: 0;
