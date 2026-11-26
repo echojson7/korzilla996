@@ -120,8 +120,8 @@ const nextLabel = (at: number) => (at === 0 ? "сегодня" : at === 1 ? "з�
           >{{ stage.label }}</button>
         </div>
 
-        <section class="mt-5">
-          <MarkdownField v-model="opened.text" class="-mx-3" placeholder="Описание сделки: щёлкните и пишите. Списки, чек-листы, ссылки и картинки — на панели сверху." min-height="80px" />
+        <section class="md-card card card--default mt-5 overflow-hidden p-0">
+          <MarkdownField v-model="opened.text" placeholder="Описание сделки: щёлкните и пишите. Списки, чек-листы, ссылки и картинки — на панели сверху." min-height="80px" />
         </section>
 
         <div class="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-1">

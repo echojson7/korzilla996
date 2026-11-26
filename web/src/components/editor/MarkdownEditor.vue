@@ -165,8 +165,8 @@ const TOOLS: Tool[] = [
 </script>
 
 <template>
-  <div class="md-box rounded-xl border transition" :class="[editable ? (focused ? 'border-accent bg-surface' : 'border-transparent hover:border-border') : 'border-transparent']">
-    <div v-if="editable && editor" class="md-toolbar sticky top-0 z-10 flex flex-wrap items-center gap-0.5 rounded-t-xl px-1.5 py-1" :class="focused || linking ? 'visible' : 'invisible h-0 overflow-hidden py-0'">
+  <div class="md-box">
+    <div v-if="editable && editor" class="md-toolbar sticky top-0 z-10 flex flex-wrap items-center gap-0.5 px-2 py-1" :class="focused || linking ? 'visible' : 'invisible h-0 overflow-hidden py-0'">
       <template v-for="tool in TOOLS" :key="tool.label">
         <span v-if="tool.gap" class="mx-1 h-4 w-px bg-separator" />
         <button
@@ -188,6 +188,6 @@ const TOOLS: Tool[] = [
       <button type="submit" class="button button--primary button--sm button--icon-only" aria-label="Готово"><Check class="size-4" /></button>
       <button type="button" class="button button--ghost button--sm button--icon-only" aria-label="Отмена" @click="linking = false"><X class="size-4" /></button>
     </form>
-    <EditorContent :editor="editor" class="px-3 py-2" :style="{ minHeight: editable ? minHeight : undefined }" @click="editable && !focused && editor?.commands.focus()" />
+    <EditorContent :editor="editor" class="px-4 py-3" :style="{ minHeight: editable ? minHeight : undefined }" @click="editable && !focused && editor?.commands.focus()" />
   </div>
 </template>

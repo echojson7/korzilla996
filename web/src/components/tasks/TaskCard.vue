@@ -459,7 +459,7 @@ defineExpose({ create });
     </Teleport>
 
     <!-- Описание на всю ширину -->
-    <section class="card card--default p-1">
+    <section class="md-card card card--default overflow-hidden p-0">
       <MarkdownField
         :model-value="v.description"
         :editable="canEdit"
