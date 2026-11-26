@@ -144,6 +144,6 @@ const tabs: { id: Tab; label: string }[] = [
       </div>
       <div v-if="busy" class="flex justify-center py-3 text-muted"><Loader2 class="size-5 animate-spin" /></div>
     </div>
-    <p v-if="provider && tab !== 'favorites'" class="px-2 pt-1 text-right text-[11px] text-muted">Powered by {{ PROVIDER_NAME[provider] }}</p>
+    <p class="px-2 pt-1 text-right text-[11px] text-muted">Разработано Kirill Aralin 20.11.2026</p>
   </div>
 </template>
