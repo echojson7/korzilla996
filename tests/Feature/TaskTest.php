@@ -133,4 +133,25 @@ class TaskTest extends TestCase
         $this->actingAs($anna)->postJson("/api/messenger/chats/{$chat}/messages", ['body' => 'Ещё раз @Глеб'])->assertCreated();
         $this->getJson("/api/tasks/{$id}")->assertJsonPath('data.auditors', [$gleb->id]);
     }
+
+    public function test_deleting_task_drops_its_chat(): void
+    {
+        $anna = $this->user('Анна Иванова');
+        $id = $this->actingAs($anna)->postJson('/api/tasks', ['title' => 'Тест'])->json('data.id');
+        $chat = $this->postJson('/api/messenger/entity-chats', ['entity' => "task:{$id}", 'title' => 'Задача: Тест'])->json('data.id');
+        $this->postJson("/api/messenger/chats/{$chat}/messages", ['body' => 'привет'])->assertCreated();
+
+        $this->deleteJson("/api/tasks/{$id}")->assertNoContent();
+        $this->assertDatabaseMissing('chats', ['id' => $chat]);
+        $this->assertDatabaseMissing('messages', ['chat_id' => $chat]);
+        /* Чат на несуществующую задачу не заводится. */
+        $this->postJson('/api/messenger/entity-chats', ['entity' => 'task:999', 'title' => 'Задача:'])->assertNotFound();
+
+        /* Сирота, оставшийся с прошлых времён, — команда находит и удаляет. */
+        $orphan = \App\Models\Chat::query()->create(['type' => 'group', 'title' => 'Задача:', 'entity' => 'task:777', 'created_by' => $anna->id]);
+        $this->artisan('chats:prune-orphans')->assertSuccessful();
+        $this->assertDatabaseHas('chats', ['id' => $orphan->id]);
+        $this->artisan('chats:prune-orphans --force')->assertSuccessful();
+        $this->assertDatabaseMissing('chats', ['id' => $orphan->id]);
+    }
 }

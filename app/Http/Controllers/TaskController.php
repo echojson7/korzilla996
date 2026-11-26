@@ -209,6 +209,7 @@ class TaskController extends Controller
         DB::transaction(function () use ($task) {
             Storage::disk('local')->deleteDirectory('tasks/'.$task->id);
             $task->delete();
+            Chat::dropEntity('task:'.$task->id);
         });
 
         return response()->noContent();

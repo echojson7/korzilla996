@@ -132,6 +132,22 @@ Artisan::command('changelog:clear {--force : без вопроса}', function (
     $this->info("Удалено записей: {$count}");
 })->purpose('Удалить записи портала из канала Changelog');
 
+/* Чаты задач, у которых задачи больше нет (остались от удалённых до исправления). */
+Artisan::command('chats:prune-orphans {--force : удалить, без этого только показать}', function () {
+    $orphans = \App\Models\Chat::query()->where('entity', 'like', 'task:%')->get()
+        ->reject(fn ($chat) => \App\Models\Task::query()->whereKey((int) substr($chat->entity, 5))->exists());
+    foreach ($orphans as $chat) {
+        $this->line("#{$chat->id} {$chat->entity} «{$chat->title}», сообщений: ".$chat->messages()->withTrashed()->count());
+    }
+    if (! $this->option('force') || $orphans->isEmpty()) {
+        $this->info('Найдено: '.$orphans->count().($orphans->isEmpty() ? '' : '. Удалить — с --force'));
+
+        return 0;
+    }
+    $orphans->each->drop();
+    $this->info('Удалено чатов: '.$orphans->count());
+})->purpose('Показать или удалить чаты задач без задачи');
+
 /* Личные чаты «… теперь в команде» между всеми сотрудниками — задним числом, без дублей. */
 Artisan::command('staff:greet-all', function () {
     $this->info('Заведено личных чатов: '.\App\Support\GeneralChat::greetAll());
