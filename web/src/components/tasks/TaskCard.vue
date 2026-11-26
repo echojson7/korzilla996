@@ -5,7 +5,7 @@
      «Комментарии / История / Время».
      Без taskId — форма новой задачи: те же поля, «Поставить задачу». -->
 <script setup lang="ts">
-import { computed, nextTick, reactive, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from "vue";
 import {
   Play, Pause, Check, Pencil, RotateCcw, Timer, Square, CalendarClock, Flame, Briefcase, Hash, X, Plus, Trash2,
   Paperclip, Download, FileText, ListChecks, GitBranch, Link2, MoreHorizontal, ChevronRight, CircleSlash,
@@ -191,8 +191,17 @@ async function go(to: Status) {
 /* ---------- Таймер ---------- */
 
 const now = ref(Date.now());
-setInterval(() => (now.value = Date.now()), 1000);
 const timerHere = computed(() => !!task.value && taskStore.timer?.taskId === task.value.id);
+/* Тикает, только пока таймер идёт в этой задаче, и снимается с карточкой:
+   иначе каждое открытие задачи оставляло вечный setInterval и держало
+   закрытую карточку в памяти. */
+let ticker = 0;
+watch(timerHere, (on) => {
+  clearInterval(ticker);
+  ticker = on ? window.setInterval(() => (now.value = Date.now()), 1000) : 0;
+  now.value = Date.now();
+}, { immediate: true });
+onBeforeUnmount(() => clearInterval(ticker));
 const timerText = computed(() => {
   if (!timerHere.value || !taskStore.timer) return "";
   const s = Math.max(0, Math.floor((now.value - new Date(taskStore.timer.startedAt).getTime()) / 1000));
