@@ -53,6 +53,12 @@ function photo(base: string) {
   return typed ? `image-set(${url("avif")} type("image/avif"), ${url("webp")} type("image/webp"))` : url("webp");
 }
 
+/* Фото во весь размер (2560 px) — для экрана входа, где фон главный. */
+export function fullPhoto(id: string) {
+  const one = BACKDROPS.find((item) => item.id === id) ?? BACKDROPS[0];
+  return { color: one.color, image: photo(`./bg/${one.id}`) };
+}
+
 export function startLook() {
   apply();
   watch([theme, backdrop], apply);

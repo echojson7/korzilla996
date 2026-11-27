@@ -1,11 +1,11 @@
-<!-- Вход сотрудника: спокойный экран без фото — форма по центру на фоне
-     темы, как вход в Korzilla CMS. Учётки заводят администраторы. -->
+<!-- Вход сотрудника: выбранное фото во весь экран (полный размер), форма —
+     стеклянная карточка по центру. Учётки заводят администраторы. -->
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { Eye, EyeOff, Lock, Moon, Sun, User } from "@lucide/vue";
 import { login, ApiError } from "../lib/api";
 import { auth } from "../lib/session";
-import { theme } from "../lib/look";
+import { backdrop, fullPhoto, theme } from "../lib/look";
 import Brand from "../components/Brand.vue";
 
 const email = ref("");
@@ -13,6 +13,11 @@ const password = ref("");
 const shown = ref(false);
 const error = ref("");
 const busy = ref(false);
+
+const bg = computed(() => {
+  const one = fullPhoto(backdrop.value);
+  return { backgroundColor: one.color, backgroundImage: one.image };
+});
 
 const dark = ref(document.documentElement.classList.contains("dark"));
 function flipTheme() {
@@ -34,7 +39,7 @@ async function submit() {
 </script>
 
 <template>
-  <main class="login">
+  <main class="login" :style="bg">
     <form class="login__form" novalidate @submit.prevent="submit">
       <header class="flex flex-col items-center gap-2 pb-2 text-center">
         <h1 class="text-[30px] leading-none"><Brand /></h1>
@@ -100,7 +105,7 @@ async function submit() {
     <div class="flex items-start justify-center">
       <button
         type="button"
-        class="button button--ghost button--icon-only button--md text-muted"
+        class="login__theme button button--icon-only button--md"
         :aria-label="dark ? 'Светлая тема' : 'Тёмная тема'"
         :title="dark ? 'Светлая тема' : 'Тёмная тема'"
         @click="flipTheme"
@@ -122,8 +127,19 @@ async function submit() {
   justify-items: center;
   padding: 16px;
   overflow-y: auto;
-  background: var(--background);
+  background-size: cover;
+  background-position: center;
   color: var(--foreground);
+}
+.login::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(ellipse at center, oklch(0 0 0 / 0.1), oklch(0 0 0 / 0.35));
+}
+.dark .login::before {
+  background: radial-gradient(ellipse at center, oklch(0 0 0 / 0.3), oklch(0 0 0 / 0.55));
 }
 .login__form {
   grid-row: 2;
@@ -131,8 +147,17 @@ async function submit() {
   flex-direction: column;
   gap: 16px;
   width: 100%;
-  max-width: 352px;
-  padding: 24px;
+  max-width: 380px;
+  padding: 32px 28px 24px;
+  border-radius: 24px;
+  background: color-mix(in oklab, var(--surface) 90%, transparent);
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  border: 1px solid color-mix(in oklab, white 35%, transparent);
+  box-shadow: 0 24px 60px -12px oklch(0 0 0 / 0.35);
+}
+.dark .login__form {
+  border-color: color-mix(in oklab, white 10%, transparent);
 }
 .login__form .input {
   height: 44px;
@@ -173,5 +198,15 @@ async function submit() {
 }
 .login > div {
   grid-row: 3;
+}
+.login__theme {
+  margin-top: 20px;
+  color: white;
+  background: oklch(0 0 0 / 0.25);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.login__theme:hover {
+  background: oklch(0 0 0 / 0.4);
 }
 </style>
