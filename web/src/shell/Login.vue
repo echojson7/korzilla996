@@ -130,7 +130,16 @@ async function submit() {
 </template>
 
 <style scoped>
+/* Акцент входа — фирменный зелёный вместо синего (просьба пользователя). */
 .login {
+  --accent: #87c540;
+  --accent-hover: #79b535;
+  --accent-foreground: #fff;
+  --accent-soft: color-mix(in oklab, #87c540 16%, transparent);
+  --accent-soft-foreground: #4d7a1c;
+  --focus: #87c540;
+  --field-border-focus: #87c540;
+  --field-focus: #87c540;
   position: fixed;
   inset: 0;
   z-index: 10;
