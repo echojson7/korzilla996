@@ -36,10 +36,10 @@ const narrow = computed(() => props.collapsed && !props.mobileOpen);
     :class="[narrow ? 'w-[56px] min-w-[56px] max-w-[56px]' : 'w-[200px] min-w-[200px] max-w-[200px]', mobileOpen ? 'translate-x-0' : '-translate-x-full']"
     aria-label="Разделы портала"
   >
-    <div class="flex h-14 shrink-0 items-center gap-2.5" :class="narrow ? 'justify-center px-0' : 'px-3.5'">
+    <div class="relative flex h-14 shrink-0 items-center justify-center" :class="narrow ? 'px-0' : 'px-3.5'">
       <Brand v-if="narrow" compact />
-      <span v-else class="min-w-0 flex-1 truncate text-[19px]"><Brand /></span>
-      <button v-if="mobileOpen" type="button" class="flex size-8 items-center justify-center rounded-lg hover:bg-white/15 lg:hidden" aria-label="Закрыть меню" @click="emit('closeMobile')">
+      <span v-else class="flex min-w-0 justify-center text-[19px]"><Brand /></span>
+      <button v-if="mobileOpen" type="button" class="absolute top-1/2 right-3 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg hover:bg-white/15 lg:hidden" aria-label="Закрыть меню" @click="emit('closeMobile')">
         <X class="size-4" />
       </button>
     </div>
