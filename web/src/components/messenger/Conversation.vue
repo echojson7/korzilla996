@@ -464,11 +464,12 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
       <button v-if="chat" type="button" class="flex min-w-0 flex-1 items-center gap-3 text-left" @click="infoOpen = true">
         <ChatFace :chat="chat" size="md" />
         <span class="min-w-0">
-          <span class="flex min-w-0 items-center gap-2">
-            <span v-if="kind" class="chip chip--sm chip--soft chip--accent shrink-0"><component :is="kind.icon" class="size-3.5" /><span class="chip__label">{{ kind.label }}</span></span>
-            <span class="truncate font-semibold">{{ kind ? entityTitle(chat.title, chat.entity) : chat.title }}</span>
+          <span class="block truncate font-semibold">{{ kind ? entityTitle(chat.title, chat.entity) : chat.title }}</span>
+          <!-- Вторая строка: участники (или «печатает»), затем тип карточки. -->
+          <span class="flex min-w-0 items-center gap-1.5 text-xs" :class="typers.length ? 'text-accent' : 'text-muted'">
+            <span class="truncate">{{ sub }}</span>
+            <template v-if="kind"><span aria-hidden="true">·</span><span class="inline-flex shrink-0 items-center gap-1 font-medium text-accent"><component :is="kind.icon" class="size-3.5" />{{ kind.label }}</span></template>
           </span>
-          <span class="block truncate text-xs" :class="typers.length ? 'text-accent' : 'text-muted'">{{ sub }}</span>
         </span>
       </button>
       <span v-else-if="loading" class="flex min-w-0 flex-1 animate-pulse items-center gap-3" aria-hidden="true">
