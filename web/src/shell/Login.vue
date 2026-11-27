@@ -164,7 +164,7 @@ async function submit() {
   margin-bottom: 6px;
 }
 .login__title {
-  font-size: 22px;
+  font-size: 28px;
   line-height: 1.2;
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -263,7 +263,7 @@ async function submit() {
   color: var(--foreground);
 }
 .login__brand-light {
-  font-size: 34px;
+  font-size: 26px;
   color: white;
   filter: drop-shadow(0 2px 12px oklch(0 0 0 / 0.4));
 }
@@ -293,12 +293,12 @@ async function submit() {
   align-items: center;
   gap: 28px;
   width: 100%;
-  max-width: 384px;
+  max-width: 408px;
 }
 .login__card {
   width: 100%;
-  padding: 40px 36px 36px;
-  border-radius: 32px;
+  padding: 48px 44px 44px;
+  border-radius: 40px;
   background: var(--surface);
   border: 1px solid color-mix(in oklab, var(--foreground) 6%, transparent);
   box-shadow:
