@@ -70,7 +70,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey, true));
       >
         <span v-if="current === one.id" class="absolute top-1/2 -left-2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-white" aria-hidden="true" />
         <ChatFace :chat="one" size="md" class="[text-shadow:none] transition-opacity" :class="current === one.id ? '' : 'opacity-90 group-hover:opacity-100'" />
-        <span v-if="one.unread" class="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-semibold text-danger-foreground [text-shadow:none] tabular-nums">{{ one.unread > 99 ? "99+" : one.unread }}</span>
+        <span v-if="one.unread" class="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold [text-shadow:none] tabular-nums" :class="one.muted ? 'bg-neutral-500 text-white' : 'bg-danger text-danger-foreground'">{{ one.unread > 99 ? "99+" : one.unread }}</span>
       </button>
     </div>
     <button type="button" class="mt-1 mb-2 flex size-10 shrink-0 items-center justify-center rounded-full border border-dashed border-white/40 text-white/80 transition-colors hover:border-white/70 hover:bg-white/12 hover:text-white" title="Новый чат" aria-label="Новый чат" @click="creating = true"><Plus class="size-[18px]" /></button>

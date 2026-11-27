@@ -65,6 +65,7 @@ Route::prefix('api')->group(function () {
         Route::post('chats/{chat}/members', 'addMembers');
         Route::delete('chats/{chat}/members/{user}', 'removeMember');
         Route::post('chats/{chat}/pin', 'pin');
+        Route::post('chats/{chat}/flags', 'flags');
         Route::post('chats/{chat}/read', 'read');
         Route::post('chats/{chat}/typing', 'typing');
         Route::get('chats/{chat}/avatar', 'avatar');

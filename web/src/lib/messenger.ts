@@ -43,6 +43,10 @@ export interface ChatItem {
   readonly?: boolean;
   /* Можно закреплять сообщения (в общем чате — модераторам, в Changelog — публикующим). */
   canPin?: boolean;
+  /* Без звука: без уведомлений, счётчик серый и не идёт в общий. */
+  muted?: boolean;
+  /* Отмечен непрочитанным вручную (меню чата). */
+  markedUnread?: boolean;
   title: string;
   initials: string;
   hue: number;
@@ -117,7 +121,7 @@ export const focused = shallowRef<number | null>(null);
 export const threads = reactive(new Map<number, Thread>());
 
 export const enabled = computed(() => !!auth.me && !auth.demo);
-export const totalUnread = computed(() => chats.value.reduce((sum, one) => sum + one.unread, 0));
+export const totalUnread = computed(() => chats.value.reduce((sum, one) => sum + (one.muted ? 0 : one.unread), 0));
 export const chatById = (id: number | null | undefined) => chats.value.find((one) => one.id === id) ?? null;
 export const person = (id: number | null | undefined) => (id == null ? null : people.get(id) ?? null);
 
@@ -383,7 +387,7 @@ export async function askNotify() {
 }
 const notified = new Set<string>();
 function notify(chat: ChatItem, text: string, userId: number | null) {
-  if (!document.hidden || canNotify.value !== "granted" || chat.last == null) return;
+  if (chat.muted || !document.hidden || canNotify.value !== "granted" || chat.last == null) return;
   const key = `${chat.id}:${chat.last.id}`;
   if (notified.has(key)) return;
   notified.add(key);
@@ -622,6 +626,10 @@ export async function markRead(chatId: number) {
   const chat = chatById(chatId);
   const one = threads.get(chatId);
   const last = one?.messages.filter((m) => !m.pending).at(-1)?.id ?? 0;
+  if (chat?.markedUnread) {
+    chat.markedUnread = false;
+    if (!last || last <= chat.lastReadId) void setChatFlags(chat, { unread: false });
+  }
   if (!chat || !last || last <= chat.lastReadId || (reading.get(chatId) ?? 0) >= last) return;
   reading.set(chatId, last);
   chat.lastReadId = last;
@@ -669,6 +677,25 @@ export async function renameChat(chatId: number, title: string) {
 export async function addMembers(chatId: number, userIds: number[]) {
   return upsert(await api<ChatItem>("POST", `messenger/chats/${chatId}/members`, { user_ids: userIds }));
 }
+/* Меню чата в списке: свои отметки. */
+export async function setChatFlags(chat: ChatItem, flags: { muted?: boolean; unread?: boolean }) {
+  if (flags.muted !== undefined) chat.muted = flags.muted;
+  if (flags.unread !== undefined) chat.markedUnread = flags.unread;
+  try {
+    upsert(await api<ChatItem>("POST", `messenger/chats/${chat.id}/flags`, flags));
+  } catch (error) {
+    toast(error instanceof ApiError ? error.first : "Не получилось сохранить", "danger");
+  }
+}
+/* «Прочитано» из меню — до последнего сообщения, не открывая чат. */
+export async function markChatRead(chat: ChatItem) {
+  const last = chat.last?.id ?? 0;
+  chat.unread = 0;
+  chat.markedUnread = false;
+  if (last > chat.lastReadId) chat.lastReadId = last;
+  await api("POST", `messenger/chats/${chat.id}/read`, { id: last }).catch(() => undefined);
+}
+
 export async function removeMember(chatId: number, userId: number) {
   await api("DELETE", `messenger/chats/${chatId}/members/${userId}`);
   if (userId === meId.value) {

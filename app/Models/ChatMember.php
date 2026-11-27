@@ -7,11 +7,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ChatMember extends Model
 {
-    protected $fillable = ['chat_id', 'user_id', 'last_read_id', 'is_pinned'];
+    protected $fillable = ['chat_id', 'user_id', 'last_read_id', 'is_pinned', 'is_muted', 'marked_unread'];
 
     protected function casts(): array
     {
-        return ['is_pinned' => 'boolean'];
+        return ['is_pinned' => 'boolean', 'is_muted' => 'boolean', 'marked_unread' => 'boolean'];
     }
 
     public function chat(): BelongsTo

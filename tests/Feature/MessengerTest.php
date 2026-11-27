@@ -251,6 +251,20 @@ class MessengerTest extends TestCase
         $this->actingAs($owner)->postJson("/api/messenger/messages/{$post}/pin")->assertOk();
     }
 
+    public function test_chat_flags_mute_and_mark_unread(): void
+    {
+        $anna = $this->user('Анна Иванова');
+        $boris = $this->user('Борис Петров');
+        $chat = $this->actingAs($anna)->postJson('/api/messenger/chats', ['type' => 'direct', 'user_id' => $boris->id])->json('data.id');
+        $this->postJson("/api/messenger/chats/{$chat}/flags", ['muted' => true, 'unread' => true])->assertOk()
+            ->assertJsonPath('data.muted', true)->assertJsonPath('data.markedUnread', true);
+        /* Отметки — только свои. */
+        $this->actingAs($boris)->getJson('/api/messenger/chats')->assertJsonPath('data.chats.0.muted', false);
+        /* Прочитал — «непрочитанный» снят, без звука остаётся. */
+        $this->actingAs($anna)->postJson("/api/messenger/chats/{$chat}/read", ['id' => 0])->assertNoContent();
+        $this->getJson('/api/messenger/chats')->assertJsonPath('data.chats.0.markedUnread', false)->assertJsonPath('data.chats.0.muted', true);
+    }
+
     public function test_greet_all_backfills_direct_chats_once(): void
     {
         $make = fn (string $name) => User::withoutEvents(fn () => User::query()->create(['name' => $name, 'email' => mb_strtolower(str_replace(' ', '.', $name)).'@b.ru', 'password' => 'secret-pass-123', 'is_active' => true]));

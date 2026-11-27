@@ -1,8 +1,10 @@
 <!-- Список чатов: поиск, закреплённые сверху, непрочитанные — счётчиком. -->
 <script setup lang="ts">
 import { entityOf } from "../../lib/entities";
-import { computed, ref } from "vue";
-import { SquarePen, Pin, Check, CheckCheck, BellRing } from "@lucide/vue";
+import { computed, defineAsyncComponent, ref } from "vue";
+import { SquarePen, Pin, Check, CheckCheck, BellRing, BellOff } from "@lucide/vue";
+/* Меню чата — отдельным куском: нужно только по правому щелчку. */
+const ChatMenu = defineAsyncComponent(() => import("./ChatMenu.vue"));
 import SearchBox from "../SearchBox.vue";
 import ChatFace from "./ChatFace.vue";
 import { chats, ready, meId, people, when, startDirect, typingIn, prefetch, canNotify, askNotify, type ChatItem } from "../../lib/messenger";
@@ -11,6 +13,7 @@ import { toast } from "../../lib/toast";
 const props = defineProps<{ selected: number | null }>();
 const emit = defineEmits<{ open: [id: number]; create: [] }>();
 const q = ref("");
+const menu = ref<{ chat: ChatItem; x: number; y: number } | null>(null);
 
 const visible = computed(() => {
   const words = q.value.trim().toLowerCase();
@@ -75,11 +78,12 @@ void props;
             :aria-current="selected === one.id ? 'true' : undefined"
             @pointerenter="prefetch(one.id)"
             @click="emit('open', one.id)"
+            @contextmenu.prevent="menu = { chat: one, x: $event.clientX, y: $event.clientY }"
           >
             <ChatFace :chat="one" size="lg" />
             <span class="min-w-0 flex-1">
               <span class="flex items-baseline gap-2">
-                <span class="flex min-w-0 flex-1 items-center gap-1 text-[15px] leading-5 font-semibold"><component :is="entityOf(one.entity)!.icon" v-if="entityOf(one.entity)" class="size-3.5 shrink-0 opacity-60" :aria-label="entityOf(one.entity)!.label" /><span class="truncate">{{ one.title }}</span></span>
+                <span class="flex min-w-0 flex-1 items-center gap-1 text-[15px] leading-5 font-semibold"><component :is="entityOf(one.entity)!.icon" v-if="entityOf(one.entity)" class="size-3.5 shrink-0 opacity-60" :aria-label="entityOf(one.entity)!.label" /><span class="truncate">{{ one.title }}</span><BellOff v-if="one.muted" class="size-3.5 shrink-0 text-muted" aria-label="Без звука" /></span>
                 <span class="flex shrink-0 items-center gap-1 text-xs tabular-nums" :class="one.unread ? 'font-medium text-accent' : 'text-muted'">
                   <template v-if="mine(one)">
                     <CheckCheck v-if="one.readUpTo >= one.last!.id" class="size-3.5 text-accent" aria-label="Прочитано" />
@@ -92,12 +96,14 @@ void props;
                 <span class="min-w-0 flex-1 truncate text-sm leading-5" :class="typingIn(one.id).length ? 'text-accent' : 'text-muted'">
                   <span v-if="mine(one)" class="text-foreground/80">Вы: </span>{{ preview(one) }}
                 </span>
-                <Pin v-if="one.pinned && !one.unread" class="size-3.5 shrink-0 rotate-45 text-muted" aria-label="Закреплён" />
+                <Pin v-if="one.pinned && !one.unread && !one.markedUnread" class="size-3.5 shrink-0 rotate-45 text-muted" aria-label="Закреплён" />
+                <!-- Без звука — счётчик серый; отмечен непрочитанным вручную — точка. -->
                 <span
-                  v-if="one.unread"
-                  class="flex h-[22px] min-w-[22px] shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-semibold tabular-nums bg-accent text-accent-foreground"
-                  :aria-label="`Непрочитанных: ${one.unread}`"
-                >{{ one.unread > 99 ? "99+" : one.unread }}</span>
+                  v-if="one.unread || one.markedUnread"
+                  class="flex h-[22px] min-w-[22px] shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-semibold tabular-nums"
+                  :class="one.muted ? 'bg-default-foreground/25 text-background' : 'bg-accent text-accent-foreground'"
+                  :aria-label="one.unread ? `Непрочитанных: ${one.unread}` : 'Отмечен непрочитанным'"
+                >{{ one.unread ? (one.unread > 99 ? "99+" : one.unread) : "" }}</span>
               </span>
             </span>
           </button>
@@ -117,5 +123,6 @@ void props;
       </template>
       <p v-if="ready && chats.length && q && !visible.length && !strangers.length" class="py-10 text-center text-sm text-muted">Ничего не нашлось</p>
     </div>
+    <ChatMenu v-if="menu" :key="menu.chat.id" :chat="menu.chat" :x="menu.x" :y="menu.y" @close="menu = null" />
   </div>
 </template>

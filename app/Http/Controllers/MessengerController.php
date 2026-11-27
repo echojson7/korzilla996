@@ -274,6 +274,21 @@ class MessengerController extends Controller
         return response()->json(['data' => $this->chatOne($chat, $me)]);
     }
 
+    /** Свои отметки чата: без звука, «непрочитанный». Видны только мне. */
+    public function flags(Request $request, Chat $chat): JsonResponse
+    {
+        $me = $this->me($request);
+        $member = $this->membership($chat, $me);
+        $data = $request->validate(['muted' => ['sometimes', 'boolean'], 'unread' => ['sometimes', 'boolean']]);
+        $member->update(array_filter([
+            'is_muted' => $data['muted'] ?? null,
+            'marked_unread' => $data['unread'] ?? null,
+        ], fn ($value) => $value !== null));
+        Realtime::emit([$me->id], 'chat', ['chatId' => $chat->id]);
+
+        return response()->json(['data' => $this->chatOne($chat, $me)]);
+    }
+
     public function read(Request $request, Chat $chat): Response
     {
         $me = $this->me($request);
@@ -281,6 +296,10 @@ class MessengerController extends Controller
         $data = $request->validate(['id' => ['required', 'integer', 'min:0']]);
         $last = (int) $chat->messages()->withTrashed()->max('id');
         $id = min((int) $data['id'], $last);
+        /* Открыл чат — отметка «непрочитанный» снимается. */
+        if ($member->marked_unread) {
+            $member->update(['marked_unread' => false]);
+        }
         if ($id > $member->last_read_id) {
             $member->update(['last_read_id' => $id]);
             DB::table('chat_reads')->insert(['chat_id' => $chat->id, 'user_id' => $me->id, 'upto_id' => $id, 'created_at' => now()]);
@@ -790,6 +809,8 @@ class MessengerController extends Controller
                 'createdBy' => $chat->created_by,
                 'pinned' => (bool) $mine[$chat->id]->is_pinned,
                 'canPin' => $this->mayPin($chat, $me),
+                'muted' => (bool) $mine[$chat->id]->is_muted,
+                'markedUnread' => (bool) $mine[$chat->id]->marked_unread,
                 'lastReadId' => (int) $mine[$chat->id]->last_read_id,
                 'readUpTo' => (int) $others->max('last_read_id'),
                 /* До какого сообщения дочитал каждый — для аватарок под сообщениями. */
