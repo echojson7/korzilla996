@@ -162,6 +162,15 @@ async function signOut() {
             </span>
             <button
               type="button"
+              class="absolute top-1 left-1 flex size-5 items-center justify-center rounded-full bg-black/55 text-white hover:bg-black/75"
+              title="Заменить свой фон"
+              aria-label="Заменить свой фон"
+              @click="picker?.click()"
+            >
+              <Plus class="size-3" />
+            </button>
+            <button
+              type="button"
               class="absolute top-1 right-1 flex size-5 items-center justify-center rounded-full bg-black/55 text-white hover:bg-black/75"
               title="Убрать свой фон"
               aria-label="Убрать свой фон"
@@ -171,10 +180,11 @@ async function signOut() {
             </button>
           </div>
           <button
+            v-else
             type="button"
             class="flex aspect-[16/10] items-center justify-center rounded-lg border-2 border-dashed border-current/25 text-muted transition hover:border-accent hover:text-accent"
-            :title="customBackdrop ? 'Заменить свой фон' : 'Свой фон'"
-            :aria-label="customBackdrop ? 'Заменить свой фон' : 'Свой фон'"
+            title="Свой фон"
+            aria-label="Свой фон"
             @click="picker?.click()"
           >
             <Plus class="size-5" />
