@@ -17,7 +17,9 @@ import { api, ApiError } from "../lib/api";
 import { hueOf, type CrmDocument, type Field, type FieldValue as Value, type Pipeline } from "../lib/crm";
 import { person, nameOf } from "../lib/tasks";
 import { money, plural } from "../lib/format";
-import { navigate, route, setQuery } from "../lib/router";
+import { navigate, pageRoute, setQuery } from "../lib/router";
+/* Свой адрес: фоновый раздел не реагирует на чужие ?open и фильтры. */
+const route = pageRoute();
 import { toast } from "../lib/toast";
 
 interface SmartType { id: number; title: string; count: number; pipelines: Pipeline[]; fields: Field[] }

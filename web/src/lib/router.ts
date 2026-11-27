@@ -1,7 +1,7 @@
 /* Маршруты в адресе после # (#/tasks?view=board&open=501): портал лежит
    статикой в подпапке стенда, и сервер не знает путей приложения. */
 
-import { shallowRef } from "vue";
+import { computed, shallowRef, type ComputedRef } from "vue";
 
 export interface Route {
   path: string;
@@ -38,4 +38,14 @@ export function setQuery(patch: Query, { replace = true } = {}) {
   const query: Query = Object.fromEntries(route.value.query);
   Object.assign(query, patch);
   navigate(route.value.path, query, { replace });
+}
+
+/* Адрес глазами раздела. Разделы живут в KeepAlive, и фоновый раздел видел
+   чужие параметры: открыли задачу (?open=25051) — фоновые «Смарт-процессы»
+   или «Сделки» шли за своей карточкой 25051, получали 404, показывали
+   «Не найдено» и сбрасывали ?open вместе с открытой задачей. Пока раздел
+   в фоне, он видит свой последний адрес. */
+export function pageRoute(path = route.value.path): ComputedRef<Route> {
+  let last: Route = route.value.path === path ? route.value : { path, query: new URLSearchParams() };
+  return computed(() => (route.value.path === path ? (last = route.value) : last));
 }

@@ -7,7 +7,9 @@ import ChatList from "../components/messenger/ChatList.vue";
 import Conversation from "../components/messenger/Conversation.vue";
 import NewChat from "../components/messenger/NewChat.vue";
 import { enabled } from "../lib/messenger";
-import { route, setQuery } from "../lib/router";
+import { pageRoute, setQuery } from "../lib/router";
+/* Свой адрес: фоновый раздел не реагирует на чужие ?open и фильтры. */
+const route = pageRoute();
 
 const creating = ref(false);
 /* Чат из адреса открываем всегда, даже если его нет в списке: чужой или

@@ -14,7 +14,9 @@ import ChatFace from "../components/messenger/ChatFace.vue";
 import { people, meId, enabled, loadPeople, startDirect, type ChatUser } from "../lib/messenger";
 import { plural } from "../lib/format";
 import { daysToBirthday } from "../lib/profile";
-import { route, setQuery, navigate } from "../lib/router";
+import { pageRoute, setQuery, navigate } from "../lib/router";
+/* Свой адрес: фоновый раздел не реагирует на чужие ?open и фильтры. */
+const route = pageRoute();
 import { local } from "../lib/prefs";
 import { toast } from "../lib/toast";
 import type { Column } from "../lib/move";

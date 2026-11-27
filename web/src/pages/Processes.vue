@@ -8,7 +8,9 @@ import SearchBox from "../components/SearchBox.vue";
 import DataTable from "../components/DataTable.vue";
 import { PROCESSES, BP_KINDS, BP_KIND, type Process } from "../lib/data";
 import { number, plural } from "../lib/format";
-import { route, setQuery } from "../lib/router";
+import { pageRoute, setQuery } from "../lib/router";
+/* Свой адрес: фоновый раздел не реагирует на чужие ?open и фильтры. */
+const route = pageRoute();
 import { toast } from "../lib/toast";
 import type { Column } from "../lib/move";
 

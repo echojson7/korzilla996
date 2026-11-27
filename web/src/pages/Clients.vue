@@ -14,7 +14,9 @@ import ClientCard, { type ClientFull } from "../components/crm/ClientCard.vue";
 import { api, ApiError } from "../lib/api";
 import { person, nameOf } from "../lib/tasks";
 import { plural } from "../lib/format";
-import { route, setQuery } from "../lib/router";
+import { pageRoute, setQuery } from "../lib/router";
+/* Свой адрес: фоновый раздел не реагирует на чужие ?open и фильтры. */
+const route = pageRoute();
 import { toast } from "../lib/toast";
 import type { Contact } from "../lib/crm";
 

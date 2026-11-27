@@ -26,7 +26,9 @@ import {
 import { dealIndex } from "../lib/crm";
 import { auth } from "../lib/session";
 import { plural } from "../lib/format";
-import { route, setQuery } from "../lib/router";
+import { pageRoute, setQuery } from "../lib/router";
+/* Свой адрес: фоновый раздел не реагирует на чужие ?open и фильтры. */
+const route = pageRoute();
 import { moveBefore, type Column } from "../lib/move";
 import { local } from "../lib/prefs";
 import { toast } from "../lib/toast";

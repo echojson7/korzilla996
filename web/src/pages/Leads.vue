@@ -14,7 +14,9 @@ import { api, ApiError } from "../lib/api";
 import { hueOf, type Field, type Pipeline, type Stage } from "../lib/crm";
 import { person, nameOf } from "../lib/tasks";
 import { plural } from "../lib/format";
-import { route, setQuery } from "../lib/router";
+import { pageRoute, setQuery } from "../lib/router";
+/* Свой адрес: фоновый раздел не реагирует на чужие ?open и фильтры. */
+const route = pageRoute();
 import { toast } from "../lib/toast";
 
 const fail = (error: unknown) => toast(error instanceof ApiError ? error.first : "Не получилось загрузить", "danger");

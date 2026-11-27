@@ -5,7 +5,10 @@
    tg, sort, only — ссылкой можно поделиться, назад работает. */
 
 import { computed } from "vue";
-import { route, setQuery } from "../../lib/router";
+import { pageRoute, setQuery } from "../../lib/router";
+
+/* Фильтр задач читает только адрес раздела «Задачи». */
+const route = pageRoute("/tasks");
 import { chats } from "../../lib/messenger";
 import { dealIndex } from "../../lib/crm";
 import { taskStore, isOpenTask, isOverdueTask, nameOf, PRIORITIES, STATUSES, type Status, type TaskBrief } from "../../lib/tasks";

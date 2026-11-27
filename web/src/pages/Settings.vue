@@ -14,7 +14,9 @@ import ChatFace from "../components/messenger/ChatFace.vue";
 import { api, ApiError, type Level } from "../lib/api";
 import { auth, refreshSession } from "../lib/session";
 import { isOwner } from "../lib/access";
-import { route, setQuery, navigate } from "../lib/router";
+import { pageRoute, setQuery, navigate } from "../lib/router";
+/* Свой адрес: фоновый раздел не реагирует на чужие ?open и фильтры. */
+const route = pageRoute();
 import { plural } from "../lib/format";
 import { toast } from "../lib/toast";
 import type { ChatUser } from "../lib/messenger";

@@ -19,7 +19,9 @@ import { auth } from "../lib/session";
 import { ApiError } from "../lib/api";
 import NoAccess from "../components/NoAccess.vue";
 import { deniedOf, atLeast, type Denied } from "../lib/denied";
-import { route, setQuery, navigate, href } from "../lib/router";
+import { pageRoute, setQuery, navigate, href } from "../lib/router";
+/* Свой адрес: фоновый раздел не реагирует на чужие ?open и фильтры. */
+const route = pageRoute();
 import { plural, shortDate } from "../lib/format";
 import { toast } from "../lib/toast";
 
