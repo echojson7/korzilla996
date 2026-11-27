@@ -18,6 +18,7 @@ import { robots, loadRobots, orderRobots, delayText, type Robot, type Trigger } 
 import { loadPeople } from "../../../lib/messenger";
 import { toast } from "../../../lib/toast";
 import { ApiError } from "../../../lib/api";
+import { useCardDrag } from "../../../lib/drag";
 
 const props = defineProps<{ pipelineId: number }>();
 const emit = defineEmits<{ close: [] }>();
@@ -47,22 +48,39 @@ const addRobot = (stageId: number, type: string) => (editing.value = { kind: "ro
 const addTrigger = (stageId: number, type: string) => (editing.value = { kind: "trigger", item: { stageId, type } });
 const menus = new Map<string, InstanceType<typeof Popover>>();
 
-/* Перетаскивание роботов: в столбце — порядок, в другой столбец — перенос. */
-const dragging = ref<number | null>(null);
-const over = ref<{ stageId: number; before: number | null } | null>(null);
-function drop() {
-  const id = dragging.value;
-  const target = over.value;
-  dragging.value = null;
-  over.value = null;
-  if (id == null || !target) return;
-  const ids = robotsOf(target.stageId).map((one) => one.id).filter((one) => one !== id);
-  const at = target.before == null ? ids.length : Math.max(0, ids.indexOf(target.before));
-  ids.splice(at, 0, id);
-  const robot = robots.list.find((one) => one.id === id);
-  if (robot) robot.stageId = target.stageId;
-  orderRobots(target.stageId, ids).catch(fail);
+/* Перетаскивание роботов — то же, что в канбане задач и сделок (lib/drag.ts):
+   в столбце — порядок выполнения, в другой столбец — перенос на стадию. */
+const drag = useCardDrag({
+  enabled: () => robots.can.edit,
+  columnOf: (key) => {
+    const robot = robots.list.find((one) => one.id === key);
+    return robot ? String(robot.stageId) : null;
+  },
+  keysIn: (column) => robotsOf(Number(column)).map((one) => one.id),
+  onDrop: (key, column, before) => {
+    const stageId = Number(column);
+    const ids = robotsOf(stageId).map((one) => one.id).filter((one) => one !== key);
+    const at = before == null ? ids.length : Math.max(0, ids.indexOf(before as number));
+    ids.splice(at, 0, key as number);
+    const robot = robots.list.find((one) => one.id === key);
+    if (robot) robot.stageId = stageId;
+    orderRobots(stageId, ids).catch(fail);
+  },
+});
+const { dragging, slotHeight, landed } = drag;
+/* Строки столбца: роботы и, пока тянут, пустой слот на месте вставки. */
+function rowsOf(stageId: number): { key: string; slot: boolean; robot?: Robot }[] {
+  const rows: { key: string; slot: boolean; robot?: Robot }[] = [];
+  const target = drag.targetIn(String(stageId));
+  for (const robot of robotsOf(stageId)) {
+    if (target && target.before === robot.id) rows.push({ key: "__slot", slot: true });
+    if (dragging.value === robot.id) continue;
+    rows.push({ key: `r${robot.id}`, slot: false, robot });
+  }
+  if (target && target.before == null) rows.push({ key: "__slot", slot: true });
+  return rows;
 }
+const openRobotCard = (one: Robot) => drag.wasDragged() || openRobot(one);
 </script>
 
 <template>
@@ -75,10 +93,11 @@ function drop() {
     </div>
 
     <p v-if="!ready" class="sheet rounded-2xl p-6 text-sm text-muted">Загружаю роботов…</p>
-    <div v-else class="flex min-h-0 flex-1 overflow-x-auto overflow-y-hidden pb-1 photo-scroll">
+    <div v-else :ref="(el) => (drag.board.value = el as HTMLElement | null)" class="flex min-h-0 flex-1 overflow-x-auto overflow-y-hidden pb-1 photo-scroll">
       <section
         v-for="stage in pipeline?.stages ?? []"
         :key="stage.id"
+        :ref="drag.registerSection(String(stage.id))"
         class="flex h-full w-[278px] min-w-[262px] shrink-0 flex-col border-l border-white/45 px-[7px] first:w-[271px] first:border-l-0 first:pl-0"
         :style="{ '--hue': hueOf(stage.color) }"
       >
@@ -87,7 +106,7 @@ function drop() {
           <span v-if="stage.semantic !== 'process'" class="rounded-full bg-black/15 px-1.5 text-xs">{{ stage.semantic === "success" ? "успех" : "провал" }}</span>
         </header>
 
-        <div class="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto pt-2 pb-2 photo-scroll" @dragover.prevent="dragging != null && (over = { stageId: stage.id, before: null })" @drop.prevent="drop">
+        <div :ref="drag.registerList(String(stage.id))" class="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto pt-2 pb-2 photo-scroll">
           <!-- Триггеры -->
           <p class="on-photo flex items-center gap-1 px-1 text-xs font-semibold tracking-wide uppercase opacity-90"><Zap class="size-3.5" />Триггеры</p>
           <button
@@ -119,38 +138,38 @@ function drop() {
 
           <!-- Роботы -->
           <p class="on-photo mt-2 flex items-center gap-1 px-1 text-xs font-semibold tracking-wide uppercase opacity-90"><Bot class="size-3.5" />Роботы</p>
-          <template v-for="one in robotsOf(stage.id)" :key="`r${one.id}`">
-            <div v-if="over && dragging !== one.id && over.stageId === stage.id && over.before === one.id" class="h-1 rounded-full bg-white/80" />
-            <button
-              type="button"
-              class="group rounded-xl border border-transparent bg-surface px-3 py-2 text-left text-sm shadow-surface transition-[border-color,opacity] hover:border-border"
-              :class="[one.active ? '' : 'opacity-60', dragging === one.id ? 'opacity-40' : '', one.type === 'bitrix' ? 'border-warning/60!' : '']"
-              :draggable="robots.can.edit"
-              @dragstart="dragging = one.id"
-              @dragend="dragging = null; over = null"
-              @dragover.prevent.stop="dragging != null && (over = { stageId: stage.id, before: one.id })"
-              @drop.prevent.stop="drop"
-              @click="openRobot(one)"
-            >
-              <span class="flex items-start gap-2">
-                <component :is="ICONS[one.type] ?? Bot" class="mt-0.5 size-4 shrink-0" :class="one.type === 'bitrix' ? 'text-warning' : 'text-muted'" />
-                <span class="min-w-0 flex-1">
-                  <span class="block leading-snug font-medium">{{ one.title }}</span>
-                  <span class="flex flex-wrap items-center gap-x-1.5 text-xs text-muted">
-                    <span class="inline-flex items-center gap-0.5"><Clock class="size-3" />{{ delayText(one.delay, titleOf) }}</span>
-                    <span v-if="one.conditions.length">· с условием</span>
-                    <span v-if="!one.active">· выключен</span>
-                    <span v-if="one.type === 'bitrix'" class="text-warning">· нужно настроить</span>
+          <TransitionGroup tag="ol" name="card" class="relative flex flex-col gap-1.5">
+            <template v-for="row in rowsOf(stage.id)" :key="row.key">
+              <li v-if="row.slot" data-slot class="drop-slot" :style="{ height: `${slotHeight}px` }" />
+              <li v-else :class="landed === row.robot!.id ? 'card-landed' : ''">
+                <button
+                  type="button"
+                  :data-key="String(row.robot!.id)"
+                  class="group w-full rounded-xl border border-transparent bg-surface px-3 py-2 text-left text-sm shadow-surface transition-[border-color,box-shadow,transform] duration-150 select-none hover:-translate-y-px hover:border-border hover:shadow-md"
+                  :class="[row.robot!.active ? '' : 'opacity-60', row.robot!.type === 'bitrix' ? 'border-warning/60!' : '', robots.can.edit ? 'cursor-grab active:cursor-grabbing' : '']"
+                  @pointerdown="drag.onPointerDown($event, row.robot!.id)"
+                  @click="openRobotCard(row.robot!)"
+                >
+                  <span class="flex items-start gap-2">
+                    <component :is="ICONS[row.robot!.type] ?? Bot" class="mt-0.5 size-4 shrink-0" :class="row.robot!.type === 'bitrix' ? 'text-warning' : 'text-muted'" />
+                    <span class="min-w-0 flex-1">
+                      <span class="block leading-snug font-medium">{{ row.robot!.title }}</span>
+                      <span class="flex flex-wrap items-center gap-x-1.5 text-xs text-muted">
+                        <span class="inline-flex items-center gap-0.5"><Clock class="size-3" />{{ delayText(row.robot!.delay, titleOf) }}</span>
+                        <span v-if="row.robot!.conditions.length">· с условием</span>
+                        <span v-if="!row.robot!.active">· выключен</span>
+                        <span v-if="row.robot!.type === 'bitrix'" class="text-warning">· нужно настроить</span>
+                      </span>
+                      <span v-if="row.robot!.stats && (row.robot!.stats.done || row.robot!.stats.failed)" class="mt-0.5 block text-xs text-muted">
+                        За 30 дней: {{ row.robot!.stats.done ?? 0 }}<span v-if="row.robot!.stats.failed" class="text-danger"> · ошибок {{ row.robot!.stats.failed }}</span>
+                      </span>
+                    </span>
+                    <GripVertical v-if="robots.can.edit" class="mt-0.5 size-4 shrink-0 text-muted opacity-0 group-hover:opacity-100" />
                   </span>
-                  <span v-if="one.stats && (one.stats.done || one.stats.failed)" class="mt-0.5 block text-xs text-muted">
-                    За 30 дней: {{ one.stats.done ?? 0 }}<span v-if="one.stats.failed" class="text-danger"> · ошибок {{ one.stats.failed }}</span>
-                  </span>
-                </span>
-                <GripVertical v-if="robots.can.edit" class="mt-0.5 size-4 shrink-0 text-muted opacity-0 group-hover:opacity-100" />
-              </span>
-            </button>
-          </template>
-          <div v-if="over && over.stageId === stage.id && over.before === null && dragging != null" class="h-1 rounded-full bg-white/80" />
+                </button>
+              </li>
+            </template>
+          </TransitionGroup>
           <Popover v-if="robots.can.edit" :ref="(el) => el && menus.set(`r${stage.id}`, el as InstanceType<typeof Popover>)" align="left" width="w-64">
             <template #trigger="{ toggle }">
               <button type="button" class="on-photo flex w-full items-center gap-1 rounded-lg px-1.5 py-1 text-xs hover:bg-white/15" @click="toggle"><Plus class="size-3.5" />Робот</button>
