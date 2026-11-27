@@ -153,7 +153,7 @@ async function submit() {
   margin-bottom: 6px;
 }
 .login__title {
-  font-size: 26px;
+  font-size: 22px;
   line-height: 1.2;
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -279,12 +279,12 @@ async function submit() {
   align-items: center;
   gap: 28px;
   width: 100%;
-  max-width: 420px;
+  max-width: 360px;
 }
 .login__card {
   width: 100%;
-  padding: 36px 36px 32px;
-  border-radius: 22px;
+  padding: 28px 26px 26px;
+  border-radius: 20px;
   background: var(--surface);
   border: 1px solid color-mix(in oklab, var(--foreground) 6%, transparent);
   box-shadow:
