@@ -1,4 +1,5 @@
-<!-- Вход сотрудника. Фон — выбранное в портале фото в полном размере.
+<!-- Вход сотрудника: фото на весь экран (выбранное в портале, полный размер),
+     над модалкой с формой — логотип, под ней — подпись и смена темы.
      Учётки и пароли выдают администраторы, регистрации и сброса нет. -->
 <script setup lang="ts">
 import { computed, ref } from "vue";
@@ -41,13 +42,11 @@ async function submit() {
 </script>
 
 <template>
-  <main class="login">
-    <!-- Слева фото с логотипом, справа форма -->
-    <aside class="login__photo" :style="photo">
+  <main class="login" :style="photo">
+    <div class="login__stack">
       <div class="login__brand-light"><Brand /></div>
-    </aside>
 
-    <section class="login__pane">
+      <section class="login__card">
       <form class="login__form" novalidate @submit.prevent="submit">
         <header class="login__head">
           <h1 class="login__title">Вход в портал</h1>
@@ -110,6 +109,7 @@ async function submit() {
           {{ busy ? "Входим…" : "Войти" }}
         </button>
       </form>
+      </section>
 
       <footer class="login__foot">
         <span>© {{ year }} Korzilla CRM</span>
@@ -124,7 +124,7 @@ async function submit() {
           <Moon v-else :size="16" />
         </button>
       </footer>
-    </section>
+    </div>
 
   </main>
 </template>
@@ -249,55 +249,65 @@ async function submit() {
   color: var(--foreground);
 }
 .login__brand-light {
-  font-size: 28px;
+  font-size: 34px;
   color: white;
-  filter: drop-shadow(0 1px 8px oklch(0 0 0 / 0.35));
+  filter: drop-shadow(0 2px 12px oklch(0 0 0 / 0.4));
 }
 
-/* Фото слева вплотную к краям, форма справа */
+/* Фото на весь экран, логотип и модалка по центру */
 .login {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(440px, 40%);
-  background: var(--surface);
-}
-.login__photo {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 40px 48px;
-  overflow: hidden;
+  place-items: center;
+  padding: 32px 16px;
   background-size: cover;
   background-position: center;
-  isolation: isolate;
+  background-color: var(--surface);
 }
-.login__photo::before {
+.login::before {
   content: "";
-  position: absolute;
+  position: fixed;
   inset: 0;
   z-index: -1;
-  background:
-    linear-gradient(180deg, oklch(0 0 0 / 0.35), transparent 30%),
-    linear-gradient(0deg, oklch(0 0 0 / 0.6), transparent 45%);
+  background: radial-gradient(120% 90% at 50% 45%, oklch(0 0 0 / 0.12), oklch(0 0 0 / 0.45));
 }
-.login__pane {
+.dark .login::before {
+  background: radial-gradient(120% 90% at 50% 45%, oklch(0 0 0 / 0.3), oklch(0 0 0 / 0.6));
+}
+.login__stack {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 40px 48px 24px;
-  min-height: 100%;
+  gap: 28px;
+  width: 100%;
+  max-width: 420px;
 }
-.login__pane .login__form {
-  margin: auto 0;
+.login__card {
+  width: 100%;
+  padding: 36px 36px 32px;
+  border-radius: 22px;
+  background: var(--surface);
+  border: 1px solid color-mix(in oklab, var(--foreground) 6%, transparent);
+  box-shadow:
+    0 1px 2px oklch(0 0 0 / 0.08),
+    0 12px 24px -6px oklch(0 0 0 / 0.18),
+    0 40px 80px -24px oklch(0 0 0 / 0.45);
 }
-@media (max-width: 900px) {
-  .login {
-    grid-template-columns: 1fr;
-  }
-  .login__photo {
-    display: none;
-  }
+.login__card .login__form {
+  max-width: none;
 }
-
+.login__foot {
+  padding: 0 6px;
+  color: oklch(1 0 0 / 0.78);
+  text-shadow: 0 1px 4px oklch(0 0 0 / 0.45);
+}
+.login__theme {
+  color: white;
+  background: oklch(0 0 0 / 0.22);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.login__theme:hover {
+  background: oklch(0 0 0 / 0.38);
+  color: white;
+}
 </style>
