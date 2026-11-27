@@ -59,11 +59,13 @@ class Client
             if ($ok && ! $error) {
                 return $body;
             }
-            $retry = $error === 'QUERY_LIMIT_EXCEEDED' || $status >= 500;
-            if (! $retry || $try >= 6) {
+            /* Метод выбрал свой лимит времени (≈8 минут работы за 10): ждать дольше. */
+            $slow = $error === 'OPERATION_TIME_LIMIT';
+            $retry = $slow || $error === 'QUERY_LIMIT_EXCEEDED' || $status >= 500;
+            if (! $retry || $try >= ($slow ? 15 : 6)) {
                 throw new RuntimeException("Битрикс24 {$method}: ".($error ?: 'HTTP '.$status).' '.($body['error_description'] ?? ''));
             }
-            sleep(2 * $try);
+            sleep($slow ? 90 : 2 * $try);
         }
     }
 
@@ -112,10 +114,19 @@ class Client
             foreach ($chunk as $offset) {
                 $cmd['p'.$offset] = $method.'?'.http_build_query($params + ['start' => $offset]);
             }
-            $body = $this->call('batch', ['halt' => 0, 'cmd' => $cmd]);
-            $errors = $body['result']['result_error'] ?? [];
-            if ($errors) {
-                throw new RuntimeException("Битрикс24 batch {$method}: ".json_encode(array_slice($errors, 0, 2), JSON_UNESCAPED_UNICODE));
+            for ($try = 1; ; $try++) {
+                $body = $this->call('batch', ['halt' => 0, 'cmd' => $cmd]);
+                $errors = $body['result']['result_error'] ?? [];
+                if (! $errors) {
+                    break;
+                }
+                /* Лимит времени метода внутри batch: подождать и повторить всю пачку. */
+                $slow = collect($errors)->contains(fn ($one) => in_array($one['error'] ?? '', ['OPERATION_TIME_LIMIT', 'QUERY_LIMIT_EXCEEDED'], true));
+                if (! $slow || $try >= 15) {
+                    throw new RuntimeException("Битрикс24 batch {$method}: ".json_encode(array_slice($errors, 0, 2), JSON_UNESCAPED_UNICODE));
+                }
+                unset($body);
+                sleep(90);
             }
             foreach ($chunk as $offset) {
                 $rows = $body['result']['result']['p'.$offset] ?? [];

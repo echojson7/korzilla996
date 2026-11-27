@@ -213,6 +213,12 @@ class ImportCrm
                 'sort' => -(float) $row['ID'],
             ] + $common;
         };
+        /* Все лиды: докачка с последнего перенесённого ID, а не с начала
+           (start=N у Битрикса медленный, а обрыв на 137 тыс. — это 6 часов заново). */
+        if ($this->leads === 'all' && ! $this->update) {
+            $after = (int) DB::table('crm_leads')->whereNotNull('external_id')->max(DB::raw('CAST(external_id AS INTEGER)'));
+            $filters = [$after ? ['>ID' => $after] : []];
+        }
         foreach ($filters as $filter) {
             $this->each('leads', 'crm.lead.list', ['select' => $select, 'filter' => $filter], 'crm_leads', $map, ! empty($this->report['leads']));
         }
