@@ -130,10 +130,12 @@ async function submit() {
 </template>
 
 <style scoped>
-/* Акцент входа — фирменный зелёный вместо синего (просьба пользователя). */
+/* Акцент входа — фирменный зелёный вместо синего (просьба пользователя):
+   кнопка #82bd40 — между #87c540 и #7eb53f, белый текст читается; обводка
+   фокуса — светлее, #87c540. */
 .login {
-  --accent: #87c540;
-  --accent-hover: #79b535;
+  --accent: #82bd40;
+  --accent-hover: #74ab36;
   --accent-foreground: #fff;
   --accent-soft: color-mix(in oklab, #87c540 16%, transparent);
   --accent-soft-foreground: #4d7a1c;
@@ -218,7 +220,10 @@ async function submit() {
 }
 .login__link {
   font-size: 13px;
-  color: var(--accent);
+  color: #5f8f2a;
+}
+.dark .login__link {
+  color: #9ccf62;
 }
 .login__link:hover {
   text-decoration: underline;
