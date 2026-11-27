@@ -405,7 +405,7 @@ async function showPins(on: boolean, target?: number) {
 const pins = computed(() => thread.value.pins);
 const pinShown = computed(() => pins.value[Math.min(pinIndex.value, pins.value.length - 1)] ?? null);
 function pinText(message: ChatMessage) {
-  const who = message.userId ? person(message.userId)?.name : "Korzilla 996";
+  const who = message.userId ? person(message.userId)?.name : "Korzilla CRM";
   return { who, text: previewOf(message).replace(/[#*_`>]+/g, "").trim() };
 }
 async function openPin() {

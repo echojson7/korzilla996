@@ -1,5 +1,5 @@
 <!-- Запись канала Changelog — карточкой релиза, а не пузырём: обложка
-     (картинка или ролик), подпись «Korzilla 996» с датой, заголовок, текст
+     (картинка или ролик), подпись «Korzilla CRM» с датой, заголовок, текст
      в Markdown, дополнительные кадры и реакции. -->
 <script setup lang="ts">
 import { computed } from "vue";
@@ -45,7 +45,7 @@ const src = (file: ChatFile) => apiUrl(file.url);
     <div class="px-6 pt-5 pb-4">
       <div class="flex items-center gap-2.5 text-[13px] text-muted">
         <ChatFace :chat="chat" size="xs" />
-        <span class="font-semibold text-foreground">Korzilla 996</span>
+        <span class="font-semibold text-foreground">Korzilla CRM</span>
         <span aria-hidden="true">·</span>
         <time :datetime="message.at">{{ when }}</time>
       </div>

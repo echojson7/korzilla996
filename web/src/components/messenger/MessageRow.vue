@@ -98,7 +98,7 @@ const emit = defineEmits<{
         ]"
       >
         <p v-if="head && author && !message.deleted" class="text-[13px] font-semibold" :style="{ color: `oklch(0.55 0.14 ${person(message.userId)?.hue ?? 220})` }">
-          {{ message.userId ? person(message.userId)?.name ?? "Сотрудник" : "Korzilla 996" }}
+          {{ message.userId ? person(message.userId)?.name ?? "Сотрудник" : "Korzilla CRM" }}
         </p>
         <template v-if="message.deleted">Сообщение удалено</template>
         <template v-else>

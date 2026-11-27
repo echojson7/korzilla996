@@ -26,7 +26,7 @@ const closed = computed(() => {
 });
 /* Непрочитанные — числом в заголовке вкладки, как в Telegram Web. */
 watch(() => [route.value.path, totalUnread.value] as const, ([path, unread]) => {
-  document.title = `${unread ? `(${unread > 99 ? "99+" : unread}) ` : ""}${closed.value ? "Нет доступа" : pageOf(path).title} — Korzilla 996`;
+  document.title = `${unread ? `(${unread > 99 ? "99+" : unread}) ` : ""}${closed.value ? "Нет доступа" : pageOf(path).title} — Korzilla CRM`;
 }, { immediate: true });
 
 const onKey = (event: KeyboardEvent) => {
