@@ -279,12 +279,12 @@ async function submit() {
   align-items: center;
   gap: 28px;
   width: 100%;
-  max-width: 360px;
+  max-width: 384px;
 }
 .login__card {
   width: 100%;
-  padding: 28px 26px 26px;
-  border-radius: 20px;
+  padding: 40px 36px 36px;
+  border-radius: 32px;
   background: var(--surface);
   border: 1px solid color-mix(in oklab, var(--foreground) 6%, transparent);
   box-shadow:
