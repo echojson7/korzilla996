@@ -30,7 +30,7 @@ import NoAccess from "../NoAccess.vue";
 import { deniedOf, atLeast, type Denied } from "../../lib/denied";
 
 /* closeTab — крестик закрытия рисует сама панель снаружи (ярлычок), в шапке его нет. */
-const props = withDefaults(defineProps<{ chatId: number; panel?: boolean; back?: boolean; closeTab?: boolean }>(), { panel: false, back: false, closeTab: false });
+const props = withDefaults(defineProps<{ chatId: number; panel?: boolean; back?: boolean; closeTab?: boolean; card?: boolean }>(), { panel: false, back: false, closeTab: false, card: false });
 const emit = defineEmits<{ close: []; back: [] }>();
 
 /* Нет доступа / чата нет: вместо ленты — экран NoAccess, данные чата не берём. */
@@ -484,7 +484,8 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKey));
       <button v-if="chat" type="button" class="button button--ghost button--icon-only" :aria-label="chat.pinned ? 'Открепить' : 'Закрепить'" :title="chat.pinned ? 'Открепить' : 'Закрепить наверху'" @click="togglePin(chat)">
         <PinOff v-if="chat.pinned" class="size-[18px]" /><Pin v-else class="size-[18px]" />
       </button>
-      <button v-if="chat" type="button" class="button button--ghost button--icon-only" aria-label="О чате" title="О чате" @click="infoOpen = true"><Info class="size-[18px]" /></button>
+      <!-- В карточке задачи/сделки рядом и так панель информации — «О чате» не нужен. -->
+      <button v-if="chat && !card" type="button" class="button button--ghost button--icon-only" aria-label="О чате" title="О чате" @click="infoOpen = true"><Info class="size-[18px]" /></button>
       <button v-if="panel && !closeTab" type="button" class="button button--ghost button--icon-only" aria-label="Закрыть" @click="emit('close')"><X class="size-5" /></button>
     </header>
 

@@ -90,7 +90,7 @@ watch(() => [props.open, props.chat?.entity, enabled.value, again.value] as cons
             <section v-if="chat" class="hidden min-w-0 flex-1 flex-col bg-surface lg:flex" :aria-label="`Чат: ${chat.title}`">
               <!-- Переключатель «Чат / История» в шапке правой области -->
               <div v-show="sideMode === 'chat'" class="flex min-h-0 flex-1 flex-col">
-                <Conversation v-if="chatId" :chat-id="chatId" class="min-h-0 flex-1">
+                <Conversation v-if="chatId" :chat-id="chatId" card class="min-h-0 flex-1">
                   <template v-if="sideLabel" #header-extra>
                     <div class="toggle-button-group toggle-button-group--horizontal shrink-0" role="tablist">
                       <button type="button" role="tab" class="toggle-button toggle-button--sm" aria-selected="true" data-selected="true">Чат</button>
