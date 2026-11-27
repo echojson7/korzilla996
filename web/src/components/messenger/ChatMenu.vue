@@ -77,7 +77,7 @@ onBeforeUnmount(() => {
       ref="box"
       role="menu"
       :aria-label="`Действия с чатом ${chat.title}`"
-      class="popover-layer fixed top-0 left-0 w-[248px] rounded-2xl bg-overlay p-1.5 text-overlay-foreground shadow-overlay"
+      class="popover-layer fixed top-0 left-0 w-max min-w-[248px] max-w-[calc(100vw-16px)] rounded-2xl bg-overlay p-1.5 text-overlay-foreground shadow-overlay"
       :style="{ left: `${pos.left}px`, top: `${pos.top}px` }"
       @contextmenu.prevent
     >
@@ -103,6 +103,8 @@ onBeforeUnmount(() => {
   padding: 0 0.75rem;
   border-radius: 0.75rem;
   font-size: 0.9375rem;
+  line-height: 1.25rem;
+  white-space: nowrap;
   text-align: left;
   transition: background-color 120ms;
 }

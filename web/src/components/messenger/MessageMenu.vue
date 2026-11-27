@@ -98,7 +98,7 @@ function remove() {
       ref="box"
       role="menu"
       aria-label="Действия с сообщением"
-      class="popover-layer fixed top-0 left-0 w-[264px] overflow-y-auto overscroll-contain thin-scroll rounded-2xl bg-overlay p-1.5 text-overlay-foreground shadow-overlay"
+      class="popover-layer fixed top-0 left-0 w-max min-w-[264px] max-w-[calc(100vw-16px)] overflow-y-auto overscroll-contain thin-scroll rounded-2xl bg-overlay p-1.5 text-overlay-foreground shadow-overlay"
       :style="{ left: `${pos.left}px`, top: `${pos.top}px` }"
       @contextmenu.prevent
     >
@@ -157,6 +157,8 @@ function remove() {
   padding: 0 0.75rem;
   border-radius: 0.75rem;
   font-size: 0.9375rem;
+  line-height: 1.25rem;
+  white-space: nowrap;
   text-align: left;
   transition: background-color 120ms;
 }
