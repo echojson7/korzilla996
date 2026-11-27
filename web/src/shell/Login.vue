@@ -1,5 +1,5 @@
-<!-- Вход сотрудника: выбранное фото во весь экран (полный размер), форма —
-     стеклянная карточка по центру. Учётки заводят администраторы. -->
+<!-- Вход сотрудника. Фон — выбранное в портале фото в полном размере.
+     Учётки и пароли выдают администраторы, регистрации и сброса нет. -->
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { Eye, EyeOff, Lock, Moon, Sun, User } from "@lucide/vue";
@@ -11,13 +11,15 @@ import Brand from "../components/Brand.vue";
 const email = ref("");
 const password = ref("");
 const shown = ref(false);
+const forgot = ref(false);
 const error = ref("");
 const busy = ref(false);
 
-const bg = computed(() => {
+const photo = computed(() => {
   const one = fullPhoto(backdrop.value);
   return { backgroundColor: one.color, backgroundImage: one.image };
 });
+const year = new Date().getFullYear();
 
 const dark = ref(document.documentElement.classList.contains("dark"));
 function flipTheme() {
@@ -39,81 +41,95 @@ async function submit() {
 </script>
 
 <template>
-  <main class="login" :style="bg">
-    <form class="login__form" novalidate @submit.prevent="submit">
-      <header class="flex flex-col items-center gap-2 pb-2 text-center">
-        <h1 class="text-[30px] leading-none"><Brand /></h1>
-        <p class="text-sm text-muted">Вход в портал компании</p>
-      </header>
+  <main class="login">
+    <!-- Слева фото с подписью, справа форма -->
+    <aside class="login__photo" :style="photo">
+      <div class="login__brand-light"><Brand /></div>
+      <div class="login__pitch">
+        <p class="login__pitch-title">Вся работа компании в одном окне</p>
+        <p class="login__pitch-text">Сделки, задачи, процессы и переписка с коллегами.</p>
+      </div>
+    </aside>
 
-      <label class="flex flex-col gap-1.5">
-        <span class="label">Логин или почта</span>
-        <span class="login__field">
-          <User class="login__icon" :size="18" aria-hidden="true" />
-          <input
-            v-model="email"
-            class="input input--secondary input--full-width"
-            autocomplete="username"
-            placeholder="name@korzilla.ru"
-            :aria-invalid="error ? 'true' : undefined"
-            required
-            autofocus
-          />
-        </span>
-      </label>
+    <section class="login__pane">
+      <form class="login__form" novalidate @submit.prevent="submit">
+        <header class="login__head">
+          <h1 class="login__title">Вход в портал</h1>
+          <p class="login__sub">Войдите под учётной записью сотрудника</p>
+        </header>
 
-      <label class="flex flex-col gap-1.5">
-        <span class="label">Пароль</span>
-        <span class="login__field">
-          <Lock class="login__icon" :size="18" aria-hidden="true" />
-          <input
-            v-model="password"
-            class="input input--secondary input--full-width pr-11"
-            :type="shown ? 'text' : 'password'"
-            autocomplete="current-password"
-            placeholder="••••••••"
-            :aria-invalid="error ? 'true' : undefined"
-            required
-          />
-          <button
-            type="button"
-            class="login__eye"
-            :aria-label="shown ? 'Скрыть пароль' : 'Показать пароль'"
-            @click="shown = !shown"
-          >
-            <EyeOff v-if="shown" :size="18" />
-            <Eye v-else :size="18" />
-          </button>
-        </span>
-      </label>
+        <label class="login__label">
+          <span class="label">Логин или почта</span>
+          <span class="login__field">
+            <User class="login__icon" :size="18" aria-hidden="true" />
+            <input
+              v-model="email"
+              class="input input--secondary input--full-width"
+              autocomplete="username"
+              placeholder="name@korzilla.ru"
+              :aria-invalid="error ? 'true' : undefined"
+              required
+              autofocus
+            />
+          </span>
+        </label>
 
-      <p v-if="error" class="-mt-1 text-sm text-danger" role="alert">{{ error }}</p>
+        <div class="login__label">
+          <div class="flex items-baseline justify-between">
+            <label class="label" for="login-password">Пароль</label>
+            <button type="button" class="login__link" @click="forgot = !forgot">Забыли пароль?</button>
+          </div>
+          <span class="login__field">
+            <Lock class="login__icon" :size="18" aria-hidden="true" />
+            <input
+              id="login-password"
+              v-model="password"
+              class="input input--secondary input--full-width pr-11"
+              :type="shown ? 'text' : 'password'"
+              autocomplete="current-password"
+              placeholder="Ваш пароль"
+              :aria-invalid="error ? 'true' : undefined"
+              required
+            />
+            <button
+              type="button"
+              class="login__eye"
+              :aria-label="shown ? 'Скрыть пароль' : 'Показать пароль'"
+              @click="shown = !shown"
+            >
+              <EyeOff v-if="shown" :size="18" />
+              <Eye v-else :size="18" />
+            </button>
+          </span>
+          <p v-if="forgot" class="login__note">Пароль меняет администратор портала — напишите ему, и он выдаст новый.</p>
+        </div>
 
-      <button
-        class="button button--primary button--lg button--full-width mt-1"
-        :disabled="busy || !email.trim() || !password"
-        :data-pending="busy ? 'true' : undefined"
-      >
-        {{ busy ? "Входим…" : "Войти" }}
-      </button>
+        <p v-if="error" class="login__error" role="alert">{{ error }}</p>
 
-      <p class="text-center text-xs leading-relaxed text-muted">
-        Нет учётки или забыли пароль — напишите администратору портала.
-      </p>
-    </form>
+        <button
+          class="button button--primary button--lg button--full-width"
+          :disabled="busy"
+          :data-pending="busy ? 'true' : undefined"
+        >
+          {{ busy ? "Входим…" : "Войти" }}
+        </button>
+      </form>
 
-    <div class="flex items-start justify-center">
-      <button
-        type="button"
-        class="login__theme button button--icon-only button--md"
-        :aria-label="dark ? 'Светлая тема' : 'Тёмная тема'"
-        :title="dark ? 'Светлая тема' : 'Тёмная тема'"
-        @click="flipTheme"
-      >
-        <Sun v-if="dark" :size="18" />
-        <Moon v-else :size="18" />
-      </button>
-    </div>
+      <footer class="login__foot">
+        <span>© {{ year }} Korzilla CRM</span>
+        <button
+          type="button"
+          class="login__theme"
+          :aria-label="dark ? 'Светлая тема' : 'Тёмная тема'"
+          :title="dark ? 'Светлая тема' : 'Тёмная тема'"
+          @click="flipTheme"
+        >
+          <Sun v-if="dark" :size="16" />
+          <Moon v-else :size="16" />
+        </button>
+      </footer>
+    </section>
+
   </main>
 </template>
 
@@ -122,47 +138,50 @@ async function submit() {
   position: fixed;
   inset: 0;
   z-index: 10;
-  display: grid;
-  grid-template-rows: max(0px, calc(50dvh - 240px)) auto 1fr;
-  justify-items: center;
-  padding: 16px;
   overflow-y: auto;
-  background-size: cover;
-  background-position: center;
   color: var(--foreground);
 }
-.login::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  background: radial-gradient(ellipse at center, oklch(0 0 0 / 0.1), oklch(0 0 0 / 0.35));
-}
-.dark .login::before {
-  background: radial-gradient(ellipse at center, oklch(0 0 0 / 0.3), oklch(0 0 0 / 0.55));
-}
+
+/* Общая форма */
 .login__form {
-  grid-row: 2;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
   width: 100%;
-  max-width: 380px;
-  padding: 32px 28px 24px;
-  border-radius: 24px;
-  background: color-mix(in oklab, var(--surface) 90%, transparent);
-  backdrop-filter: blur(24px) saturate(1.4);
-  -webkit-backdrop-filter: blur(24px) saturate(1.4);
-  border: 1px solid color-mix(in oklab, white 35%, transparent);
-  box-shadow: 0 24px 60px -12px oklch(0 0 0 / 0.35);
+  max-width: 360px;
 }
-.dark .login__form {
-  border-color: color-mix(in oklab, white 10%, transparent);
+.login__head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.login__title {
+  font-size: 26px;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.login__sub {
+  font-size: 14px;
+  color: var(--muted);
+}
+.login__label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 .login__form .input {
-  height: 44px;
+  height: 46px;
   border-radius: 12px;
-  padding-left: 40px;
+  padding-left: 42px;
+  font-size: 15px;
+}
+.login__form .button--lg {
+  height: 46px;
+  border-radius: 12px;
+  margin-top: 4px;
+  font-size: 15px;
 }
 .login__field {
   position: relative;
@@ -170,7 +189,7 @@ async function submit() {
 }
 .login__icon {
   position: absolute;
-  left: 13px;
+  left: 14px;
   top: 50%;
   translate: 0 -50%;
   color: var(--muted);
@@ -178,7 +197,7 @@ async function submit() {
 }
 .login__eye {
   position: absolute;
-  right: 6px;
+  right: 7px;
   top: 50%;
   translate: 0 -50%;
   display: grid;
@@ -192,21 +211,115 @@ async function submit() {
   background: var(--default);
   color: var(--foreground);
 }
-.login__form .button--lg {
-  height: 44px;
-  border-radius: 12px;
+.login__link {
+  font-size: 13px;
+  color: var(--accent);
 }
-.login > div {
-  grid-row: 3;
+.login__link:hover {
+  text-decoration: underline;
+}
+.login__note {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted);
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--default);
+}
+.login__error {
+  margin-top: -6px;
+  font-size: 14px;
+  color: var(--danger);
+}
+.login__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  font-size: 13px;
+  color: var(--muted);
 }
 .login__theme {
-  margin-top: 20px;
-  color: white;
-  background: oklch(0 0 0 / 0.25);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  color: var(--muted);
 }
 .login__theme:hover {
-  background: oklch(0 0 0 / 0.4);
+  background: var(--default);
+  color: var(--foreground);
 }
+.login__brand-light {
+  font-size: 28px;
+  color: white;
+  filter: drop-shadow(0 1px 8px oklch(0 0 0 / 0.35));
+}
+
+/* Фото слева вплотную к краям, форма справа */
+.login {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(440px, 40%);
+  background: var(--surface);
+}
+.login__photo {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 40px 48px;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  isolation: isolate;
+}
+.login__photo::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(180deg, oklch(0 0 0 / 0.35), transparent 30%),
+    linear-gradient(0deg, oklch(0 0 0 / 0.6), transparent 45%);
+}
+.login__pitch {
+  max-width: 600px;
+  text-wrap: balance;
+  margin-top: auto;
+  margin-bottom: 20px;
+  color: white;
+}
+.login__pitch-title {
+  font-size: 36px;
+  line-height: 1.15;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.login__pitch-text {
+  margin-top: 12px;
+  font-size: 16px;
+  color: oklch(1 0 0 / 0.82);
+}
+.login__pane {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 48px 24px;
+  min-height: 100%;
+}
+.login__pane .login__form {
+  margin: auto 0;
+}
+@media (max-width: 900px) {
+  .login {
+    grid-template-columns: 1fr;
+  }
+  .login__photo {
+    display: none;
+  }
+}
+
 </style>
