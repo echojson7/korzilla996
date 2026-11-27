@@ -17,9 +17,9 @@
       var dark = theme === "dark" || (theme === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
       root.classList.toggle("dark", dark);
       root.dataset.theme = dark ? "dark" : "light";
-      var colors = { lake: "rgb(123 132 131)", campfire: "rgb(80 106 108)", cloudpeak: "rgb(44 60 36)", evening: "rgb(73 67 72)", meadow: "rgb(58 97 113)", race: "rgb(121 116 100)" };
+      var colors = { cloudpeak: "rgb(44 60 36)", evening: "rgb(73 67 72)", race: "rgb(121 116 100)", crystals: "rgb(65 117 159)", overpass: "rgb(106 141 175)", fjord: "rgb(53 47 58)", pinewood: "rgb(23 27 18)", ivy: "rgb(88 93 83)", dawn: "rgb(90 76 62)" };
       var bg = get("bg");
-      if (!colors[bg]) bg = "lake";
+      if (!colors[bg]) bg = "cloudpeak";
       var size = Math.max(screen.width, screen.height) * devicePixelRatio > 1600 ? "" : "-1280";
       root.style.setProperty("--bg-color", colors[bg]);
       var url = function (ext) { return 'url("' + new URL("./bg/" + bg + size + "." + ext, location.href).href + '")'; };
@@ -27,7 +27,7 @@
         ? "image-set(" + url("avif") + ' type("image/avif"), ' + url("webp") + ' type("image/webp"))' : url("webp"));
     } catch (e) {}
   </script>
-  <script type="module" crossorigin src="./assets/index-D6GNUyIl.js"></script>
+  <script type="module" crossorigin src="./assets/index-BI1XEDXr.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/vue-CkooJmFi.js">
   <link rel="modulepreload" crossorigin href="./assets/data-DmZPkeGy.js">
   <link rel="modulepreload" crossorigin href="./assets/session-CZjq-Qu-.js">

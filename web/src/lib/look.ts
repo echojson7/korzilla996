@@ -13,14 +13,17 @@ export interface Backdrop {
   color: string;
 }
 export const BACKDROPS: Backdrop[] = [
-  { id: "lake", name: "Озеро в горах", color: "rgb(123 132 131)" },
-  { id: "campfire", name: "Костёр у реки", color: "rgb(80 106 108)" },
   { id: "cloudpeak", name: "Гора в облаках", color: "rgb(44 60 36)" },
   { id: "evening", name: "Вечерний город", color: "rgb(73 67 72)" },
-  { id: "meadow", name: "Зелёный холм", color: "rgb(58 97 113)" },
   { id: "race", name: "Гонка", color: "rgb(121 116 100)" },
+  { id: "crystals", name: "Кристаллы", color: "rgb(65 117 159)" },
+  { id: "overpass", name: "Эстакада и небо", color: "rgb(106 141 175)" },
+  { id: "fjord", name: "Фьорд в тучах", color: "rgb(53 47 58)" },
+  { id: "pinewood", name: "Хвойный лес", color: "rgb(23 27 18)" },
+  { id: "ivy", name: "Бетон и плющ", color: "rgb(88 93 83)" },
+  { id: "dawn", name: "Рассвет в горах", color: "rgb(90 76 62)" },
 ];
-export const DEFAULT_BACKDROP = "lake";
+export const DEFAULT_BACKDROP = "cloudpeak";
 
 export type Theme = "light" | "dark" | "system";
 export const theme = local<Theme>("theme", "system");
