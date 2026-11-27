@@ -2,7 +2,7 @@
      профиль. -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from "vue";
-import { Menu, Search, Bell, Palette, LogOut, Sun, Moon, Monitor, Check, UserRound, Settings } from "@lucide/vue";
+import { Menu, Search, Bell, Palette, LogOut, Sun, Moon, Monitor, Check, UserRound, Settings, Plus, X } from "@lucide/vue";
 import Popover from "../components/Popover.vue";
 import Face from "../components/Face.vue";
 import { auth } from "../lib/session";
@@ -13,7 +13,7 @@ import { time, shortDate } from "../lib/format";
 import { href } from "../lib/router";
 import { avatarSrc } from "../lib/profile";
 import { people } from "../lib/messenger";
-import { BACKDROPS, backdrop, messageLayout, theme, thumb, type MessageLayout, type Theme } from "../lib/look";
+import { BACKDROPS, CUSTOM, backdrop, customBackdrop, messageLayout, removeCustomBackdrop, setCustomBackdrop, theme, thumb, type MessageLayout, type Theme } from "../lib/look";
 
 defineEmits<{ menu: []; search: [] }>();
 
@@ -27,6 +27,24 @@ const meAvatar = computed(() => avatarSrc(myAvatar.value, 28));
 const meAvatarBig = computed(() => avatarSrc(myAvatar.value, 40));
 
 const seen = ref(false);
+
+/* Свой фон: плитка «+» открывает выбор файла. */
+const picker = ref<HTMLInputElement | null>(null);
+async function pickOwn(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  input.value = "";
+  if (!file) return;
+  if (!file.type.startsWith("image/")) {
+    toast("Нужна картинка: JPG, PNG или WebP", "danger");
+    return;
+  }
+  try {
+    await setCustomBackdrop(file);
+  } catch (error) {
+    toast(error instanceof Error ? error.message : "Не удалось поставить картинку", "danger");
+  }
+}
 const when = (date: Date) => (date >= TODAY ? time(date) : date >= day(-1) ? `вчера, ${time(date)}` : `${shortDate(date)}, ${time(date)}`);
 const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
 
@@ -130,6 +148,38 @@ async function signOut() {
               <Check class="size-3" />
             </span>
           </button>
+          <div
+            v-if="customBackdrop"
+            class="relative aspect-[16/10] overflow-hidden rounded-lg ring-offset-2 ring-offset-overlay transition"
+            :class="backdrop === CUSTOM ? 'ring-2 ring-accent' : 'hover:opacity-85'"
+            :style="{ background: customBackdrop.color }"
+          >
+            <button type="button" class="size-full" title="Свой фон" aria-label="Свой фон" @click="backdrop = CUSTOM">
+              <img :src="customBackdrop.src" alt="" class="size-full object-cover" />
+            </button>
+            <span v-if="backdrop === CUSTOM" class="pointer-events-none absolute right-1 bottom-1 flex size-5 items-center justify-center rounded-full bg-accent text-accent-foreground">
+              <Check class="size-3" />
+            </span>
+            <button
+              type="button"
+              class="absolute top-1 right-1 flex size-5 items-center justify-center rounded-full bg-black/55 text-white hover:bg-black/75"
+              title="Убрать свой фон"
+              aria-label="Убрать свой фон"
+              @click="removeCustomBackdrop()"
+            >
+              <X class="size-3" />
+            </button>
+          </div>
+          <button
+            type="button"
+            class="flex aspect-[16/10] items-center justify-center rounded-lg border-2 border-dashed border-current/25 text-muted transition hover:border-accent hover:text-accent"
+            :title="customBackdrop ? 'Заменить свой фон' : 'Свой фон'"
+            :aria-label="customBackdrop ? 'Заменить свой фон' : 'Свой фон'"
+            @click="picker?.click()"
+          >
+            <Plus class="size-5" />
+          </button>
+          <input ref="picker" type="file" accept="image/*" class="hidden" @change="pickOwn" />
         </div>
       </div>
     </Popover>

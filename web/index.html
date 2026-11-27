@@ -17,8 +17,14 @@
       var dark = theme === "dark" || (theme === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
       root.classList.toggle("dark", dark);
       root.dataset.theme = dark ? "dark" : "light";
-      var colors = { cloudpeak: "rgb(44 60 36)", evening: "rgb(73 67 72)", race: "rgb(121 116 100)", crystals: "rgb(65 117 159)", overpass: "rgb(106 141 175)", fjord: "rgb(53 47 58)", pinewood: "rgb(23 27 18)", ivy: "rgb(88 93 83)", dawn: "rgb(90 76 62)" };
+      var colors = { cloudpeak: "rgb(44 60 36)", evening: "rgb(73 67 72)", race: "rgb(121 116 100)", crystals: "rgb(50 91 123)", overpass: "rgb(106 141 175)", fjord: "rgb(53 47 58)", pinewood: "rgb(23 27 18)", ivy: "rgb(68 72 64)" };
       var bg = get("bg");
+      var own = bg === "custom" ? get("bgCustom") : null;
+      if (own && own.src) {
+        root.style.setProperty("--bg-color", own.color);
+        root.style.setProperty("--bg-image", 'url("' + own.src + '")');
+        throw 0;
+      }
       if (!colors[bg]) bg = "cloudpeak";
       var size = Math.max(screen.width, screen.height) * devicePixelRatio > 1600 ? "" : "-1280";
       root.style.setProperty("--bg-color", colors[bg]);
