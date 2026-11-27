@@ -3,6 +3,7 @@
      рождения, пароль. Должность и отдел правит администратор. -->
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from "vue";
+import UiDate from "../components/UiDate.vue";
 import {
   Phone, Mail, Send, MessageCircle, Cake, Building2, BriefcaseBusiness, ShieldCheck, CalendarDays, Pencil, MessageSquare,
   Camera, Trash2, Copy, KeyRound, Eye, EyeOff, ArrowLeft, X, AtSign, Users,
@@ -355,7 +356,7 @@ async function submitPassword() {
                 </div>
                 <div class="textfield" :data-invalid="err('birthday') ? 'true' : undefined">
                   <label class="label" for="pf-bday">День рождения</label>
-                  <input id="pf-bday" v-model="form.birthday" type="date" class="input input--full-width" :max="today" min="1920-01-01" />
+                  <UiDate id="pf-bday" v-model="form.birthday" class="w-full" size="lg" aria-label="День рождения" :max="today" min="1920-01-01" />
                   <p v-if="err('birthday')" class="field-error" data-visible="true">{{ err("birthday") }}</p>
                 </div>
                 <div class="flex items-end pb-2.5">
@@ -421,7 +422,7 @@ async function submitPassword() {
               </div>
               <div class="textfield mt-3">
                 <label class="label" for="pf-until">Показывать до</label>
-                <input id="pf-until" v-model="form.statusUntil" type="date" class="input input--full-width" :min="today" :disabled="!form.statusEmoji && !form.statusText" />
+                <UiDate id="pf-until" v-model="form.statusUntil" class="w-full" size="lg" aria-label="Показывать до" placeholder="Без срока" :min="today" :disabled="!form.statusEmoji && !form.statusText" />
                 <p class="description">Пусто — пока не сбросите сами</p>
               </div>
             </section>

@@ -6,6 +6,7 @@
      документы, комментарий, задачи и история. Правка сразу уходит на сервер. -->
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
+import UiDate from "../UiDate.vue";
 import { Check, ChevronDown, Clock, ListChecks, MoreHorizontal, Pencil, Plus, SlidersHorizontal, Trash2, Link2, LayoutList, ShoppingCart, Receipt, FileText, Layers, CalendarDays } from "@lucide/vue";
 import Popover from "../Popover.vue";
 import HueChip from "../HueChip.vue";
@@ -241,11 +242,14 @@ function copyLink() {
       </div>
       <div class="summary">
         <span class="summary__label">Дата завершения</span>
-        <label v-if="canEdit" class="value relative max-w-full cursor-pointer">
-          <CalendarDays class="size-4 shrink-0 text-muted" />
-          <span class="truncate" :class="deal.closeDate ? '' : 'text-muted'">{{ deal.closeDate ? shortDay(deal.closeDate) : "Не указана" }}</span>
-          <input type="date" :value="deal.closeDate ?? ''" class="date-overlay" aria-label="Дата завершения" @change="patch({ close_date: ($event.target as HTMLInputElement).value || null })" @click="($event.target as HTMLInputElement).showPicker?.()" />
-        </label>
+        <UiDate v-if="canEdit" class="max-w-full" :model-value="deal.closeDate ?? ''" aria-label="Дата завершения" @change="(v) => patch({ close_date: v || null })">
+          <template #trigger="{ toggle }">
+            <button type="button" class="value max-w-full cursor-pointer" aria-label="Дата завершения" @click="toggle">
+              <CalendarDays class="size-4 shrink-0 text-muted" />
+              <span class="truncate" :class="deal.closeDate ? '' : 'text-muted'">{{ deal.closeDate ? shortDay(deal.closeDate) : "Не указана" }}</span>
+            </button>
+          </template>
+        </UiDate>
         <span v-else class="text-sm">{{ deal.closeDate ? day(deal.closeDate) : "—" }}</span>
       </div>
     </section>
@@ -441,12 +445,6 @@ function copyLink() {
   height: 2.25rem;
   font-size: 1.25rem;
   font-weight: 600;
-}
-.date-overlay {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  cursor: pointer;
 }
 .timeline {
   display: flex;

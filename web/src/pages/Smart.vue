@@ -3,6 +3,7 @@
      стадией, связями, своими полями и документами. ?type, ?stage, ?q, ?open. -->
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
+import UiSelect from "../components/UiSelect.vue";
 import { Link2, SlidersHorizontal, FileText } from "@lucide/vue";
 import PageHead from "../components/PageHead.vue";
 import Segmented from "../components/Segmented.vue";
@@ -96,10 +97,10 @@ const date = (value: string | null) => (value ? new Date(value).toLocaleDateStri
     <PageHead title="Смарт-процессы" :sub="type ? plural(total, 'элемент', 'элемента', 'элементов') : ''">
       <template #toolbar>
         <Segmented v-if="types.length" label="Тип" :items="TYPES" :model-value="String(typeId)" @update:model-value="(key) => setQuery({ type: key, stage: null, open: null })" />
-        <select v-if="stages.length" class="input h-9 w-auto py-0 text-sm" :value="stage" aria-label="Стадия" @change="setQuery({ stage: Number(($event.target as HTMLSelectElement).value) || null })">
+        <UiSelect v-if="stages.length" class="w-auto" :model-value="stage" aria-label="Стадия" @change="(v: unknown) => setQuery({ stage: Number(v) || null })">
           <option :value="0">Все стадии</option>
           <option v-for="one in stages" :key="one.id" :value="one.id">{{ one.title }}</option>
-        </select>
+        </UiSelect>
         <SearchBox v-model="text" placeholder="Название" class="w-full min-w-0 sm:w-auto sm:flex-1" />
       </template>
     </PageHead>

@@ -1,0 +1,1 @@
+import{W as e}from"./vue-DRplfhw5.js";var t=e([]),n=0;function r(e,r=`default`){let i=++n;t.push({id:i,text:e,tone:r}),setTimeout(()=>{let e=t.findIndex(e=>e.id===i);e>=0&&t.splice(e,1)},3200)}export{t as n,r as t};

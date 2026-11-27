@@ -1,6 +1,7 @@
 <!-- Условие как в Битрикс24: строки «поле — оператор — значение», связанные
      «и» / «или». «И» сильнее: a и b или c = (a и b) или c. -->
 <script setup lang="ts">
+import UiSelect from "../../UiSelect.vue";
 import { Plus, X } from "@lucide/vue";
 import ValueInput from "./ValueInput.vue";
 import { conditionFields } from "./fields";
@@ -24,13 +25,13 @@ const noValue = (op: string) => op === "empty" || op === "!empty";
         </div>
       </div>
       <div class="grid grid-cols-[1fr_auto] gap-1.5 rounded-xl border border-separator p-2 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)_minmax(0,1.4fr)_auto]">
-        <select class="ui-select" :value="rule.field" aria-label="Поле" :disabled="disabled" @change="patch(i, { field: ($event.target as HTMLSelectElement).value, value: '' })">
+        <UiSelect :model-value="rule.field" aria-label="Поле" :disabled="disabled" @change="(v: string) => patch(i, { field: v, value: '' })">
           <option v-for="one in conditionFields" :key="one.key" :value="one.key">{{ one.title }}</option>
-        </select>
+        </UiSelect>
         <button type="button" class="button button--ghost button--icon-only button--sm sm:order-last" aria-label="Убрать условие" :disabled="disabled" @click="drop(i)"><X class="size-4" /></button>
-        <select class="ui-select" :value="rule.op" aria-label="Оператор" :disabled="disabled" @change="patch(i, { op: ($event.target as HTMLSelectElement).value })">
+        <UiSelect :model-value="rule.op" aria-label="Оператор" :disabled="disabled" @change="(v: string) => patch(i, { op: v })">
           <option v-for="(text, op) in OPS" :key="op" :value="op">{{ text }}</option>
-        </select>
+        </UiSelect>
         <div class="col-span-2 sm:col-span-1">
           <ValueInput v-if="!noValue(rule.op)" :field="def(rule.field)" :model-value="rule.value" label="Значение" :pipeline-id="pipelineId" :disabled="disabled" @update:model-value="(value) => patch(i, { value })" />
         </div>

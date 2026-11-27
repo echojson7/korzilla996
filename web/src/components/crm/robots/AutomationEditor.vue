@@ -2,6 +2,7 @@
      Сохраняется кнопкой; журнал запусков робота — внизу. -->
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from "vue";
+import UiSelect from "../../UiSelect.vue";
 import { Check, Copy, Plus, Trash2, X, Info } from "@lucide/vue";
 import Checkbox from "../../Checkbox.vue";
 import SpecPicker from "./SpecPicker.vue";
@@ -91,10 +92,8 @@ function setDelay(key: string) {
   const type = key as Delay["type"];
   draft.delay = { ...draft.delay, type, unit: type === "field" ? "d" : draft.delay.unit, field: type === "field" ? draft.delay.field || dateFields.value[0]?.key : null };
 }
-function watchField(event: Event) {
-  const select = event.target as HTMLSelectElement;
-  if (select.value && !s.fields.includes(select.value)) s.fields.push(select.value);
-  select.value = "";
+function watchField(field: string) {
+  if (field && !s.fields.includes(field)) s.fields.push(field);
 }
 /* Тип без сужения TypeScript в цепочке v-if. */
 const typeIs = (type: string) => (draft.type as string) === type;
@@ -143,17 +142,17 @@ async function remove() {
     <section class="card card--default gap-3 p-4">
       <div class="grid gap-3 sm:grid-cols-2">
         <label class="flex flex-col gap-1 text-sm">{{ isRobot ? "Действие" : "Событие" }}
-          <select v-model="draft.type" class="ui-select" :disabled="!editable">
+          <UiSelect v-model="draft.type" :disabled="!editable">
             <option v-for="(text, key) in (isRobot ? robots.types : robots.triggerTypes)" :key="key" :value="key" :disabled="key === 'bitrix' && draft.type !== 'bitrix'">{{ text }}</option>
-          </select>
+          </UiSelect>
         </label>
         <label class="flex flex-col gap-1 text-sm">Стадия
-          <select v-model.number="draft.stageId" class="ui-select" :disabled="!editable">
+          <UiSelect v-model.number="draft.stageId" :disabled="!editable">
             <option v-for="one in pipeline?.stages ?? []" :key="one.id" :value="one.id">{{ one.title }}</option>
-          </select>
+          </UiSelect>
         </label>
         <label class="flex flex-col gap-1 text-sm sm:col-span-2">Название
-          <input v-model="draft.title" class="input text-sm" maxlength="250" required :disabled="!editable" />
+          <input v-model="draft.title" class="input text-sm" maxlength="250" :disabled="!editable" />
         </label>
       </div>
       <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm">
@@ -178,14 +177,14 @@ async function remove() {
           <div class="flex flex-col gap-1 text-sm">Крайний срок
             <div class="flex gap-1.5">
               <input v-model="s.deadline_value" class="input w-24 text-sm" placeholder="нет" aria-label="Через сколько" :disabled="!editable" />
-              <select v-model="s.deadline_unit" class="ui-select flex-1" aria-label="Единица срока" :disabled="!editable">
+              <UiSelect v-model="s.deadline_unit" class="flex-1" aria-label="Единица срока" :disabled="!editable">
                 <option v-for="(text, key) in UNITS" :key="key" :value="key">{{ text }} от постановки</option>
-              </select>
+              </UiSelect>
             </div>
             <span class="text-xs text-muted">Число или поле сделки через «{ }». Пусто — без срока.</span>
           </div>
           <label class="flex flex-col gap-1 text-sm">Приоритет
-            <select v-model="s.priority" class="ui-select" :disabled="!editable"><option v-for="one in PRIORITIES" :key="one.id" :value="one.id">{{ one.label }}</option></select>
+            <UiSelect v-model="s.priority" :disabled="!editable"><option v-for="one in PRIORITIES" :key="one.id" :value="one.id">{{ one.label }}</option></UiSelect>
           </label>
         </div>
         <label class="flex flex-col gap-1 text-sm">Чек-лист — пункт в строке<textarea v-model="s.checklist" class="textarea text-sm" rows="3" :disabled="!editable" /></label>
@@ -211,10 +210,10 @@ async function remove() {
         <template v-if="typeIs('deal')">
           <div class="grid gap-3 sm:grid-cols-2">
             <label class="flex flex-col gap-1 text-sm">Воронка и стадия
-              <select v-model.number="s.stage_id" class="ui-select" required :disabled="!editable">
+              <UiSelect v-model.number="s.stage_id" :disabled="!editable">
                 <option value="" disabled>Выберите стадию</option>
                 <optgroup v-for="one in allStages" :key="one.title" :label="one.title"><option v-for="st in one.stages" :key="st.id" :value="st.id">{{ st.title }}</option></optgroup>
-              </select>
+              </UiSelect>
             </label>
             <label class="flex flex-col gap-1 text-sm">Ответственный<SpecPicker v-model="responsible" single label="Ответственный" :disabled="!editable" /></label>
           </div>
@@ -223,9 +222,9 @@ async function remove() {
           <p class="text-sm">Заполнить поля</p>
         </template>
         <div v-for="(row, i) in s.values" :key="i" class="grid grid-cols-[1fr_auto] gap-1.5 rounded-xl border border-separator p-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_auto]">
-          <select v-model="row.field" class="ui-select" aria-label="Поле" :disabled="!editable" @change="row.value = ''">
+          <UiSelect v-model="row.field" aria-label="Поле" :disabled="!editable" @change="row.value = ''">
             <option v-for="one in writableFields" :key="one.key" :value="one.key">{{ one.title }}</option>
-          </select>
+          </UiSelect>
           <button type="button" class="button button--ghost button--icon-only button--sm sm:order-last" aria-label="Убрать поле" :disabled="!editable" @click="s.values.splice(i, 1)"><X class="size-4" /></button>
           <div class="col-span-2 sm:col-span-1"><ValueInput v-model="row.value" :field="fieldDef(row.field)" label="Значение" :pipeline-id="robots.pipelineId" :disabled="!editable" /></div>
         </div>
@@ -234,28 +233,28 @@ async function remove() {
 
       <template v-else-if="isRobot && typeIs('stage')">
         <label class="flex flex-col gap-1 text-sm">Перевести на стадию
-          <select v-model.number="s.stage_id" class="ui-select" required :disabled="!editable">
+          <UiSelect v-model.number="s.stage_id" :disabled="!editable">
             <option value="" disabled>Выберите стадию</option>
             <optgroup v-for="one in allStages" :key="one.title" :label="one.title"><option v-for="st in one.stages" :key="st.id" :value="st.id">{{ st.title }}</option></optgroup>
-          </select>
+          </UiSelect>
         </label>
       </template>
 
       <template v-else-if="isRobot && typeIs('responsible')">
         <label class="flex flex-col gap-1 text-sm">Кого назначить<SpecPicker v-model="users" label="Сотрудники" :disabled="!editable" /></label>
         <label class="flex flex-col gap-1 text-sm">Если несколько
-          <select v-model="s.mode" class="ui-select" :disabled="!editable">
+          <UiSelect v-model="s.mode" :disabled="!editable">
             <option value="first">Первого из списка</option>
             <option value="queue">По очереди</option>
             <option value="random">Случайно</option>
-          </select>
+          </UiSelect>
         </label>
       </template>
 
       <template v-else-if="isRobot && typeIs('webhook')">
         <label class="flex flex-col gap-1 text-sm">Адрес<TemplateInput v-model="s.url" label="Адрес вебхука" placeholder="Адрес с подстановками полей сделки" :disabled="!editable" /></label>
         <label class="flex flex-col gap-1 text-sm">Метод
-          <select v-model="s.method" class="ui-select" :disabled="!editable"><option>GET</option><option>POST</option></select>
+          <UiSelect v-model="s.method" :disabled="!editable"><option>GET</option><option>POST</option></UiSelect>
         </label>
         <label v-if="s.method === 'POST'" class="flex flex-col gap-1 text-sm">Тело (JSON)<TemplateInput v-model="s.body" multiline label="Тело запроса" placeholder="JSON с подстановками, например ID сделки" :disabled="!editable" /></label>
         <p class="text-xs text-muted">Подстановки в адресе кодируются для ссылки сами.</p>
@@ -267,10 +266,10 @@ async function remove() {
 
       <template v-else-if="!isRobot && typeIs('field')">
         <label class="flex flex-col gap-1 text-sm">Какие поля изменились (пусто — любые)
-          <select class="ui-select" :disabled="!editable" @change="watchField">
+          <UiSelect model-value="" :disabled="!editable" @change="watchField">
             <option value="">Добавить поле…</option>
             <option v-for="one in conditionFields" :key="one.key" :value="one.key">{{ one.title }}</option>
-          </select>
+          </UiSelect>
         </label>
         <div v-if="s.fields.length" class="flex flex-wrap gap-1.5">
           <span v-for="(code, i) in s.fields" :key="code" class="inline-flex items-center gap-1 rounded-full bg-surface-secondary px-2 py-0.5 text-sm">
@@ -302,16 +301,16 @@ async function remove() {
       </div>
       <div v-if="draft.delay.type !== 'now'" class="flex flex-wrap items-center gap-1.5 text-sm">
         <template v-if="draft.delay.type === 'field'">
-          <select v-model="draft.delay.field" class="ui-select w-auto" aria-label="Поле с датой" :disabled="!editable">
+          <UiSelect v-model="draft.delay.field" class="w-auto max-w-full" aria-label="Поле с датой" :disabled="!editable">
             <option v-for="one in dateFields" :key="one.key" :value="one.key">{{ one.title }}</option>
-          </select>
+          </UiSelect>
           <span>сдвиг</span>
         </template>
         <span v-else>через</span>
         <input v-model="draft.delay.value" class="input w-24 text-sm" aria-label="Сколько" :disabled="!editable" />
-        <select v-model="draft.delay.unit" class="ui-select w-auto" aria-label="Единица" :disabled="!editable">
+        <UiSelect v-model="draft.delay.unit" class="w-auto max-w-full" aria-label="Единица" :disabled="!editable">
           <option v-for="(text, key) in UNITS" :key="key" :value="key">{{ text }}</option>
-        </select>
+        </UiSelect>
       </div>
       <p class="text-xs text-muted">Отложенный робот выполнится, только если сделка всё ещё на стадии «{{ stage?.title }}».</p>
     </section>

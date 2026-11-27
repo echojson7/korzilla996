@@ -3,6 +3,7 @@
      строки responsible | creator | actor | f:код | u:id (см. Actions.php). -->
 <script setup lang="ts">
 import { computed } from "vue";
+import UiSelect from "../../UiSelect.vue";
 import { X } from "@lucide/vue";
 import { crm } from "../../../lib/crm";
 import { staffList, person } from "../../../lib/tasks";
@@ -19,10 +20,7 @@ const title = (spec: string) => {
   return spec;
 };
 const fired = (spec: string) => spec.startsWith("u:") && person(Number(spec.slice(2)))?.active === false;
-function add(event: Event) {
-  const select = event.target as HTMLSelectElement;
-  const spec = select.value;
-  select.value = "";
+function add(spec: string) {
   if (!spec) return;
   emit("update:modelValue", props.single ? [spec] : [...props.modelValue.filter((one) => one !== spec), spec]);
 }
@@ -37,7 +35,7 @@ const drop = (spec: string) => emit("update:modelValue", props.modelValue.filter
         <button v-if="!disabled" type="button" class="-mr-1 rounded-full p-0.5 hover:bg-default" :aria-label="`Убрать ${title(spec)}`" @click="drop(spec)"><X class="size-3" /></button>
       </span>
     </div>
-    <select class="ui-select" :aria-label="label" :disabled="disabled" :value="single ? modelValue[0] ?? '' : ''" @change="add">
+    <UiSelect :aria-label="label" :disabled="disabled" :model-value="single ? modelValue[0] ?? '' : ''" search @change="add">
       <option value="" :disabled="single">{{ single ? "Не выбран" : "Добавить…" }}</option>
       <optgroup label="Из сделки">
         <option v-for="(text, key) in ROLES" :key="key" :value="key">{{ text }}</option>
@@ -49,7 +47,7 @@ const drop = (spec: string) => emit("update:modelValue", props.modelValue.filter
         <option v-if="single && modelValue[0]?.startsWith('u:') && fired(modelValue[0])" :value="modelValue[0]">{{ title(modelValue[0]) }} · уволен</option>
         <option v-for="one in staffList" :key="one.id" :value="`u:${one.id}`">{{ one.name }}</option>
       </optgroup>
-    </select>
+    </UiSelect>
   </div>
 </template>
 

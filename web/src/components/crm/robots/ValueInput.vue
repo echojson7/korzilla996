@@ -2,6 +2,8 @@
      люди, стадия — стадии воронки, да/нет, дата; иначе текст с подстановками. -->
 <script setup lang="ts">
 import { computed } from "vue";
+import UiDate from "../../UiDate.vue";
+import UiSelect from "../../UiSelect.vue";
 import TemplateInput from "./TemplateInput.vue";
 import { crm } from "../../../lib/crm";
 import { staffList } from "../../../lib/tasks";
@@ -14,22 +16,22 @@ const stages = computed(() => crm.pipelines.find((one) => one.id === props.pipel
 </script>
 
 <template>
-  <select v-if="field?.type === 'list'" class="ui-select" :value="modelValue" :aria-label="label" :disabled="disabled" @change="set(($event.target as HTMLSelectElement).value)">
+  <UiSelect v-if="field?.type === 'list'" :model-value="modelValue" :aria-label="label" :disabled="disabled" @change="(v: unknown) => set(String(v))">
     <option value="">—</option>
     <option v-for="one in field.options ?? []" :key="one.id" :value="one.id">{{ one.label }}</option>
-  </select>
-  <select v-else-if="field?.type === 'user'" class="ui-select" :value="modelValue" :aria-label="label" :disabled="disabled" @change="set(($event.target as HTMLSelectElement).value)">
+  </UiSelect>
+  <UiSelect v-else-if="field?.type === 'user'" :model-value="modelValue" :aria-label="label" :disabled="disabled" @change="(v: unknown) => set(String(v))">
     <option value="">—</option>
     <option v-for="one in staffList" :key="one.id" :value="String(one.id)">{{ one.name }}</option>
-  </select>
-  <select v-else-if="field?.type === 'stage'" class="ui-select" :value="modelValue" :aria-label="label" :disabled="disabled" @change="set(($event.target as HTMLSelectElement).value)">
+  </UiSelect>
+  <UiSelect v-else-if="field?.type === 'stage'" :model-value="modelValue" :aria-label="label" :disabled="disabled" @change="(v: unknown) => set(String(v))">
     <option value="">—</option>
     <option v-for="one in stages" :key="one.id" :value="String(one.id)">{{ one.title }}</option>
-  </select>
-  <select v-else-if="field?.type === 'boolean'" class="ui-select" :value="modelValue" :aria-label="label" :disabled="disabled" @change="set(($event.target as HTMLSelectElement).value)">
+  </UiSelect>
+  <UiSelect v-else-if="field?.type === 'boolean'" :model-value="modelValue" :aria-label="label" :disabled="disabled" @change="(v: unknown) => set(String(v))">
     <option value="1">Да</option>
     <option value="0">Нет</option>
-  </select>
-  <input v-else-if="field?.type === 'date' && !modelValue.includes('{{')" type="date" class="input w-full text-sm" :value="modelValue" :aria-label="label" :disabled="disabled" @input="set(($event.target as HTMLInputElement).value)" />
+  </UiSelect>
+  <UiDate v-else-if="field?.type === 'date' && !modelValue.includes('{{')" class="w-full" :model-value="modelValue" :aria-label="label" :disabled="disabled" @change="set" />
   <TemplateInput v-else :model-value="modelValue" :label="label" :multiline="field?.type === 'text'" :rows="3" :disabled="disabled" @update:model-value="set" />
 </template>

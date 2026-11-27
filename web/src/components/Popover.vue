@@ -9,7 +9,7 @@
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { autoUpdate, computePosition, flip, offset, shift, size, type Placement } from "@floating-ui/dom";
 
-const props = withDefaults(defineProps<{ align?: "left" | "right" | "center"; width?: string; up?: boolean; hover?: boolean | "manual"; matchWidth?: boolean }>(), { align: "right", width: "w-72", up: false, hover: false, matchWidth: false });
+const props = withDefaults(defineProps<{ align?: "left" | "right" | "center"; width?: string; up?: boolean; hover?: boolean | "manual"; matchWidth?: boolean | "min" }>(), { align: "right", width: "w-72", up: false, hover: false, matchWidth: false });
 const open = ref(false);
 const root = ref<HTMLElement | null>(null);
 const panel = ref<HTMLElement | null>(null);
@@ -38,8 +38,10 @@ async function place() {
       size({
         padding: 8,
         apply({ availableHeight, availableWidth, elements, rects }) {
-          /* matchWidth: панель шириной с якорь (с учётом своих полей p-1.5). */
-          if (props.matchWidth) elements.floating.style.width = `${Math.round(rects.reference.width) + 12}px`;
+          /* matchWidth: панель шириной с якорь (с учётом своих полей p-1.5);
+             "min" — не уже якоря, но может быть шире (выпадающие списки). */
+          if (props.matchWidth === "min") elements.floating.style.minWidth = `${Math.round(rects.reference.width)}px`;
+          else if (props.matchWidth) elements.floating.style.width = `${Math.round(rects.reference.width) + 12}px`;
           elements.floating.style.maxHeight = `${Math.max(160, Math.floor(availableHeight))}px`;
           elements.floating.style.maxWidth = `${Math.floor(availableWidth)}px`;
         },
@@ -85,6 +87,7 @@ onBeforeUnmount(() => {
   stop?.();
 });
 const close = () => (open.value = false);
+const show = () => (open.value = true);
 
 /* hover: панель открывается наведением мыши на кнопку и закрывается, когда
    мышь ушла и с кнопки, и с панели (с паузой, чтобы успеть перейти).
@@ -109,7 +112,7 @@ function hoverOut(event: PointerEvent) {
 const rootIn = (event: PointerEvent) => props.hover !== "manual" && hoverIn(event);
 const rootOut = (event: PointerEvent) => props.hover !== "manual" && hoverOut(event);
 onBeforeUnmount(() => clearTimeout(hoverTimer));
-defineExpose({ close });
+defineExpose({ close, show, open, panel });
 </script>
 
 <template>

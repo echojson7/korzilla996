@@ -1,0 +1,1 @@
+import{C as e,N as t,Y as n,_ as r,j as i}from"./vue-DRplfhw5.js";var a=e({__name:`HueChip`,props:{hue:{}},setup(e){return(a,o)=>(i(),r(`span`,{class:`hue-soft inline-flex h-6 items-center rounded-md px-2 text-xs font-medium whitespace-nowrap`,style:n({"--hue":e.hue})},[t(a.$slots,`default`)],4))}});export{a as t};

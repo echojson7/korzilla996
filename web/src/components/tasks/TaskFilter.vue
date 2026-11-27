@@ -3,6 +3,7 @@
      слева готовые наборы со счётчиками, справа поля. Всё применяется сразу. -->
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import UiSelect from "../UiSelect.vue";
 import { Search, X, SlidersHorizontal, Check, RotateCcw } from "@lucide/vue";
 import Popover from "../Popover.vue";
 import {
@@ -26,7 +27,7 @@ function toggleStatus(id: Status) {
 }
 const pick = (key: "pr" | "due", value: string, current: string | null) => setField(key, current === value ? null : value);
 const people = computed(() => staffList.value);
-const onSelect = (key: "who" | "by" | "pj" | "tg", event: Event) => setField(key, (event.target as HTMLSelectElement).value || null);
+const onSelect = (key: "who" | "by" | "pj" | "tg", value: unknown) => setField(key, value === "" || value == null ? null : String(value));
 const placeholder = computed(() => (chips.value.length || preset.value !== "mine" ? "Искать дальше…" : "Поиск: задача, сотрудник, сделка, проект, #тег"));
 defineExpose({ focus: () => input.value?.focus() });
 </script>
@@ -105,31 +106,31 @@ defineExpose({ focus: () => input.value?.focus() });
             <div class="grid gap-3 sm:grid-cols-2">
               <label class="block">
                 <span class="field-label">Ответственный</span>
-                <select class="input h-9 w-full py-0 text-sm" :value="responsible ?? ''" @change="onSelect('who', $event)">
+                <UiSelect class="w-full" :model-value="responsible ?? ''" @change="(v: unknown) => onSelect('who', v)">
                   <option value="">Любой</option>
                   <option v-for="one in people" :key="one.id" :value="one.id">{{ one.id === taskStore.me ? `${one.name} (я)` : one.name }}</option>
-                </select>
+                </UiSelect>
               </label>
               <label class="block">
                 <span class="field-label">Постановщик</span>
-                <select class="input h-9 w-full py-0 text-sm" :value="creator ?? ''" @change="onSelect('by', $event)">
+                <UiSelect class="w-full" :model-value="creator ?? ''" @change="(v: unknown) => onSelect('by', v)">
                   <option value="">Любой</option>
                   <option v-for="one in people" :key="one.id" :value="one.id">{{ one.id === taskStore.me ? `${one.name} (я)` : one.name }}</option>
-                </select>
+                </UiSelect>
               </label>
               <label class="block">
                 <span class="field-label">Проект</span>
-                <select class="input h-9 w-full py-0 text-sm" :value="project" :disabled="!taskStore.projects.length" @change="onSelect('pj', $event)">
+                <UiSelect class="w-full" :model-value="project" :disabled="!taskStore.projects.length" @change="(v: unknown) => onSelect('pj', v)">
                   <option value="">{{ taskStore.projects.length ? "Любой" : "Проектов нет" }}</option>
                   <option v-for="one in taskStore.projects" :key="one" :value="one">{{ one }}</option>
-                </select>
+                </UiSelect>
               </label>
               <label class="block">
                 <span class="field-label">Тег</span>
-                <select class="input h-9 w-full py-0 text-sm" :value="tag" :disabled="!taskStore.tags.length" @change="onSelect('tg', $event)">
+                <UiSelect class="w-full" :model-value="tag" :disabled="!taskStore.tags.length" @change="(v: unknown) => onSelect('tg', v)">
                   <option value="">{{ taskStore.tags.length ? "Любой" : "Тегов нет" }}</option>
                   <option v-for="one in taskStore.tags" :key="one" :value="one">#{{ one }}</option>
-                </select>
+                </UiSelect>
               </label>
             </div>
             <div class="mt-auto flex items-center gap-2 border-t border-separator pt-3">

@@ -6,6 +6,7 @@
 import { computed, ref, watch } from "vue";
 import { Check, ExternalLink, FileText, Plus, X } from "@lucide/vue";
 import Popover from "../Popover.vue";
+import UiDate from "../UiDate.vue";
 import Checkbox from "../Checkbox.vue";
 import ChatFace from "../messenger/ChatFace.vue";
 import UserPick from "../tasks/UserPick.vue";
@@ -20,7 +21,7 @@ const label = (id: string | number) => props.field.options.find((one) => one.id 
 const files = computed(() => (Array.isArray(props.value) ? (props.value as { name?: string; url?: string }[]).filter((one) => one && typeof one === "object") : []));
 
 /* Поле ввода: черновик, пока фокус в поле. */
-const inputType = computed(() => ({ number: "text", date: "date", datetime: "datetime-local", url: "url" } as Record<string, string>)[props.field.type] ?? "text");
+const inputType = computed(() => ({ number: "text", url: "url" } as Record<string, string>)[props.field.type] ?? "text");
 const asInput = (value: FieldValue | undefined) => {
   if (value == null) return "";
   if (props.field.type === "datetime" && typeof value === "string") {
@@ -135,7 +136,21 @@ const shownDate = computed(() => {
     @keydown.enter.ctrl.prevent="($event.target as HTMLElement).blur()"
   />
 
-  <!-- Строка, число, ссылка, дата -->
+  <!-- Дата, дата со временем -->
+  <UiDate
+    v-else-if="editable && (field.type === 'date' || field.type === 'datetime')"
+    :model-value="asInput(value)"
+    :type="field.type === 'datetime' ? 'datetime' : 'date'"
+    :clearable="!field.required"
+    :aria-label="field.title"
+    @change="(v) => emit('save', !v ? null : field.type === 'datetime' ? new Date(v).toISOString() : v)"
+  >
+    <template #trigger="{ toggle }">
+      <button type="button" class="fv-value" @click="toggle"><span v-if="value">{{ shownDate }}</span><span v-else class="text-muted">Не заполнено</span></button>
+    </template>
+  </UiDate>
+
+  <!-- Строка, число, ссылка -->
   <div v-else-if="editable" class="flex min-w-0 flex-1 items-center gap-1">
     <input
       v-model="draft"
@@ -143,7 +158,6 @@ const shownDate = computed(() => {
       :inputmode="field.type === 'number' ? 'decimal' : undefined"
       class="fv-input w-full"
       placeholder="Не заполнено"
-      @change="field.type === 'date' || field.type === 'datetime' ? commit() : undefined"
       @blur="commit"
       @keydown.enter.prevent="($event.target as HTMLElement).blur()"
       @keydown.esc.prevent="reset"

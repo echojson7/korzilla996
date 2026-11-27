@@ -4,6 +4,7 @@
      от прежней версии. -->
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import UiDate from "../UiDate.vue";
 import { Pencil, Trash2, Send, Plus, Clock, Play, Square, Check, X } from "@lucide/vue";
 import Popover from "../Popover.vue";
 import ChatFace from "../messenger/ChatFace.vue";
@@ -326,7 +327,7 @@ const mine = (one: TaskFull["timeItems"][number]) => one.userId === taskStore.me
               <input v-model="spent" class="input h-9 w-full py-0 pr-16 text-sm" placeholder="1ч 30м" aria-label="Сколько времени" v-focus />
               <span v-if="spent.trim()" class="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 text-xs" :class="parsed ? 'text-muted' : 'text-danger'">{{ parsed ? `= ${duration(parsed * 60)}` : "?" }}</span>
             </label>
-            <input v-model="day" type="datetime-local" class="input h-9 w-full min-w-0 py-0 text-sm" aria-label="Когда начали (по умолчанию — только что)" title="Когда начали; пусто — только что" />
+            <UiDate v-model="day" type="datetime" class="w-full" placeholder="Только что" aria-label="Когда начали (по умолчанию — только что)" title="Когда начали; пусто — только что" align="right" />
           </div>
           <input v-model="note" class="input h-9 py-0 text-sm" placeholder="Что делали (необязательно)" maxlength="250" />
           <div class="flex items-center gap-2">
@@ -343,7 +344,7 @@ const mine = (one: TaskFull["timeItems"][number]) => one.userId === taskStore.me
           <form v-if="editId === one.id" class="flex flex-col gap-2 rounded-xl bg-surface-secondary p-2.5" @submit.prevent="saveTime" @keydown.esc.stop="editId = null">
             <div class="grid grid-cols-[minmax(0,9rem)_minmax(0,1fr)] gap-2">
               <input v-model="editSpent" v-focus class="input h-8 w-full py-0 text-sm" aria-label="Сколько времени" />
-              <input v-model="editDay" type="datetime-local" class="input h-8 w-full min-w-0 py-0 text-sm" aria-label="Когда" />
+              <UiDate v-model="editDay" type="datetime" class="w-full" size="sm" aria-label="Когда" align="right" />
             </div>
             <div class="flex items-center gap-2">
               <input v-model="editNote" class="input h-8 min-w-0 flex-1 py-0 text-sm" placeholder="Что делали" maxlength="250" />

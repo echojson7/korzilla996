@@ -17,10 +17,14 @@
 @import "@heroui/styles/components/description.css" layer(components);
 @import "@heroui/styles/components/field-error.css" layer(components);
 @import "@heroui/styles/components/search-field.css" layer(components);
+@import "@heroui/styles/components/calendar.css" layer(components);
+@import "@heroui/styles/components/select.css" layer(components);
 @import "@heroui/styles/components/kbd.css" layer(components);
 @import "@heroui/styles/components/link.css" layer(components);
 @import "@heroui/styles/components/separator.css" layer(components);
 @import "@heroui/styles/components/menu-item.css" layer(components);
+@import "@heroui/styles/components/list-box-item.css" layer(components);
+@import "@heroui/styles/components/list-box.css" layer(components);
 @import "@heroui/styles/components/table.css" layer(components);
 @import "@heroui/styles/components/toggle-button.css" layer(components);
 @import "@heroui/styles/components/toggle-button-group.css" layer(components);
@@ -697,22 +701,3 @@ body {
 .pin-swap-enter-from { opacity: 0; transform: translateY(6px); }
 .pin-swap-leave-to { opacity: 0; transform: translateY(-6px); }
 
-/* Выпадающий список в формах (роботы CRM и др.): как поле ввода HeroUI. */
-.ui-select {
-  width: 100%;
-  min-width: 0;
-  height: 2.25rem;
-  padding: 0 0.625rem;
-  border: 1px solid var(--border);
-  border-radius: 0.75rem;
-  background: var(--field-background, var(--surface));
-  color: var(--foreground);
-  font-size: 0.875rem;
-}
-.ui-select:focus-visible {
-  outline: 2px solid var(--focus, var(--accent));
-  outline-offset: 1px;
-}
-.ui-select:disabled {
-  opacity: 0.7;
-}

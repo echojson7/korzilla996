@@ -4,6 +4,7 @@
      администратор и роль с правом «Настраивать воронки, стадии и поля». -->
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
+import UiSelect from "../UiSelect.vue";
 import { ArrowDown, ArrowUp, Check, ChevronRight, Plus, Star, Trash2, X } from "@lucide/vue";
 import Segmented from "../Segmented.vue";
 import Checkbox from "../Checkbox.vue";
@@ -224,9 +225,9 @@ function deleteField(field: Field) {
             <li v-for="(stage, i) in selected.stages" :key="stage.id" class="flex flex-wrap items-center gap-2 rounded-xl border border-separator p-1.5 pl-2 sm:flex-nowrap">
               <input type="color" :value="stage.color" class="color-dot" :aria-label="`Цвет стадии ${stage.title}`" @input="recolor(stage, ($event.target as HTMLInputElement).value)" />
               <input :value="stage.title" class="value-input min-w-0 flex-1" maxlength="120" :aria-label="`Название стадии ${i + 1}`" @blur="renameStage(stage, $event)" @keydown.enter="($event.target as HTMLInputElement).blur()" />
-              <select :value="stage.semantic" class="semantic" :aria-label="`Смысл стадии ${stage.title}`" @change="run(() => settings.updateStage(stage.id, { semantic: ($event.target as HTMLSelectElement).value as Semantic }))">
+              <UiSelect :model-value="stage.semantic" class="w-40 shrink-0" size="sm" :aria-label="`Смысл стадии ${stage.title}`" @update:model-value="(v: Semantic) => run(() => settings.updateStage(stage.id, { semantic: v }))">
                 <option v-for="[key, label] in SEMANTIC_LIST" :key="key" :value="key">{{ label }}</option>
-              </select>
+              </UiSelect>
               <span class="flex shrink-0">
                 <button type="button" class="icon-btn" :disabled="i === 0" aria-label="Выше" @click="moveStage(stage, -1)"><ArrowUp class="size-3.5" /></button>
                 <button type="button" class="icon-btn" :disabled="i === selected.stages.length - 1" aria-label="Ниже" @click="moveStage(stage, 1)"><ArrowDown class="size-3.5" /></button>
@@ -235,10 +236,10 @@ function deleteField(field: Field) {
                   <div class="flex flex-col gap-2 p-2 text-sm">
                     <p>Удалить стадию «{{ stage.title }}»?</p>
                     <label class="flex flex-col gap-1 text-xs text-muted">Сделки с неё перенести на
-                      <select v-model="moveTo[stage.id]" class="semantic w-full">
+                      <UiSelect v-model="moveTo[stage.id]" class="w-full" size="sm">
                         <option :value="undefined">— на ней нет сделок —</option>
                         <option v-for="other in selected.stages.filter((one) => one.id !== stage.id)" :key="other.id" :value="other.id">{{ other.title }}</option>
-                      </select>
+                      </UiSelect>
                     </label>
                     <button type="button" class="button button--danger button--sm self-end" @click="deleteStage(stage)"><Trash2 class="size-3.5" />Удалить</button>
                   </div>
@@ -267,9 +268,9 @@ function deleteField(field: Field) {
         <div class="grid gap-3 sm:grid-cols-2">
           <label class="flex flex-col gap-1 text-sm">Название<input v-model="draft.title" class="input" maxlength="200" required autofocus /></label>
           <label class="flex flex-col gap-1 text-sm">Тип
-            <select v-model="draft.type" class="semantic h-10">
+            <UiSelect v-model="draft.type" size="lg">
               <option v-for="[key, label] in typeList.filter(([key]) => key !== 'file')" :key="key" :value="key">{{ label }}</option>
-            </select>
+            </UiSelect>
           </label>
           <label class="flex flex-col gap-1 text-sm">Блок в карточке<input v-model="draft.section" class="input" list="crm-sections" placeholder="Дополнительно" maxlength="80" /></label>
           <div class="flex items-end pb-2"><Checkbox v-if="draft.type !== 'boolean'" v-model="draft.multiple" label="Несколько значений" /><span v-if="draft.type !== 'boolean'" class="ml-2 text-sm">Несколько значений</span></div>
@@ -378,14 +379,6 @@ function deleteField(field: Field) {
 .color-dot::-moz-color-swatch {
   border: 0;
   border-radius: 9999px;
-}
-.semantic {
-  height: 2rem;
-  padding: 0 0.5rem;
-  border: 1px solid var(--border);
-  border-radius: 0.625rem;
-  background: var(--field-background, var(--surface));
-  font-size: 0.8125rem;
 }
 .value-input {
   min-width: 0;

@@ -5,6 +5,7 @@
      Вкладка — ?tab=roles, открытая роль — ?role=<id>. -->
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from "vue";
+import UiSelect from "../components/UiSelect.vue";
 import { Plus, KeyRound, Power, Copy, Trash2, ShieldCheck, Crown, Save, UserX } from "@lucide/vue";
 import PageHead from "../components/PageHead.vue";
 import SearchBox from "../components/SearchBox.vue";
@@ -293,16 +294,16 @@ const usersOf = (role: RoleItem) => plural(role.users, "сотрудник", "с
           <span class="hidden truncate text-sm md:block">{{ one.department || "—" }}</span>
           <span class="hidden truncate text-sm text-muted md:block">{{ one.email }}</span>
           <span class="col-span-2 flex items-center gap-2 md:col-span-1">
-            <select
-              class="input h-9 w-full min-w-0 py-0 text-sm"
-              :value="one.role"
+            <UiSelect
+              class="w-full"
+              :model-value="one.role"
               :disabled="locked(one) || !one.active || busy.has(one.id)"
               :aria-label="`Роль: ${one.name}`"
               :title="locked(one) ? 'Владельцев меняет только владелец' : undefined"
-              @change="setRole(one, ($event.target as HTMLSelectElement).value)"
+              @change="(v: string) => setRole(one, v)"
             >
               <option v-for="role in roleChoices(one)" :key="role.key" :value="role.key" :disabled="one.role === 'owner' && role.key !== 'owner' && ownersLeft <= 1">{{ role.name }}</option>
-            </select>
+            </UiSelect>
             <span v-if="one.fired" class="chip chip--sm chip--soft chip--danger shrink-0"><span class="chip__label">Уволен</span></span>
             <span v-else-if="!one.active" class="chip chip--sm chip--soft chip--danger shrink-0"><span class="chip__label">Выключена</span></span>
           </span>
@@ -402,9 +403,9 @@ const usersOf = (role: RoleItem) => plural(role.users, "сотрудник", "с
         <label class="flex flex-col gap-1 text-sm">Имя и фамилия<input v-model="draft.name" class="input" maxlength="120" required /></label>
         <label class="flex flex-col gap-1 text-sm">Почта или логин для входа<input v-model="draft.email" class="input" maxlength="255" autocomplete="off" required /></label>
         <label class="flex flex-col gap-1 text-sm">Роль
-          <select v-model="draft.role" class="input">
+          <UiSelect v-model="draft.role" size="lg">
             <option v-for="role in roles.filter((one) => one.key !== 'owner' || owner)" :key="role.key" :value="role.key">{{ role.name }}</option>
-          </select>
+          </UiSelect>
         </label>
         <label class="flex flex-col gap-1 text-sm">Должность<input v-model="draft.position" class="input" maxlength="120" /></label>
         <label class="flex flex-col gap-1 text-sm">Отдел<input v-model="draft.department" class="input" maxlength="120" list="settings-depts" /></label>
@@ -449,9 +450,9 @@ const usersOf = (role: RoleItem) => plural(role.users, "сотрудник", "с
       <form id="new-role" class="flex flex-col gap-3" @submit.prevent="createRole">
         <label class="flex flex-col gap-1 text-sm">Название<input v-model="newRole.name" class="input" maxlength="80" placeholder="Например, «Менеджер продаж»" required /></label>
         <label class="flex flex-col gap-1 text-sm">Права взять из роли
-          <select v-model="newRole.from" class="input">
+          <UiSelect v-model="newRole.from" size="lg">
             <option v-for="role in roles.filter((one) => one.editable)" :key="role.key" :value="role.key">{{ role.name }}</option>
-          </select>
+          </UiSelect>
         </label>
         <p v-if="draftError" class="text-sm text-danger">{{ draftError }}</p>
       </form>
