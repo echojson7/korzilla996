@@ -42,13 +42,9 @@ async function submit() {
 
 <template>
   <main class="login">
-    <!-- Слева фото с подписью, справа форма -->
+    <!-- Слева фото с логотипом, справа форма -->
     <aside class="login__photo" :style="photo">
       <div class="login__brand-light"><Brand /></div>
-      <div class="login__pitch">
-        <p class="login__pitch-title">Вся работа компании в одном окне</p>
-        <p class="login__pitch-text">Сделки, задачи, процессы и переписка с коллегами.</p>
-      </div>
     </aside>
 
     <section class="login__pane">
@@ -283,24 +279,6 @@ async function submit() {
   background:
     linear-gradient(180deg, oklch(0 0 0 / 0.35), transparent 30%),
     linear-gradient(0deg, oklch(0 0 0 / 0.6), transparent 45%);
-}
-.login__pitch {
-  max-width: 600px;
-  text-wrap: balance;
-  margin-top: auto;
-  margin-bottom: 20px;
-  color: white;
-}
-.login__pitch-title {
-  font-size: 36px;
-  line-height: 1.15;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-}
-.login__pitch-text {
-  margin-top: 12px;
-  font-size: 16px;
-  color: oklch(1 0 0 / 0.82);
 }
 .login__pane {
   display: flex;
