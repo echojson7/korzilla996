@@ -99,14 +99,16 @@ onBeforeUnmount(() => {
   width: 100%;
   align-items: center;
   gap: 0.75rem;
-  min-height: 2.5rem;
-  padding: 0.5rem 0.75rem;
+  height: 2.5rem;
+  padding: 0 0.75rem;
   border-radius: 0.75rem;
   font-size: 0.9375rem;
-  line-height: 1.25rem;
+  /* Перенос в две строки — плотно, в той же высоте пункта. */
+  line-height: 1.1;
   text-align: left;
   transition: background-color 120ms;
 }
+.menu-row > svg { flex-shrink: 0; }
 .menu-row:hover,
 .menu-row:focus-visible {
   background: var(--default);
